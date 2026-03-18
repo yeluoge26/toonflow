@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id          Int       @id @default(autoincrement())
+  name        String
+  intro       String?
+  type        String?
+  artStyle    String?
+  videoRatio  String?
+  userId      Int       @default(1)
+  createTime  BigInt?
+  scripts     Script[]
+  batches     Batch[]   @relation("BatchProject")
+  scores      Score[]
+  metrics     Metric[]
+}
+
+model Script {
+  id          Int       @id @default(autoincrement())
+  projectId   Int
+  outlineId   Int?
+  content     String?
+  version     Int       @default(1)
+  createTime  BigInt?
+  project     Project   @relation(fields: [projectId], references: [id])
+}
+
+model Batch {
+  id           Int       @id @default(autoincrement())
+  batchId      String    @unique
+  type         String?
+  totalCount   Int       @default(0)
+  successCount Int       @default(0)
+  failCount    Int       @default(0)
+  priority     String    @default("normal")
+  status       String    @default("pending")
+  config       String?
+  createdAt    BigInt?
+  updatedAt    BigInt?
+  projectId    Int?
+  project      Project?  @relation("BatchProject", fields: [projectId], references: [id])
+  tasks        PipelineTask[]
+}
+
+model PipelineTask {
+  id          Int       @id @default(autoincrement())
+  taskId      String    @unique
+  batchId     String
+  projectId   Int
+  step        String
+  status      String    @default("pending")
+  retryCount  Int       @default(0)
+  maxRetries  Int       @default(3)
+  priority    Int       @default(5)
+  payload     String?
+  result      String?
+  errorMsg    String?
+  createdAt   BigInt?
+  startedAt   BigInt?
+  completedAt BigInt?
+  batch       Batch     @relation(fields: [batchId], references: [batchId])
+}
+
+model Score {
+  id             Int       @id @default(autoincrement())
+  projectId      Int
+  hookScore      Float?
+  emotionScore   Float?
+  visualScore    Float?
+  audioScore     Float?
+  conflictScore  Float?
+  finalScore     Float?
+  label          String?
+  details        String?
+  createdAt      BigInt?
+  project        Project   @relation(fields: [projectId], references: [id])
+}
+
+model Metric {
+  id              Int       @id @default(autoincrement())
+  projectId       Int
+  platform        String?
+  postId          String?
+  views           Int       @default(0)
+  likes           Int       @default(0)
+  comments        Int       @default(0)
+  shares          Int       @default(0)
+  completionRate  Float     @default(0)
+  likeRate        Float     @default(0)
+  fetchedAt       BigInt?
+  createdAt       BigInt?
+  project         Project   @relation(fields: [projectId], references: [id])
+}
+
+model PromptGenome {
+  id               Int       @id @default(autoincrement())
+  promptId         String    @unique
+  template         String?
+  variables        String?
+  score            Float     @default(0)
+  performanceScore Float     @default(0)
+  generation       Int       @default(1)
+  parentId         String?
+  status           String    @default("active")
+  usageCount       Int       @default(0)
+  createdAt        BigInt?
+}
+
+model Character {
+  id              Int       @id @default(autoincrement())
+  name            String
+  description     String?
+  projectId       Int?
+  referenceImages String?
+  loraId          String?
+  embeddingId     String?
+  voiceId         String?
+  personality     String?
+  stateHistory    String?
+  artStyle        String?
+  isPublic        Int       @default(0)
+  createdAt       BigInt?
+  updatedAt       BigInt?
+}
+
+model Template {
+  id             Int       @id @default(autoincrement())
+  name           String?
+  category       String?
+  type           String?
+  structure      String?
+  promptTemplate String?
+  variables      String?
+  tags           String?
+  successRate    Float     @default(0)
+  usageCount     Int       @default(0)
+  avgScore       Float     @default(0)
+  isBuiltin      Int       @default(0)
+  createdAt      BigInt?
+  updatedAt      BigInt?
+}
