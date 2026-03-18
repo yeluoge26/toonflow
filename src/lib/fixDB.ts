@@ -361,6 +361,141 @@ export default async (knex: Knex): Promise<void> => {
     });
   }
 
+  // Prompt Evolution tables
+  if (!(await knex.schema.hasTable("t_promptGenome"))) {
+    await knex.schema.createTable("t_promptGenome", (table) => {
+      table.increments("id").primary();
+      table.string("promptId").unique();
+      table.text("template");
+      table.text("variables");          // JSON
+      table.float("score").defaultTo(0);
+      table.float("performanceScore").defaultTo(0);
+      table.integer("generation").defaultTo(1);
+      table.string("parentId");
+      table.string("status").defaultTo("active"); // 'active' | 'deprecated'
+      table.integer("usageCount").defaultTo(0);
+      table.integer("createdAt");
+    });
+  }
+
+  if (!(await knex.schema.hasTable("t_promptMetrics"))) {
+    await knex.schema.createTable("t_promptMetrics", (table) => {
+      table.increments("id").primary();
+      table.string("promptId");
+      table.integer("projectId");
+      table.integer("views").defaultTo(0);
+      table.integer("likes").defaultTo(0);
+      table.integer("comments").defaultTo(0);
+      table.integer("shares").defaultTo(0);
+      table.float("completionRate").defaultTo(0);
+      table.float("calculatedScore").defaultTo(0);
+      table.integer("createdAt");
+    });
+  }
+
+  if (!(await knex.schema.hasTable("t_promptEvolution"))) {
+    await knex.schema.createTable("t_promptEvolution", (table) => {
+      table.increments("id").primary();
+      table.string("parentPromptId");
+      table.string("childPromptId");
+      table.string("type");             // 'mutation' | 'crossover' | 'random'
+      table.text("changeDetail");       // JSON: what was changed
+      table.integer("createdAt");
+    });
+  }
+
+  if (!(await knex.schema.hasTable("t_variablePool"))) {
+    await knex.schema.createTable("t_variablePool", (table) => {
+      table.increments("id").primary();
+      table.string("keyName");          // 'hook' | 'genre' | 'twist' | 'theme' | 'ending' | 'emotion'
+      table.text("value");
+      table.float("weight").defaultTo(1.0);
+      table.float("score").defaultTo(0);
+      table.integer("usageCount").defaultTo(0);
+      table.integer("successCount").defaultTo(0);
+      table.integer("createdAt");
+    });
+  }
+
+  // Seed default variable pool data if table is empty
+  const variablePoolCount = await knex("t_variablePool").count("* as c").first();
+  if (Number(variablePoolCount?.c) === 0) {
+    const seedData: Array<{ keyName: string; value: string }> = [
+      // hooks
+      { keyName: "hook", value: "被全公司羞辱的她" },
+      { keyName: "hook", value: "突然收到死人的消息" },
+      { keyName: "hook", value: "手机预测了自己的死亡" },
+      { keyName: "hook", value: "醒来发现自己变成了AI" },
+      { keyName: "hook", value: "前任突然跪下求复合" },
+      { keyName: "hook", value: "被甩后彩票中了500万" },
+      { keyName: "hook", value: "面试官竟然是前男友" },
+      { keyName: "hook", value: "收到来自未来的视频" },
+      { keyName: "hook", value: "深夜收到陌生人的求救" },
+      { keyName: "hook", value: "发现老公是AI" },
+      { keyName: "hook", value: "婚礼上新郎逃跑" },
+      { keyName: "hook", value: "重生回到被背叛那天" },
+      // genres
+      { keyName: "genre", value: "霸道总裁" },
+      { keyName: "genre", value: "情感虐心" },
+      { keyName: "genre", value: "悬疑反转" },
+      { keyName: "genre", value: "校园恋爱" },
+      { keyName: "genre", value: "AI恋人" },
+      { keyName: "genre", value: "复仇爽文" },
+      { keyName: "genre", value: "重生逆袭" },
+      { keyName: "genre", value: "甜宠日常" },
+      { keyName: "genre", value: "职场逆袭" },
+      { keyName: "genre", value: "豪门恩怨" },
+      // twists
+      { keyName: "twist", value: "她其实是董事长女儿" },
+      { keyName: "twist", value: "AI回复了消息" },
+      { keyName: "twist", value: "凶手竟然是自己" },
+      { keyName: "twist", value: "前男友破产来求她" },
+      { keyName: "twist", value: "他一直在暗中保护她" },
+      { keyName: "twist", value: "一切都是梦境" },
+      { keyName: "twist", value: "真正的反派是最信任的人" },
+      { keyName: "twist", value: "死去的人还活着" },
+      // themes
+      { keyName: "theme", value: "被背叛的爱情" },
+      { keyName: "theme", value: "隐藏身份" },
+      { keyName: "theme", value: "假结婚" },
+      { keyName: "theme", value: "失忆" },
+      { keyName: "theme", value: "重生" },
+      { keyName: "theme", value: "AI替代人类" },
+      { keyName: "theme", value: "时间循环" },
+      { keyName: "theme", value: "平行世界" },
+      // endings
+      { keyName: "ending", value: "崩溃大哭" },
+      { keyName: "ending", value: "冷笑转身" },
+      { keyName: "ending", value: "深情拥抱" },
+      { keyName: "ending", value: "绝望独白" },
+      { keyName: "ending", value: "震惊真相" },
+      { keyName: "ending", value: "悬念未解" },
+      // emotions
+      { keyName: "emotion", value: "虐心" },
+      { keyName: "emotion", value: "爽快" },
+      { keyName: "emotion", value: "温暖" },
+      { keyName: "emotion", value: "恐惧" },
+      { keyName: "emotion", value: "震惊" },
+      { keyName: "emotion", value: "感动" },
+    ];
+    await knex("t_variablePool").insert(
+      seedData.map(d => ({ ...d, weight: 1.0, score: 0, usageCount: 0, successCount: 0, createdAt: Date.now() }))
+    );
+  }
+
+  if (!(await knex.schema.hasTable("t_templateRules"))) {
+    await knex.schema.createTable("t_templateRules", (table) => {
+      table.increments("id").primary();
+      table.string("category");
+      table.string("name");
+      table.text("structure");          // JSON: { hook, conflict, twist, ending }
+      table.float("successRate").defaultTo(0);
+      table.integer("usageCount").defaultTo(0);
+      table.text("tags");               // JSON array
+      table.integer("createdAt");
+    });
+  }
+
   const checkSd2VideoModel = await knex("t_videoModel").where("manufacturer", "volcengine").where("model", "doubao-seedance-2-0-260128").first();
   if (!checkSd2VideoModel) {
     await knex("t_videoModel").insert([

@@ -118,6 +118,15 @@ import route114 from "./routes/cost/estimateCost";
 import route115 from "./routes/cost/getDailySummary";
 import route116 from "./routes/cost/setBudget";
 import route117 from "./routes/dashboard/getProductionStats";
+import route118 from "./routes/evolution/getVariablePool";
+import route119 from "./routes/evolution/addVariable";
+import route120 from "./routes/evolution/updateVariableScore";
+import route121 from "./routes/factory/generateScript";
+import route122 from "./routes/factory/validateScript";
+import route123 from "./routes/factory/startProduction";
+import route124 from "./routes/factory/stopProduction";
+import route125 from "./routes/factory/runOnce";
+import route126 from "./routes/factory/getProductionStatus";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -238,4 +247,13 @@ export default async (app: Express) => {
   app.use("/cost/getDailySummary", route115);
   app.use("/cost/setBudget", route116);
   app.use("/dashboard/getProductionStats", route117);
+  app.use("/evolution/getVariablePool", route118);
+  app.use("/evolution/addVariable", route119);
+  app.use("/evolution/updateVariableScore", route120);
+  app.use("/factory/generateScript", route121);
+  app.use("/factory/validateScript", route122);
+  app.use("/factory/startProduction", route123);
+  app.use("/factory/stopProduction", route124);
+  app.use("/factory/runOnce", route125);
+  app.use("/factory/getProductionStatus", route126);
 }
