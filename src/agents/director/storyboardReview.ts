@@ -71,12 +71,23 @@ export async function reviewStoryboardShots(
 ): Promise<DirectorReviewResult> {
   // Get AI config for the storyboard agent (reuse same model)
   const promptConfig = await u.getPromptAi("storyboardAgent");
-  if (!promptConfig || Object.keys(promptConfig).length === 0) {
+  if (!promptConfig || Object.keys(promptConfig).length === 0 || !("apiKey" in promptConfig)) {
+    // Use rule-based analysis instead of returning empty result
+    const { validateScript } = await import("@/lib/scriptValidator");
+    const fragmentTexts = shots.map(s => s.fragmentContent).join("\n");
+    const validation = validateScript(fragmentTexts);
+
     return {
       segmentId,
-      score: "B",
-      issues: [],
-      overall: "未配置AI模型，跳过导演审查",
+      score: validation.valid ? "B" : "C",
+      issues: validation.issues.map((issue, i) => ({
+        shotIndex: 0,
+        type: "technical" as const,
+        suggestion: issue,
+      })),
+      overall: validation.valid
+        ? "基础检测通过（未配置AI导演模型）"
+        : `发现${validation.issues.length}个问题（未配置AI导演模型）`,
     };
   }
 

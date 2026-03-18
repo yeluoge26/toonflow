@@ -5,15 +5,20 @@ import evolutionEngine, { PromptGenome } from "@/lib/evolutionEngine";
 const router = express.Router();
 
 export default router.post("/", async (req, res) => {
-  const promptRows = await u.db("t_prompts")
-    .where("type", "evolved")
-    .select("defaultValue");
+  const promptRows = await u.db("t_promptGenome")
+    .where("status", "active")
+    .select("*");
 
   const population: PromptGenome[] = promptRows
-    .map((r: any) => {
-      try { return JSON.parse(r.defaultValue); } catch { return null; }
-    })
-    .filter(Boolean)
+    .map((r: any) => ({
+      id: r.promptId,
+      generation: r.generation,
+      variables: JSON.parse(r.variables || "{}"),
+      score: r.score || 0,
+      performanceScore: r.performanceScore || 0,
+      parentIds: r.parentId ? [r.parentId] : [],
+      createdAt: r.createdAt,
+    }))
     .sort((a: PromptGenome, b: PromptGenome) => b.score - a.score);
 
   res.status(200).send(success({

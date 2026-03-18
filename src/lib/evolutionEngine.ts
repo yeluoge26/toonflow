@@ -83,13 +83,17 @@ class EvolutionEngine {
       population.push(genome);
 
       // Save to database
-      await u.db("t_prompts").insert({
-        code: `evolved_${genome.id}`,
-        name: `进化Prompt-G${genome.generation}`,
-        type: "evolved",
-        parentCode: null,
-        defaultValue: JSON.stringify(genome),
-        customValue: null,
+      await u.db("t_promptGenome").insert({
+        promptId: genome.id,
+        template: this.genomeToPrompt(genome),
+        variables: JSON.stringify(genome.variables),
+        score: genome.score,
+        performanceScore: genome.performanceScore,
+        generation: genome.generation,
+        parentId: genome.parentIds[0] || null,
+        status: "active",
+        usageCount: 0,
+        createdAt: Date.now(),
       }).catch(() => {}); // Ignore if exists
     }
 
@@ -175,6 +179,19 @@ class EvolutionEngine {
     };
   }
 
+  // Record evolution history
+  private async recordEvolution(parentId: string, childId: string, type: "mutation" | "crossover" | "random", detail: string = "") {
+    try {
+      await u.db("t_promptEvolution").insert({
+        parentPromptId: parentId,
+        childPromptId: childId,
+        type,
+        changeDetail: detail,
+        createdAt: Date.now(),
+      });
+    } catch {}
+  }
+
   // Run one evolution cycle
   async evolve(population: PromptGenome[], mutationRate: number = 0.3): Promise<PromptGenome[]> {
     // Select top performers
@@ -190,10 +207,14 @@ class EvolutionEngine {
       const p2 = elites[Math.floor(Math.random() * elites.length)];
 
       let child = this.crossover(p1, p2);
+      await this.recordEvolution(p1.id, child.id, "crossover", `parents: ${p1.id} x ${p2.id}`);
+      await this.recordEvolution(p2.id, child.id, "crossover", `parents: ${p1.id} x ${p2.id}`);
 
       // Apply mutation with probability
       if (Math.random() < mutationRate) {
+        const preChild = child;
         child = this.mutate(child);
+        await this.recordEvolution(preChild.id, child.id, "mutation", `mutated from crossover child ${preChild.id}`);
       }
 
       nextGeneration.push(child);

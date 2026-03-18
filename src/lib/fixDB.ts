@@ -136,6 +136,7 @@ export default async (knex: Knex): Promise<void> => {
     { name: "剧本生成", key: "generateScript" },
     { name: "视频提示词生成", key: "videoPrompt" },
     { name: "图片编辑", key: "editImage" },
+    { name: "内容评分", key: "contentScoring" },
   ];
   const keys = aiModels.map((m) => m.key);
   const existItems = await knex("t_aiModelMap").whereIn("key", keys).select("key");

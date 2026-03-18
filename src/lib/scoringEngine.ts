@@ -214,16 +214,37 @@ export async function aiScoreProject(projectId: number): Promise<ScoreResult | n
 
     if (!scriptContent) return null;
 
-    // Try to use AI for more accurate scoring
-    const promptAi = await u.getPromptAi("generateScript") as any;
-    if (!promptAi?.config) {
-      // Fallback to rule-based scoring
+    // Try to find AI config: first try "contentScoring", then any available text model
+    let config = null;
+    const scoringMap = await u.db("t_aiModelMap")
+      .leftJoin("t_config", "t_config.id", "t_aiModelMap.configId")
+      .where("t_aiModelMap.key", "contentScoring")
+      .whereNotNull("t_aiModelMap.configId")
+      .select("t_config.model", "t_config.apiKey", "t_config.baseUrl as baseURL", "t_config.manufacturer")
+      .first();
+    if (scoringMap?.apiKey) {
+      config = scoringMap;
+    }
+    if (!config) {
+      // Fallback: find any available non-video text model config
+      const aiModelMap = await u.db("t_aiModelMap")
+        .leftJoin("t_config", "t_config.id", "t_aiModelMap.configId")
+        .whereNotNull("t_aiModelMap.configId")
+        .where("t_config.type", "<>", "video")
+        .select("t_config.model", "t_config.apiKey", "t_config.baseUrl as baseURL", "t_config.manufacturer")
+        .first();
+      if (aiModelMap?.apiKey) {
+        config = aiModelMap;
+      }
+    }
+    if (!config) {
+      // No AI config available, fallback to rule-based scoring
       return scoreProject(projectId);
     }
 
-    const result = await (u.ai.text as any).invoke({
-      config: promptAi.config,
-      system: `你是短视频内容评分专家。请对以下剧本进行专业评分。
+    const result = await u.ai.text.invoke(
+      {
+        system: `你是短视频内容评分专家。请对以下剧本进行专业评分。
 
 评分维度（每项1-10分）：
 1. hook_score: 前3秒钩子强度（是否有悬念/冲突/情绪冲击）
@@ -233,12 +254,21 @@ export async function aiScoreProject(projectId: number): Promise<ScoreResult | n
 
 严格输出JSON格式：
 {"hook_score":8,"emotion_score":7,"conflict_score":9,"suggestions":["建议1","建议2"]}`,
-      prompt: scriptContent.slice(0, 2000),
-      responseFormat: "object",
-    });
+        prompt: scriptContent.slice(0, 2000),
+      },
+      config,
+    );
 
-    if (result && typeof result === "object") {
-      const r = result as any;
+    // When no output schema is provided, invoke returns GenerateTextResult with a .text property
+    const parsed = result?.text ? (() => {
+      try {
+        const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+        return jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+      } catch { return null; }
+    })() : null;
+
+    if (parsed && typeof parsed === "object") {
+      const r = parsed as any;
       const hookScore = Math.min(10, Math.max(1, Number(r.hook_score) || 5));
       const emotionScore = Math.min(10, Math.max(1, Number(r.emotion_score) || 5));
       const conflictScore = Math.min(10, Math.max(1, Number(r.conflict_score) || 5));

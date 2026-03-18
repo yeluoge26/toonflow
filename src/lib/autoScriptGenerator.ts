@@ -20,8 +20,8 @@ export async function autoGenerateScript(config: GenerateConfig): Promise<Genera
   const { promptText, style, maxRewrites = 2 } = config;
 
   // Get AI config
-  const promptAi = await u.getPromptAi("generateScript") as any;
-  if (!promptAi?.config) {
+  const promptAi = await u.getPromptAi("generateScript");
+  if (!promptAi || Object.keys(promptAi).length === 0 || !("apiKey" in promptAi)) {
     throw new Error("未配置剧本生成AI模型");
   }
 
@@ -54,12 +54,11 @@ export async function autoGenerateScript(config: GenerateConfig): Promise<Genera
 
   // First generation
   try {
-    const result = await (u.ai.text as any).invoke({
-      config: promptAi.config,
-      system: systemPrompt,
-      prompt: promptText,
-    });
-    content = typeof result === "string" ? result : String(result);
+    const result = await u.ai.text.invoke(
+      { system: systemPrompt, prompt: promptText },
+      promptAi,
+    );
+    content = result?.text ?? (typeof result === "string" ? result : String(result));
   } catch (err: any) {
     throw new Error(`剧本生成失败: ${err.message}`);
   }
@@ -73,12 +72,11 @@ export async function autoGenerateScript(config: GenerateConfig): Promise<Genera
     const rewritePrompt = generateRewritePrompt(validation);
 
     try {
-      const result = await (u.ai.text as any).invoke({
-        config: promptAi.config,
-        system: systemPrompt,
-        prompt: `原始剧本：\n${content}\n\n${rewritePrompt}`,
-      });
-      content = typeof result === "string" ? result : String(result);
+      const result = await u.ai.text.invoke(
+        { system: systemPrompt, prompt: `原始剧本：\n${content}\n\n${rewritePrompt}` },
+        promptAi,
+      );
+      content = result?.text ?? (typeof result === "string" ? result : String(result));
       validation = validateScript(content);
     } catch (err) {
       break; // Stop rewriting on error

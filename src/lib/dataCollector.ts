@@ -54,10 +54,17 @@ class DataCollector {
       0.1 * (metrics.views > 0 ? (metrics.shares / metrics.views) * 200 : 0)
     );
 
-    // Save to prompt_metrics if table exists
+    // Find linked prompt genome for this project
+    const genomeRow = await u.db("t_promptGenome")
+      .where("status", "active")
+      .first();
+
+    const promptId = genomeRow?.promptId || batchId;
+
+    // Save to prompt_metrics
     try {
       await u.db("t_promptMetrics").insert({
-        promptId: batchId,
+        promptId,
         projectId,
         views: metrics.views,
         likes: metrics.likes,
@@ -67,8 +74,15 @@ class DataCollector {
         calculatedScore: Math.round(perfScore * 10) / 10,
         createdAt: Date.now(),
       });
+
+      // Update the genome's performanceScore
+      if (genomeRow) {
+        await u.db("t_promptGenome")
+          .where("promptId", promptId)
+          .update({ performanceScore: Math.round(perfScore * 10) / 10 });
+      }
     } catch (err) {
-      // Table may not exist yet
+      console.error("[DataCollector] Failed to write t_promptMetrics:", err);
     }
   }
 

@@ -127,6 +127,15 @@ import route123 from "./routes/factory/startProduction";
 import route124 from "./routes/factory/stopProduction";
 import route125 from "./routes/factory/runOnce";
 import route126 from "./routes/factory/getProductionStatus";
+import route127 from "./routes/distribution/autoGenerate";
+import route128 from "./routes/distribution/getTrending";
+import route129 from "./routes/distribution/publish";
+import route130 from "./routes/marketplace/getTemplates";
+import route131 from "./routes/marketplace/publishTemplate";
+import route132 from "./routes/script/getScriptVersions";
+import route133 from "./routes/script/saveScriptVersion";
+import route134 from "./routes/task/addTask";
+import route135 from "./routes/task/cancelTask";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -256,4 +265,13 @@ export default async (app: Express) => {
   app.use("/factory/stopProduction", route124);
   app.use("/factory/runOnce", route125);
   app.use("/factory/getProductionStatus", route126);
+  app.use("/distribution/autoGenerate", route127);
+  app.use("/distribution/getTrending", route128);
+  app.use("/distribution/publish", route129);
+  app.use("/marketplace/getTemplates", route130);
+  app.use("/marketplace/publishTemplate", route131);
+  app.use("/script/getScriptVersions", route132);
+  app.use("/script/saveScriptVersion", route133);
+  app.use("/task/addTask", route134);
+  app.use("/task/cancelTask", route135);
 }

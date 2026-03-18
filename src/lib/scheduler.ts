@@ -104,26 +104,39 @@ class ProductionScheduler {
     if (this.config.evolutionEnabled) {
       try {
         // Load current population
-        const promptRows = await u.db("t_prompts")
-          .where("type", "evolved")
-          .select("defaultValue");
+        const promptRows = await u.db("t_promptGenome")
+          .where("status", "active")
+          .select("*");
 
-        const population = promptRows
-          .map((r: any) => { try { return JSON.parse(r.defaultValue); } catch { return null; } })
-          .filter(Boolean);
+        const population = promptRows.map((r: any) => ({
+          id: r.promptId,
+          generation: r.generation,
+          variables: JSON.parse(r.variables || "{}"),
+          score: r.score || 0,
+          performanceScore: r.performanceScore || 0,
+          parentIds: r.parentId ? [r.parentId] : [],
+          createdAt: r.createdAt,
+        }));
 
         if (population.length >= 10) {
           const nextGen = await evolutionEngine.evolve(population);
-          // Save new generation
-          await u.db("t_prompts").where("type", "evolved").delete();
+
+          // Deprecate old generation
+          await u.db("t_promptGenome").where("status", "active").update({ status: "deprecated" });
+
+          // Insert new generation
           for (const genome of nextGen) {
-            await u.db("t_prompts").insert({
-              code: `evolved_${genome.id}`,
-              name: `进化Prompt-G${genome.generation}`,
-              type: "evolved",
-              parentCode: null,
-              defaultValue: JSON.stringify(genome),
-              customValue: null,
+            await u.db("t_promptGenome").insert({
+              promptId: genome.id,
+              template: evolutionEngine.genomeToPrompt(genome),
+              variables: JSON.stringify(genome.variables),
+              score: genome.score,
+              performanceScore: genome.performanceScore,
+              generation: genome.generation,
+              parentId: genome.parentIds[0] || null,
+              status: "active",
+              usageCount: 0,
+              createdAt: Date.now(),
             }).catch(() => {});
           }
           evolved = true;
