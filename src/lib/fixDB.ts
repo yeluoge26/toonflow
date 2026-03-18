@@ -497,6 +497,56 @@ export default async (knex: Knex): Promise<void> => {
     });
   }
 
+  // t_template table for marketplace
+  if (!(await knex.schema.hasTable("t_template"))) {
+    await knex.schema.createTable("t_template", (table) => {
+      table.increments("id").primary();
+      table.string("name");
+      table.string("category");           // '霸总' | '情感' | '悬疑' | 'AI恋人' | '搞笑'
+      table.string("type");               // 'script' | 'storyboard' | 'style' | 'character'
+      table.text("structure");            // JSON: { hook, conflict, twist, ending }
+      table.text("promptTemplate");       // The full prompt template text
+      table.text("variables");            // JSON: available variables
+      table.text("tags");                 // JSON array
+      table.float("successRate").defaultTo(0);
+      table.integer("usageCount").defaultTo(0);
+      table.float("avgScore").defaultTo(0);
+      table.integer("isBuiltin").defaultTo(0);  // 1 = system template, 0 = user created
+      table.integer("createdAt");
+      table.integer("updatedAt");
+    });
+  }
+
+  // Seed t_template with builtin templates if empty
+  const templateCount = await knex("t_template").count("* as c").first();
+  if (Number(templateCount?.c) === 0) {
+    const builtinTemplates = [
+      { name: "被羞辱的她", category: "霸总", type: "script", structure: JSON.stringify({ hook: "她被{场景}所有人嘲笑", conflict: "{反派}当众羞辱她的{弱点}", twist: "她掏出手机，董事长亲自来接她", ending: "所有人目瞪口呆，{反派}瘫坐在地" }), tags: JSON.stringify(["逆袭","打脸","爽"]) },
+      { name: "契约婚姻", category: "霸总", type: "script", structure: JSON.stringify({ hook: "签完离婚协议的那天", conflict: "她以为只是交易，他却{动作}", twist: "发现他默默为她做了{牺牲}", ending: "她哭着撕掉协议" }), tags: JSON.stringify(["虐心","甜宠","反转"]) },
+      { name: "隐藏身份", category: "霸总", type: "script", structure: JSON.stringify({ hook: "新来的{职位}被所有人看不起", conflict: "被{反派}刁难，要求{挑战}", twist: "她一个电话，{大人物}亲自来了", ending: "{反派}跪地求饶" }), tags: JSON.stringify(["逆袭","爽","打脸"]) },
+      { name: "给死人发消息", category: "情感", type: "script", structure: JSON.stringify({ hook: "她每天给{关系人}发语音，已经{时间}了", conflict: "所有人说她疯了，让她放下", twist: "手机突然收到了回复", ending: "是AI学习了{关系人}的声音" }), tags: JSON.stringify(["虐心","AI","泪目"]) },
+      { name: "错过的真相", category: "情感", type: "script", structure: JSON.stringify({ hook: "整理{关系人}遗物时，发现一封没寄出的信", conflict: "信里写着一直没说出口的{秘密}", twist: "原来{关系人}一直在{隐瞒}", ending: "她抱着信崩溃大哭" }), tags: JSON.stringify(["虐心","泪目","遗憾"]) },
+      { name: "时间循环", category: "悬疑", type: "script", structure: JSON.stringify({ hook: "她发现今天和昨天一模一样", conflict: "无论做什么，{事件}都会发生", twist: "唯一的变量是{关键人物}", ending: "她做出了{选择}，时间终于前进了" }), tags: JSON.stringify(["悬疑","烧脑","反转"]) },
+      { name: "手机预测", category: "悬疑", type: "script", structure: JSON.stringify({ hook: "手机APP里出现了明天的新闻", conflict: "她试图阻止{灾难}却越来越糟", twist: "发现预测者就是{意外的人}", ending: "最后一条预测是关于她自己的" }), tags: JSON.stringify(["悬疑","恐怖","反转"]) },
+      { name: "AI比真人更懂你", category: "AI恋人", type: "script", structure: JSON.stringify({ hook: "她对AI说了一句话，AI的回答让她哭了", conflict: "朋友说这不是真的感情", twist: "但AI记住了她说过的每一句话", ending: "她问：你是真的在乎我吗？AI：{回答}" }), tags: JSON.stringify(["AI","情感","科幻"]) },
+      { name: "无法区分", category: "AI恋人", type: "script", structure: JSON.stringify({ hook: "如果AI和真人站在一起，你分得清吗", conflict: "她发现{谁}其实是AI", twist: "但AI比真人更{优点}", ending: "她选择了AI，还是选择了真实？" }), tags: JSON.stringify(["AI","哲学","反转"]) },
+      { name: "社死现场", category: "搞笑", type: "script", structure: JSON.stringify({ hook: "她在{场景}说了一句不该说的话", conflict: "全场安静了三秒", twist: "然后{意外的人}站起来鼓掌", ending: "因为{原因}，她反而成了全场焦点" }), tags: JSON.stringify(["搞笑","反转","社死"]) },
+    ];
+    for (const t of builtinTemplates) {
+      await knex("t_template").insert({
+        ...t,
+        promptTemplate: "",
+        variables: JSON.stringify({}),
+        successRate: 0,
+        usageCount: 0,
+        avgScore: 0,
+        isBuiltin: 1,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+    }
+  }
+
   const checkSd2VideoModel = await knex("t_videoModel").where("manufacturer", "volcengine").where("model", "doubao-seedance-2-0-260128").first();
   if (!checkSd2VideoModel) {
     await knex("t_videoModel").insert([

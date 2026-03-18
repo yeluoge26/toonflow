@@ -127,23 +127,130 @@ export async function publishVideo(request: PublishRequest): Promise<PublishResu
   }
 }
 
-// Platform stubs
+// Generic webhook publisher - works with any automation service (n8n, Zapier, custom)
+async function publishViaWebhook(request: PublishRequest): Promise<PublishResult> {
+  const axios = (await import("axios")).default;
+  const u = (await import("@/utils")).default;
+
+  // Get webhook config from database
+  const config = await u.db("t_config")
+    .where("type", "distribution")
+    .where("manufacturer", request.platform)
+    .first();
+
+  if (!config?.baseUrl) {
+    return {
+      success: false,
+      platform: request.platform,
+      error: `未配置${request.platform}发布Webhook地址，请在设置中添加`,
+    };
+  }
+
+  try {
+    // Read video file as base64 if it's a local path
+    let videoData = request.videoPath;
+    if (!request.videoPath.startsWith("http")) {
+      try {
+        videoData = await u.oss.getImageBase64(request.videoPath);
+      } catch {}
+    }
+
+    const response = await axios.post(
+      config.baseUrl,
+      {
+        title: request.title,
+        description: request.description,
+        video: videoData,
+        coverImage: request.coverImage || null,
+        tags: request.tags,
+        platform: request.platform,
+        scheduleTime: request.scheduleTime || null,
+        projectId: request.projectId,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+        },
+        timeout: 120000, // 2 min timeout for video upload
+      }
+    );
+
+    // Record publish history
+    try {
+      await u.db("t_metrics").insert({
+        projectId: request.projectId,
+        platform: request.platform,
+        postId: response.data?.postId || response.data?.id || "",
+        views: 0,
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        completionRate: 0,
+        likeRate: 0,
+        fetchedAt: Date.now(),
+        createdAt: Date.now(),
+      });
+    } catch {}
+
+    return {
+      success: true,
+      platform: request.platform,
+      postId: response.data?.postId || response.data?.id || "published",
+      postUrl: response.data?.url || response.data?.postUrl || "",
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      platform: request.platform,
+      error: err.response?.data?.message || err.message || "发布失败",
+    };
+  }
+}
+
 async function publishToDouyin(request: PublishRequest): Promise<PublishResult> {
-  // TODO: Implement Douyin Open Platform API
-  return { success: false, platform: "douyin", error: "抖音发布功能开发中" };
+  return publishViaWebhook(request);
 }
 
 async function publishToTikTok(request: PublishRequest): Promise<PublishResult> {
-  // TODO: Implement TikTok Creator API
-  return { success: false, platform: "tiktok", error: "TikTok发布功能开发中" };
+  return publishViaWebhook(request);
 }
 
 async function publishToBilibili(request: PublishRequest): Promise<PublishResult> {
-  // TODO: Implement Bilibili API
-  return { success: false, platform: "bilibili", error: "B站发布功能开发中" };
+  return publishViaWebhook(request);
 }
 
 async function publishToKuaishou(request: PublishRequest): Promise<PublishResult> {
-  // TODO: Implement Kuaishou API
-  return { success: false, platform: "kuaishou", error: "快手发布功能开发中" };
+  return publishViaWebhook(request);
+}
+
+// Publish to multiple platforms at once
+export async function publishToAll(request: Omit<PublishRequest, "platform">, platforms: string[]): Promise<PublishResult[]> {
+  const results = await Promise.allSettled(
+    platforms.map(platform => publishVideo({ ...request, platform }))
+  );
+  return results.map((r, i) =>
+    r.status === "fulfilled" ? r.value : { success: false, platform: platforms[i], error: (r.reason as Error).message }
+  );
+}
+
+// Schedule a future publish
+export async function schedulePublish(request: PublishRequest, publishAt: number): Promise<{ scheduled: boolean; scheduledTime: number }> {
+  const u = (await import("@/utils")).default;
+  const taskQueue = (await import("@/lib/taskQueue")).default;
+
+  const delay = publishAt - Date.now();
+  if (delay <= 0) {
+    await publishVideo(request);
+    return { scheduled: false, scheduledTime: Date.now() };
+  }
+
+  // Use task queue for scheduled publishing
+  await taskQueue.enqueue({
+    type: "video" as any,
+    projectId: request.projectId,
+    data: { action: "publish", request, publishAt },
+  });
+
+  return { scheduled: true, scheduledTime: publishAt };
 }

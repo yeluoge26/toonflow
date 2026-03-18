@@ -203,24 +203,189 @@ class BatchEngine {
       }
 
       case "storyboard": {
-        // For batch mode, we generate storyboard prompts from the script
-        // This is a simplified version - full storyboard needs the WebSocket agent
         const script = await u.db("t_script").where("projectId", projectId).first();
-        if (!script?.content) throw new Error("No script found for storyboard generation");
+        if (!script?.content) throw new Error("无剧本内容，无法生成分镜");
 
-        // Store script content as storyboard base (actual agent would be needed for full storyboard)
-        return { status: "storyboard_generated", hasScript: true };
+        // Use AI to split script into shots (simplified batch mode, no WebSocket agent needed)
+        const promptAi = await u.getPromptAi("storyboardAgent") as any;
+        if (!promptAi?.apiKey) throw new Error("未配置分镜AI模型");
+
+        const shotPrompt = `将以下剧本拆分为6-10个分镜镜头。每个镜头包含：描述（一句话画面描述）和时长（秒数）。
+
+输出JSON数组格式：
+[{"description":"镜头画面描述","duration":3},...]
+
+剧本内容：
+${(script.content as string).slice(0, 3000)}`;
+
+        const result = await u.ai.text.invoke(
+          { system: "你是专业分镜师，将剧本拆分为短视频分镜。只输出JSON数组，不要其他内容。", prompt: shotPrompt },
+          promptAi
+        );
+
+        // Parse shots from AI response
+        let shots: Array<{ description: string; duration: number }> = [];
+        try {
+          const text = result?.text || String(result);
+          const jsonMatch = text.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            shots = JSON.parse(jsonMatch[0]);
+          }
+        } catch {
+          // Fallback: split script into paragraphs as shots
+          const paragraphs = (script.content as string).split("\n").filter((l: string) => l.trim().length > 10);
+          shots = paragraphs.slice(0, 8).map((p: string) => ({ description: p.slice(0, 100), duration: 3 }));
+        }
+
+        if (shots.length === 0) {
+          // Final fallback if AI returned nothing parseable
+          const paragraphs = (script.content as string).split("\n").filter((l: string) => l.trim().length > 10);
+          shots = paragraphs.slice(0, 8).map((p: string) => ({ description: p.slice(0, 100), duration: 3 }));
+        }
+
+        // Save shots as storyboard data in t_chatHistory
+        const storyboardData = JSON.stringify(shots.map((s, i) => ({
+          index: i,
+          title: `镜头${i + 1}`,
+          description: s.description,
+          duration: s.duration,
+        })));
+
+        await u.db("t_chatHistory").insert({
+          projectId,
+          type: "storyboard",
+          data: storyboardData,
+          createdAt: Date.now(),
+        } as any).catch(async () => {
+          // Update if exists
+          await u.db("t_chatHistory").where({ projectId, type: "storyboard" }).update({
+            data: storyboardData,
+          });
+        });
+
+        return { status: "storyboard_generated", shotCount: shots.length, shots };
       }
 
       case "image": {
-        // Image generation for storyboard shots
-        // In batch mode, this would use the image generation pipeline
-        return { status: "images_generated", projectId };
+        // Load storyboard data
+        const storyboard = await u.db("t_chatHistory")
+          .where({ projectId, type: "storyboard" })
+          .first();
+
+        if (!storyboard?.data) throw new Error("无分镜数据，无法生成图片");
+
+        const shots = JSON.parse(storyboard.data as string);
+        const project = await u.db("t_project").where("id", projectId).first();
+
+        // Get image AI config
+        const imageConfig = await u.getPromptAi("storyboardImage") as any;
+        if (!imageConfig?.apiKey) throw new Error("未配置图片生成AI模型");
+
+        const generatedImages: string[] = [];
+
+        for (const shot of shots) {
+          try {
+            // Build image prompt
+            const imagePrompt = `${shot.description}, ${project?.artStyle || "cinematic"}, 8k, ultra HD, high detail`;
+
+            const generateImage = (await import("@/utils/ai/image")).default;
+            const imageUrl = await generateImage(
+              {
+                prompt: imagePrompt,
+                aspectRatio: project?.videoRatio || "16:9",
+                size: "2K" as const,
+                imageBase64: [],
+                resType: "url" as const,
+                taskClass: "batch_storyboard",
+                name: `镜头${shot.index ?? shots.indexOf(shot)}`,
+                describe: shot.description,
+                projectId,
+              },
+              imageConfig
+            );
+
+            generatedImages.push(imageUrl);
+
+            // Save image record
+            await u.db("t_image").insert({
+              projectId,
+              filePath: imageUrl,
+              shotIndex: shots.indexOf(shot),
+              createdAt: Date.now(),
+            } as any).catch(() => {});
+          } catch (err) {
+            console.error(`[BatchEngine] Image generation failed for shot ${shots.indexOf(shot)}:`, err);
+            // Continue with other shots
+          }
+        }
+
+        return { status: "images_generated", total: shots.length, generated: generatedImages.length };
       }
 
       case "video": {
-        // Video generation from storyboard images
-        return { status: "video_generated", projectId };
+        // Load generated images
+        const images = await u.db("t_image")
+          .where("projectId", projectId)
+          .orderBy("shotIndex", "asc")
+          .select("filePath", "shotIndex");
+
+        if (images.length === 0) throw new Error("无图片素材，无法生成视频");
+
+        // Load storyboard for prompts and durations
+        const videoStoryboard = await u.db("t_chatHistory")
+          .where({ projectId, type: "storyboard" })
+          .first();
+        const videoShots = videoStoryboard?.data ? JSON.parse(videoStoryboard.data as string) : [];
+
+        const videoProject = await u.db("t_project").where("id", projectId).first();
+
+        let generatedCount = 0;
+
+        for (const image of images) {
+          try {
+            const shotData = videoShots[image.shotIndex] || {};
+            const videoPrompt = shotData.description || "";
+            const duration = shotData.duration || 5;
+
+            // Get image as base64 for video generation
+            let imageBase64 = "";
+            try {
+              imageBase64 = await u.oss.getImageBase64(image.filePath);
+            } catch {
+              continue; // Skip if image not loadable
+            }
+
+            const savePath = `${projectId}/video/${Date.now()}_shot${image.shotIndex}.mp4`;
+
+            const generateVideo = (await import("@/utils/ai/generateVideo")).default;
+            const videoUrl = await generateVideo(
+              {
+                prompt: videoPrompt,
+                savePath,
+                imageBase64: [imageBase64],
+                duration,
+                aspectRatio: videoProject?.videoRatio || "9:16",
+              } as any,
+              "volcengine"
+            );
+
+            // Save video record
+            await u.db("t_video").insert({
+              projectId,
+              filePath: videoUrl || savePath,
+              prompt: videoPrompt,
+              state: 1,
+              time: duration,
+              createdAt: Date.now(),
+            } as any).catch(() => {});
+
+            generatedCount++;
+          } catch (err) {
+            console.error(`[BatchEngine] Video generation failed for image ${image.shotIndex}:`, err);
+          }
+        }
+
+        return { status: "video_generated", total: images.length, generated: generatedCount };
       }
 
       case "voice": {

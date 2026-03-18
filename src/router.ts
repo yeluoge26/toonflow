@@ -136,6 +136,20 @@ import route132 from "./routes/script/getScriptVersions";
 import route133 from "./routes/script/saveScriptVersion";
 import route134 from "./routes/task/addTask";
 import route135 from "./routes/task/cancelTask";
+import route136 from "./routes/audio/getAudioStatus";
+import route137 from "./routes/audio/generateBatchTTS";
+import route138 from "./routes/audio/previewVoice";
+import route139 from "./routes/distribution/publishAll";
+import route140 from "./routes/distribution/getRecommendations";
+import route141 from "./routes/template/useTemplate";
+import route142 from "./routes/template/getTopTemplates";
+import route143 from "./routes/character/updateCharacterState";
+import route144 from "./routes/character/getCharacterStates";
+import route145 from "./routes/storyboard/batchReviewStoryboard";
+import route146 from "./routes/storyboard/batchGenerateShots";
+import route147 from "./routes/script/rewriteScript";
+import route148 from "./routes/video/generateSubtitles";
+import route149 from "./routes/project/getProjectDashboard";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -274,4 +288,18 @@ export default async (app: Express) => {
   app.use("/script/saveScriptVersion", route133);
   app.use("/task/addTask", route134);
   app.use("/task/cancelTask", route135);
+  app.use("/audio/getAudioStatus", route136);
+  app.use("/audio/generateBatchTTS", route137);
+  app.use("/audio/previewVoice", route138);
+  app.use("/distribution/publishAll", route139);
+  app.use("/distribution/getRecommendations", route140);
+  app.use("/template/useTemplate", route141);
+  app.use("/template/getTopTemplates", route142);
+  app.use("/character/updateCharacterState", route143);
+  app.use("/character/getCharacterStates", route144);
+  app.use("/storyboard/batchReviewStoryboard", route145);
+  app.use("/storyboard/batchGenerateShots", route146);
+  app.use("/script/rewriteScript", route147);
+  app.use("/video/generateSubtitles", route148);
+  app.use("/project/getProjectDashboard", route149);
 }

@@ -56,8 +56,11 @@ export default router.post(
         taskIds.push(taskId);
       }
 
+      const batchId = `batch_audio_${projectId}_${Date.now()}`;
+
       res.status(200).send(success({
         message: `已提交 ${taskIds.length} 条对白生成任务`,
+        batchId,
         taskIds,
         dialogueCount: dialogues.length,
       }));
