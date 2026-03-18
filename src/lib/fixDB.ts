@@ -291,6 +291,76 @@ export default async (knex: Knex): Promise<void> => {
     }
   }
 
+  // Batch Engine tables
+  if (!(await knex.schema.hasTable("t_batch"))) {
+    await knex.schema.createTable("t_batch", (table) => {
+      table.increments("id").primary();
+      table.string("batchId").unique();
+      table.string("type");
+      table.integer("totalCount");
+      table.integer("successCount").defaultTo(0);
+      table.integer("failCount").defaultTo(0);
+      table.string("priority").defaultTo("normal");
+      table.string("status").defaultTo("pending");
+      table.text("config");
+      table.integer("createdAt");
+      table.integer("updatedAt");
+    });
+  }
+
+  if (!(await knex.schema.hasTable("t_pipelineTask"))) {
+    await knex.schema.createTable("t_pipelineTask", (table) => {
+      table.increments("id").primary();
+      table.string("taskId").unique();
+      table.string("batchId");
+      table.integer("projectId");
+      table.string("step");
+      table.string("status").defaultTo("pending");
+      table.integer("retryCount").defaultTo(0);
+      table.integer("maxRetries").defaultTo(3);
+      table.integer("priority").defaultTo(5);
+      table.text("payload");
+      table.text("result");
+      table.text("errorMsg");
+      table.integer("createdAt");
+      table.integer("startedAt");
+      table.integer("completedAt");
+    });
+  }
+
+  if (!(await knex.schema.hasTable("t_scores"))) {
+    await knex.schema.createTable("t_scores", (table) => {
+      table.increments("id").primary();
+      table.integer("projectId");
+      table.float("hookScore");
+      table.float("emotionScore");
+      table.float("visualScore");
+      table.float("audioScore");
+      table.float("conflictScore");
+      table.float("finalScore");
+      table.string("label");
+      table.text("details");
+      table.integer("createdAt");
+    });
+  }
+
+  if (!(await knex.schema.hasTable("t_metrics"))) {
+    await knex.schema.createTable("t_metrics", (table) => {
+      table.increments("id").primary();
+      table.integer("projectId");
+      table.string("platform");
+      table.string("postId");
+      table.integer("views").defaultTo(0);
+      table.integer("likes").defaultTo(0);
+      table.integer("comments").defaultTo(0);
+      table.integer("shares").defaultTo(0);
+      table.float("completionRate").defaultTo(0);
+      table.float("likeRate").defaultTo(0);
+      table.integer("fetchedAt");
+      table.integer("createdAt");
+    });
+  }
+
   const checkSd2VideoModel = await knex("t_videoModel").where("manufacturer", "volcengine").where("model", "doubao-seedance-2-0-260128").first();
   if (!checkSd2VideoModel) {
     await knex("t_videoModel").insert([

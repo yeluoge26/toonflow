@@ -100,6 +100,24 @@ import route96 from "./routes/video/batchGenerateVideo";
 import route97 from "./routes/distribution/getPublishHistory";
 import route98 from "./routes/project/cloneProject";
 import route99 from "./routes/project/autoSave";
+import route100 from "./routes/batch/createBatch";
+import route101 from "./routes/batch/getBatchStatus";
+import route102 from "./routes/batch/listBatches";
+import route103 from "./routes/batch/cancelBatch";
+import route104 from "./routes/score/scoreProject";
+import route105 from "./routes/score/getScores";
+import route106 from "./routes/score/submitMetrics";
+import route107 from "./routes/evolution/initPopulation";
+import route108 from "./routes/evolution/evolve";
+import route109 from "./routes/evolution/getPopulation";
+import route110 from "./routes/evolution/generateFromGenome";
+import route111 from "./routes/template/getViralTemplates";
+import route112 from "./routes/template/generateFromTemplate";
+import route113 from "./routes/template/addTemplate";
+import route114 from "./routes/cost/estimateCost";
+import route115 from "./routes/cost/getDailySummary";
+import route116 from "./routes/cost/setBudget";
+import route117 from "./routes/dashboard/getProductionStats";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -201,4 +219,23 @@ export default async (app: Express) => {
   app.use("/distribution/getPublishHistory", route97);
   app.use("/project/cloneProject", route98);
   app.use("/project/autoSave", route99);
+  app.use("/batch/createBatch", route100);
+
+  app.use("/batch/getBatchStatus", route101);
+  app.use("/batch/listBatches", route102);
+  app.use("/batch/cancelBatch", route103);
+  app.use("/score/scoreProject", route104);
+  app.use("/score/getScores", route105);
+  app.use("/score/submitMetrics", route106);
+  app.use("/evolution/initPopulation", route107);
+  app.use("/evolution/evolve", route108);
+  app.use("/evolution/getPopulation", route109);
+  app.use("/evolution/generateFromGenome", route110);
+  app.use("/template/getViralTemplates", route111);
+  app.use("/template/generateFromTemplate", route112);
+  app.use("/template/addTemplate", route113);
+  app.use("/cost/estimateCost", route114);
+  app.use("/cost/getDailySummary", route115);
+  app.use("/cost/setBudget", route116);
+  app.use("/dashboard/getProductionStats", route117);
 }
