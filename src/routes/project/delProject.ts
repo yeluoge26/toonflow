@@ -23,30 +23,32 @@ export default router.post(
     const videoData = await u.db("t_video").whereIn("scriptId", scriptIds).select("id");
     const videoIds = videoData.map((item: any) => item.id);
 
-    await u.db("t_project").where("id", id).delete();
-    await u.db("t_novel").where("projectId", id).delete();
-    await u.db("t_storyline").where("projectId", id).delete();
-    await u.db("t_outline").where("projectId", id).delete();
-    // await u.db("t_myTasks").where("projectId", id).delete();
+    await u.db.transaction(async (trx) => {
+      await trx("t_project").where("id", id).delete();
+      await trx("t_novel").where("projectId", id).delete();
+      await trx("t_storyline").where("projectId", id).delete();
+      await trx("t_outline").where("projectId", id).delete();
+      // await trx("t_myTasks").where("projectId", id).delete();
 
-    await u.db("t_script").where("projectId", id).delete();
-    await u.db("t_assets").where("projectId", id).delete();
+      await trx("t_script").where("projectId", id).delete();
+      await trx("t_assets").where("projectId", id).delete();
 
-    const tempAssetsQuery = u.db("t_image").where("projectId", id);
-    if (assetsIds.length > 0) {
-      tempAssetsQuery.orWhereIn("assetsId", assetsIds);
-    }
-    if (scriptIds.length > 0) {
-      tempAssetsQuery.orWhereIn("scriptId", scriptIds);
-    }
-    if (videoIds.length > 0) {
-      tempAssetsQuery.orWhereIn("videoId", videoIds);
-    }
-    await tempAssetsQuery.delete();
+      const tempAssetsQuery = trx("t_image").where("projectId", id);
+      if (assetsIds.length > 0) {
+        tempAssetsQuery.orWhereIn("assetsId", assetsIds);
+      }
+      if (scriptIds.length > 0) {
+        tempAssetsQuery.orWhereIn("scriptId", scriptIds);
+      }
+      if (videoIds.length > 0) {
+        tempAssetsQuery.orWhereIn("videoId", videoIds);
+      }
+      await tempAssetsQuery.delete();
 
-    await u.db("t_video").whereIn("scriptId", scriptIds).delete();
+      await trx("t_video").whereIn("scriptId", scriptIds).delete();
 
-    await u.db("t_chatHistory").where("projectId", id).delete();
+      await trx("t_chatHistory").where("projectId", id).delete();
+    });
 
     try {
       await u.oss.deleteDirectory(`${id}/`);

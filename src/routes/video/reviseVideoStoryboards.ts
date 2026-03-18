@@ -11,13 +11,13 @@ export default router.post(
   validateFields({
     storyboardId: z.number(),
     prompt: z.string(),
-    duration: z.string(),
+    duration: z.coerce.number(),
   }),
   async (req, res) => {
     const { storyboardId, prompt, duration } = req.body;
 
     await u.db("t_assets").where("id", storyboardId).update({
-      prompt,
+      videoPrompt: prompt,
       duration,
     });
     res.status(200).send({ message: "修改成功" });

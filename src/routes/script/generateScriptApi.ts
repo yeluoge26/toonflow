@@ -31,7 +31,7 @@ export default router.post(
   async (req, res) => {
     const { outlineId, scriptId } = req.body;
     const outlineData = await u.db("t_outline").where("id", outlineId).select("*").first();
-    if (!outlineData) return res.status(500).send(success({ message: "大纲为空" }));
+    if (!outlineData) return res.status(400).send(error("大纲为空"));
     const parameter = JSON.parse(outlineData.data!);
 
     const novelData = (await u
@@ -40,7 +40,7 @@ export default router.post(
       .where("projectId", outlineData.projectId)
       .select("*")) as NovelChapter[];
 
-    if (novelData.length == 0) return res.status(500).send(success({ message: "原文为空" }));
+    if (novelData.length == 0) return res.status(400).send(error("原文为空"));
 
     const result: string = mergeNovelText(novelData);
     try {

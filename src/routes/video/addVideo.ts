@@ -1,6 +1,6 @@
 import express from "express";
 import u from "@/utils";
-import { success } from "@/lib/responseFormat";
+import { error, success } from "@/lib/responseFormat";
 import { validateFields } from "@/middleware/middleware";
 import { z } from "zod";
 import { v4 as uuid } from "uuid";
@@ -28,8 +28,14 @@ export default router.post(
       model = "sora-2";
     }
 
-    let firstFrame = new URL(filePath[0]).pathname;
-    let storyboardImgs = filePath.map((path: string) => new URL(path).pathname);
+    let firstFrame: string;
+    let storyboardImgs: string[];
+    try {
+      firstFrame = new URL(filePath[0]).pathname;
+      storyboardImgs = filePath.map((path: string) => new URL(path).pathname);
+    } catch (e) {
+      return res.status(400).send(error("无效的文件路径URL"));
+    }
 
     await u.db("t_video").insert({
       time: duration,

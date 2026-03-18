@@ -32,7 +32,7 @@ export default async (input: VideoConfig, config?: AIConfig) => {
   if (!config || !config?.model || !config?.apiKey) throw new Error("请检查模型配置是否正确");
 
   const manufacturerFn = modelInstance[manufacturer as keyof typeof modelInstance];
-  if (!manufacturerFn) if (!manufacturerFn) throw new Error("不支持的视频厂商");
+  if (!manufacturerFn) throw new Error("不支持的视频厂商");
   // const owned = modelList.find((m) => m.model === model);
   // if (!owned) throw new Error("不支持的模型");
   //添加到任务中心

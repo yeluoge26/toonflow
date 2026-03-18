@@ -41,7 +41,7 @@ export default router.post(
 
     //获取风格
     const project = await u.db("t_project").where("id", projectId).select("artStyle", "type", "intro", "videoRatio").first();
-    if (!project) return res.status(500).send(success({ message: "项目为空" }));
+    if (!project) return res.status(400).send(error("项目为空"));
 
     const promptsList = await u
       .db("t_prompts")
@@ -158,21 +158,20 @@ export default router.post(
       if (type == "role") {
         insertType = "角色";
         imagePath = `/${projectId}/role/${uuidv4()}.jpg`;
-      }
-      if (type == "scene") {
+      } else if (type == "scene") {
         insertType = "场景";
         imagePath = `/${projectId}/scene/${uuidv4()}.jpg`;
-      }
-      if (type == "props") {
+      } else if (type == "props") {
         insertType = "道具";
         imagePath = `/${projectId}/props/${uuidv4()}.jpg`;
-      }
-      if (type == "storyboard") {
+      } else if (type == "storyboard") {
         insertType = "分镜";
         imagePath = `/${projectId}/storyboard/${uuidv4()}.jpg`;
+      } else {
+        return res.status(400).send(error("未知的资产类型"));
       }
 
-      await u.oss.writeFile(imagePath!, buffer);
+      await u.oss.writeFile(imagePath, buffer);
       const imageData = await u.db("t_image").where("id", imageId).select("*").first();
       if (imageData) {
         await u.db("t_image").where("id", imageId).update({
@@ -180,7 +179,7 @@ export default router.post(
           filePath: imagePath,
           type: insertType,
         });
-        const path = await u.oss.getFileUrl(imagePath!);
+        const path = await u.oss.getFileUrl(imagePath);
 
         // const state = await u.db("t_assets").where("id", id).select("state").first();
 

@@ -119,7 +119,7 @@ router.ws("/", async (ws, req) => {
   });
 
   ws.on("close", async () => {
-    agent?.emitter?.removeAllListeners();
+    agent?.destroy();
     await saveHistory();
   });
 

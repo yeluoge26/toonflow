@@ -59,37 +59,38 @@ export default router.post(
     }
 
     if (oldVideo.filePath !== savePath) {
-      // 1. 删除临时表中属于新视频的资源
-      const newTempVideo = await u.db("t_tempAssets").where({ videoId: id, filePath: savePath }).first();
+      await u.db.transaction(async (trx) => {
+        // 1. 删除临时表中属于新视频的资源
+        const newTempVideo = await trx("t_tempAssets").where({ videoId: id, filePath: savePath }).first();
 
-      if (newTempVideo) {
-        await u.db("t_tempAssets").where({ videoId: id, filePath: savePath }).del();
-      }
+        if (newTempVideo) {
+          await trx("t_tempAssets").where({ videoId: id, filePath: savePath }).del();
+        }
 
-      // 2. 检查旧视频是否已经在临时表，不在则插入
-      const oldTempVideo = await u.db("t_tempAssets").where({ videoId: id, filePath: oldVideo.filePath }).first();
-      if (!oldTempVideo) {
-        await u.db("t_tempAssets").insert({
-          videoId: id,
-          type: "视频",
-          filePath: oldVideo.filePath,
-          scriptId: oldVideo.scriptId,
-        });
-      }
+        // 2. 检查旧视频是否已经在临时表，不在则插入
+        const oldTempVideo = await trx("t_tempAssets").where({ videoId: id, filePath: oldVideo.filePath }).first();
+        if (!oldTempVideo) {
+          await trx("t_tempAssets").insert({
+            videoId: id,
+            type: "视频",
+            filePath: oldVideo.filePath,
+            scriptId: oldVideo.scriptId,
+          });
+        }
 
-      // 3. 更新视频表
-      await u
-        .db("t_video")
-        .where("id", id)
-        .update({
-          filePath: savePath,
-          time,
-          resolution,
-          model,
-          firstFrame: firstFramePath,
-          storyboardImgs: JSON.stringify(trimmedImgs),
-          prompt,
-        });
+        // 3. 更新视频表
+        await trx("t_video")
+          .where("id", id)
+          .update({
+            filePath: savePath,
+            time,
+            resolution,
+            model,
+            firstFrame: firstFramePath,
+            storyboardImgs: JSON.stringify(trimmedImgs),
+            prompt,
+          });
+      });
     } else {
       await u
         .db("t_video")

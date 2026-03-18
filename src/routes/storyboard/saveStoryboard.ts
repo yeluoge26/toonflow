@@ -1,7 +1,7 @@
 import express from "express";
 import u from "@/utils";
 import { z } from "zod";
-import { success } from "@/lib/responseFormat";
+import { error, success } from "@/lib/responseFormat";
 import { validateFields } from "@/middleware/middleware";
 const router = express.Router();
 
@@ -15,7 +15,12 @@ export default router.post(
   }),
   async (req, res) => {
     const { filePath, id, prompt } = req.body;
-    const savePath = new URL(filePath).pathname;
+    let savePath: string;
+    try {
+      savePath = new URL(filePath).pathname;
+    } catch (e) {
+      return res.status(400).send(error("无效的文件路径URL"));
+    }
 
     let imageUrl = "";
 

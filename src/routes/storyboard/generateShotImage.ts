@@ -4,6 +4,9 @@ import generateImageTool from "@/agents/storyboard/generateImageTool";
 import { validateFields } from "@/middleware/middleware";
 import { z } from "zod";
 import fs from "fs";
+import path from "path";
+import os from "os";
+import { v4 as uuid } from "uuid";
 const router = express.Router();
 
 // 生成分镜图
@@ -24,9 +27,12 @@ export default router.post(
 
       const buffer = await generateImageTool(cells, scriptId, projectId);
 
-      fs.writeFileSync("merged.jpg", buffer);
+      const tmpPath = path.join(os.tmpdir(), uuid() + ".jpg");
+      fs.writeFileSync(tmpPath, buffer);
 
-      return res.json(success(buffer));
+      const result = success(buffer);
+      try { fs.unlinkSync(tmpPath); } catch (_) {}
+      return res.json(result);
     } catch (error) {
       console.error("生成片段图失败:", error);
       return res.status(500).json({

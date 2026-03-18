@@ -63,24 +63,28 @@ export default router.post(
 
     const itemMap: Record<string, ResultItem> = {};
 
-    if (allOutlineDataList.length > 0)
-      allOutlineDataList.forEach((row) => {
-        const data: OutlineData = JSON.parse(row?.data || "{}");
-        (["characters", "props", "scenes"] as ItemType[]).forEach((type) => {
-          (data[type] || []).forEach((item) => {
-            const key = `${type}-${item.name}`;
-            if (!itemMap[key]) {
-              itemMap[key] = {
-                type,
-                name: item.name,
-                chapterRange: [...(data.chapterRange || [])],
-              };
-            } else {
-              itemMap[key].chapterRange = Array.from(new Set([...itemMap[key].chapterRange, ...(data.chapterRange || [])]));
-            }
-          });
+    for (const row of allOutlineDataList) {
+      let data: OutlineData;
+      try {
+        data = JSON.parse(row?.data || "{}");
+      } catch (e) {
+        return res.status(400).send(error("大纲数据解析失败"));
+      }
+      (["characters", "props", "scenes"] as ItemType[]).forEach((type) => {
+        (data[type] || []).forEach((item) => {
+          const key = `${type}-${item.name}`;
+          if (!itemMap[key]) {
+            itemMap[key] = {
+              type,
+              name: item.name,
+              chapterRange: [...(data.chapterRange || [])],
+            };
+          } else {
+            itemMap[key].chapterRange = Array.from(new Set([...itemMap[key].chapterRange, ...(data.chapterRange || [])]));
+          }
         });
       });
+    }
 
     const result: ResultItem[] = Object.values(itemMap);
 

@@ -57,6 +57,12 @@ export default router.post(
     const result: StoryboardList[] = [];
     const map = new Map<number, StoryboardList>();
 
+    // Collect rows that need file URL resolution
+    const rowsWithStoryboard = rawData.filter((row) => row.storyboardId);
+    const fileUrls = await Promise.all(
+      rowsWithStoryboard.map((row) => u.oss.getFileUrl(row.filePath ?? ""))
+    );
+
     for (const row of rawData) {
       if (!map.has(row.scriptId)) {
         const script: StoryboardList = {
@@ -68,10 +74,11 @@ export default router.post(
         result.push(script);
       }
       if (row.storyboardId) {
+        const urlIndex = rowsWithStoryboard.indexOf(row);
         map.get(row.scriptId)!.storyboard.push({
           id: row.storyboardId,
           storyboardName: row.storyboardName ?? "",
-          filePath: await u.oss.getFileUrl(row.filePath ?? ""),
+          filePath: fileUrls[urlIndex],
           prompt: row.prompt ?? "",
           videoPrompt: row.videoPrompt ?? "",
           duration: row.duration ?? 0,

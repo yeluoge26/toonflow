@@ -40,7 +40,7 @@ export default async (input: ImageConfig, config: AIConfig) => {
   if (!config || !config?.model || !config?.apiKey || !config?.manufacturer) throw new Error("请检查模型配置是否正确");
 
   const manufacturerFn = modelInstance[manufacturer as keyof typeof modelInstance];
-  if (!manufacturerFn) if (!manufacturerFn) throw new Error("不支持的图片厂商");
+  if (!manufacturerFn) throw new Error("不支持的图片厂商");
 
   // if (manufacturer !== "other") {
   //   const owned = modelList.find((m) => m.model === model);

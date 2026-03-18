@@ -98,7 +98,13 @@ async function generateGridPrompt(options: GridPromptOptions): Promise<GridPromp
       : "";
 
   const promptsData = await u.db("t_prompts").where("code", "generateImagePrompts").first();
+  if (!promptsData) {
+    console.error("Failed to load prompts config for code 'generateImagePrompts'");
+  }
   const promptAiConfig = await u.getPromptAi("storyboardAgent");
+  if (!promptAiConfig) {
+    console.error("Failed to load AI config for 'storyboardAgent'");
+  }
   const mainPrompts = promptsData?.customValue || promptsData?.defaultValue;
   const errData = `请输出${options.prompts.length}张图片\n提示词如下:\n${options.prompts.map((p, i) => `第${i + 1}格: ${p}`).join("\n")}`;
 

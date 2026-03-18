@@ -50,6 +50,7 @@ interface AssetsType {
 export default class Storyboard {
   private readonly projectId: number;
   private readonly scriptId: number;
+  private readonly MAX_HISTORY_LENGTH = 50;
   readonly emitter = new EventEmitter();
   history: ModelMessage[] = [];
   novelChapters: DB["t_novel"][] = [];
@@ -66,6 +67,24 @@ export default class Storyboard {
   constructor(projectId: number, scriptId: number) {
     this.projectId = projectId;
     this.scriptId = scriptId;
+  }
+
+  private trimHistory() {
+    if (this.history.length > this.MAX_HISTORY_LENGTH) {
+      // Keep first 2 messages (system context) and last MAX_HISTORY_LENGTH-2
+      this.history = [...this.history.slice(0, 2), ...this.history.slice(-(this.MAX_HISTORY_LENGTH - 2))];
+    }
+  }
+
+  reset() {
+    this.segments = [];
+    this.shots = [];
+    this.shotIdCounter = 0;
+    this.history = [];
+  }
+
+  destroy() {
+    this.emitter.removeAllListeners();
   }
 
   // 更新shopts
@@ -448,7 +467,7 @@ ${sections.join("\n\n")}
       this.emit("shotImageGenerateProgress", { shotId, status: "splitting", message: "正在分割宫格图片为单张镜头图" });
 
       // 分割宫格图片为单张镜头图片
-      const imageBuffers = await imageSplitting(gridImage, prompts.length);
+      const imageBuffers = await imageSplitting(gridImage, shot.cells.length);
 
       // 通知前端正在保存图片
       this.emit("shotImageGenerateProgress", { shotId, status: "saving", message: `正在保存 ${imageBuffers.length} 张镜头图片` });
@@ -635,14 +654,19 @@ ${task}
     );
 
     let fullResponse = "";
-    for await (const item of fullStream) {
-      if (item.type == "tool-call") {
-        this.emit("toolCall", { agent: "main", name: item.title, args: null });
+    try {
+      for await (const item of fullStream) {
+        if (item.type == "tool-call") {
+          this.emit("toolCall", { agent: "main", name: item.title, args: null });
+        }
+        if (item.type == "text-delta") {
+          fullResponse += item.text;
+          this.emit("subAgentStream", { agent: agentType, text: item.text });
+        }
       }
-      if (item.type == "text-delta") {
-        fullResponse += item.text;
-        this.emit("subAgentStream", { agent: agentType, text: item.text });
-      }
+    } catch (streamError) {
+      console.error("Stream error:", streamError);
+      this.emitter.emit("error", { error: streamError });
     }
 
     this.emit("subAgentEnd", { agent: agentType });
@@ -650,6 +674,7 @@ ${task}
       role: "assistant",
       content: fullResponse,
     });
+    this.trimHistory();
     this.log(`Sub-Agent 完成`, agentType);
 
     return fullResponse ?? `${agentType}已完成任务`;
@@ -694,6 +719,7 @@ ${task}
       role: "user",
       content: msg,
     });
+    this.trimHistory();
 
     const envContext = await this.buildEnvironmentContext();
 
@@ -713,19 +739,25 @@ ${task}
     );
 
     let fullResponse = "";
-    for await (const item of fullStream) {
-      if (item.type == "tool-call") {
-        this.emit("toolCall", { agent: "main", name: item.title, args: null });
+    try {
+      for await (const item of fullStream) {
+        if (item.type == "tool-call") {
+          this.emit("toolCall", { agent: "main", name: item.title, args: null });
+        }
+        if (item.type == "text-delta") {
+          fullResponse += item.text;
+          this.emit("data", item.text);
+        }
       }
-      if (item.type == "text-delta") {
-        fullResponse += item.text;
-        this.emit("data", item.text);
-      }
+    } catch (streamError) {
+      console.error("Stream error:", streamError);
+      this.emitter.emit("error", { error: streamError });
     }
     this.history.push({
       role: "assistant",
       content: fullResponse,
     });
+    this.trimHistory();
 
     this.emit("response", fullResponse);
 

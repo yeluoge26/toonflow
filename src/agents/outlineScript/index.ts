@@ -59,7 +59,7 @@ const episodeSchema = z.object({
   coreConflict: z.string().describe("核心矛盾：A想要X vs B阻碍X"),
   outline: z.string().describe("100-300字剧情主干，最高优先级，剧本生成的唯一权威，按时间顺序完整叙述"),
   openingHook: z.string().describe("开场镜头：outline 第一句话的视觉化，必须作为剧本第一个镜头"),
-  keyEvents: z.array(z.string()).length(4).describe("4个元素的数组：[起, 承, 转, 合]，严格按 outline 顺序从中提取"),
+  keyEvents: z.array(z.string()).min(4).max(4).describe("4个元素的数组：[起, 承, 转, 合]，严格按 outline 顺序从中提取"),
   emotionalCurve: z.string().describe("情绪曲线，如：2(压抑)→5(反抗)→9(爆发)→3(余波)，对应 keyEvents 各阶段"),
   visualHighlights: z.array(z.string()).describe("3-5个标志性镜头，按 outline 叙事顺序排列"),
   endingHook: z.string().describe("结尾悬念：outline 之后的延伸，勾引下集"),
@@ -72,6 +72,7 @@ const episodeSchema = z.object({
 
 export default class OutlineScript {
   private readonly projectId: number;
+  private readonly MAX_HISTORY_LENGTH = 50;
   readonly emitter = new EventEmitter();
   history: Array<ModelMessage> = [];
   novelChapters: DB["t_novel"][] = [];
@@ -88,6 +89,17 @@ export default class OutlineScript {
 
   setNovel(chapters: DB["t_novel"][]) {
     this.novelChapters = chapters;
+  }
+
+  private trimHistory() {
+    if (this.history.length > this.MAX_HISTORY_LENGTH) {
+      // Keep first 2 messages (system context) and last MAX_HISTORY_LENGTH-2
+      this.history = [...this.history.slice(0, 2), ...this.history.slice(-(this.MAX_HISTORY_LENGTH - 2))];
+    }
+  }
+
+  destroy() {
+    this.emitter.removeAllListeners();
   }
 
   // ==================== 私有工具方法 ====================
@@ -641,14 +653,19 @@ ${task}
     );
 
     let fullResponse = "";
-    for await (const item of fullStream) {
-      if (item.type == "tool-call") {
-        this.emit("toolCall", { agent: "main", name: item.title, args: null });
+    try {
+      for await (const item of fullStream) {
+        if (item.type == "tool-call") {
+          this.emit("toolCall", { agent: "main", name: item.title, args: null });
+        }
+        if (item.type == "text-delta") {
+          fullResponse += item.text;
+          this.emit("subAgentStream", { agent: agentType, text: item.text });
+        }
       }
-      if (item.type == "text-delta") {
-        fullResponse += item.text;
-        this.emit("subAgentStream", { agent: agentType, text: item.text });
-      }
+    } catch (streamError) {
+      console.error("Stream error:", streamError);
+      this.emitter.emit("error", { error: streamError });
     }
 
     this.emit("subAgentEnd", { agent: agentType });
@@ -656,6 +673,7 @@ ${task}
       role: "assistant",
       content: fullResponse,
     });
+    this.trimHistory();
     this.log(`Sub-Agent 完成`, agentType);
 
     return fullResponse ?? `${agentType}已完成任务`;
@@ -696,6 +714,7 @@ ${task}
       role: "user",
       content: msg,
     });
+    this.trimHistory();
 
     const envContext = await this.buildEnvironmentContext();
 
@@ -715,19 +734,25 @@ ${task}
     );
 
     let fullResponse = "";
-    for await (const item of fullStream) {
-      if (item.type == "tool-call") {
-        this.emit("toolCall", { agent: "main", name: item.title, args: null });
+    try {
+      for await (const item of fullStream) {
+        if (item.type == "tool-call") {
+          this.emit("toolCall", { agent: "main", name: item.title, args: null });
+        }
+        if (item.type == "text-delta") {
+          fullResponse += item.text;
+          this.emit("data", item.text);
+        }
       }
-      if (item.type == "text-delta") {
-        fullResponse += item.text;
-        this.emit("data", item.text);
-      }
+    } catch (streamError) {
+      console.error("Stream error:", streamError);
+      this.emitter.emit("error", { error: streamError });
     }
     this.history.push({
       role: "assistant",
       content: fullResponse,
     });
+    this.trimHistory();
 
     this.emit("response", fullResponse);
 

@@ -33,7 +33,6 @@ router.ws("/", async (ws, req) => {
       agent.history = [];
     }
   }
-  agent.history = [];
   // 监听各类事件
   // 流式传输：每个token
   agent.emitter.on("data", (text) => {
@@ -130,7 +129,7 @@ router.ws("/", async (ws, req) => {
           if (msg.type == "user") await agent.call(prompt);
           break;
         case "cleanHistory":
-          agent.history = [];
+          agent.reset();
           await u
             .db("t_chatHistory")
             .where({ projectId: Number(projectId) })
@@ -138,7 +137,7 @@ router.ws("/", async (ws, req) => {
           ws.send(JSON.stringify({ type: "notice", data: "历史记录已清空" }));
           break;
         case "generateShotImage":
-          agent.history = [];
+          agent.reset();
           await u
             .db("t_chatHistory")
             .where({ projectId: Number(projectId) })
@@ -158,7 +157,7 @@ router.ws("/", async (ws, req) => {
   });
 
   ws.on("close", async () => {
-    agent?.emitter?.removeAllListeners();
+    agent?.destroy();
     await saveHistory();
   });
 

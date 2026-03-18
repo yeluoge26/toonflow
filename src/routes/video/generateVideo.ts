@@ -32,11 +32,11 @@ export default router.post(
 
     if (mode == "text") filePath.length = 0;
     else if (!filePath.length) {
-      return res.status(500).send(error("请先选择图片"));
+      return res.status(400).send(error("请先选择图片"));
     }
     const configData = await u.db("t_videoConfig").where("id", configId).first();
     if (!configData) {
-      return res.status(500).send(error("视频配置不存在"));
+      return res.status(400).send(error("视频配置不存在"));
     }
     // 优先使用视频配置中的AI配置ID查询,查不到再使用传入的aiConfigId
     let aiConfigData = null;
@@ -44,7 +44,7 @@ export default router.post(
       aiConfigData = await u.db("t_config").where("id", configData.aiConfigId).first();
     }
     if (!aiConfigData || !aiConfigData?.model) {
-      return res.status(500).send(error("模型不存在"));
+      return res.status(400).send(error("模型不存在"));
     }
     if (aiConfigData.model?.includes("sora")) {
       if (filePath.length > 1) {
@@ -114,7 +114,11 @@ export default router.post(
     res.status(200).send(success({ id: videoId, configId: configId || null }));
 
     // 异步生成视频
-    generateVideoAsync(videoId, projectId, fileUrl, savePath, prompt, duration, resolution, audioEnabled, aiConfigData, mode);
+    generateVideoAsync(videoId, projectId, fileUrl, savePath, prompt, duration, resolution, audioEnabled, aiConfigData, mode).catch(async (err) => {
+      try {
+        await u.db("t_video").where("id", videoId).update({ state: -1, errorReason: u.error(err).message });
+      } catch (_) {}
+    });
   },
 );
 

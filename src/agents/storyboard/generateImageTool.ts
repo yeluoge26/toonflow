@@ -270,7 +270,14 @@ export default async (cells: { prompt: string }[], scriptId: number, projectId: 
   const projectInfo = await u.db("t_project").where({ id: projectId }).first();
 
   const row = await u.db("t_outline").where({ id: scriptData?.outlineId!, projectId }).first();
-  const outline: EpisodeData | null = row?.data ? JSON.parse(row.data) : null;
+  let outline: EpisodeData | null = null;
+  if (row?.data) {
+    try {
+      outline = JSON.parse(row.data);
+    } catch (e) {
+      console.error("Failed to parse outline data for outlineId:", scriptData?.outlineId, e);
+    }
+  }
 
   const resources: ResourceItem[] = outline
     ? (["characters", "props", "scenes"] as const).flatMap((k) => outline[k]?.map((i) => ({ name: i.name, intro: i.description })) ?? [])

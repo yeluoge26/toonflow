@@ -99,6 +99,7 @@ ${quotesStr}
 export async function generateScript(episode: Episode, novelData: string): Promise<string> {
   const episodePrompt = formatEpisodePrompt(episode);
 
+  const targetWordCount = Math.max(500, episode.outline.length * 3);
   const userPrompt = `请根据以下结构化大纲生成剧本。
 
 【⚠️ 最高优先级：剧情主干(outline)是唯一权威】
@@ -109,12 +110,13 @@ export async function generateScript(episode: Episode, novelData: string): Promi
 2. ⚠️ 严格按【剧情主干】顺序展开剧情，这是剧本的唯一权威
 3. ⚠️ 【剧情节点】四步必须严格按顺序呈现：起→承→转→合，不输出标记
 4. emotionalCurve必须在对应剧情节点体现
-5. classicQuotes必须原文出现在高潮段落
+5. classicQuotes必须出现在对应keyEvent的高潮段落中作为角色台词
 6. endingHook必须作为收尾
 7. scenes/characters/props必须全部使用，按出场顺序
 8. visualHighlights中的镜头必须按剧情主干顺序全部呈现
-9. 500-800字
+9. 目标${targetWordCount}字（${Math.round(targetWordCount * 0.8)}-${Math.round(targetWordCount * 1.2)}字范围内）
 10. 以【黑屏】结尾
+11. 每段描述应包含场景名称和可视化的动作描述，便于后续分镜拆分
 
 ═══════════════════════════════════════
 大纲数据
