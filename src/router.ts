@@ -150,6 +150,8 @@ import route146 from "./routes/storyboard/batchGenerateShots";
 import route147 from "./routes/script/rewriteScript";
 import route148 from "./routes/video/generateSubtitles";
 import route149 from "./routes/project/getProjectDashboard";
+import route150 from "./routes/queue/getQueueStats";
+import route151 from "./routes/queue/pauseQueue";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -302,4 +304,6 @@ export default async (app: Express) => {
   app.use("/script/rewriteScript", route147);
   app.use("/video/generateSubtitles", route148);
   app.use("/project/getProjectDashboard", route149);
+  app.use("/queue/getQueueStats", route150);
+  app.use("/queue/pauseQueue", route151);
 }

@@ -66,6 +66,41 @@ const mainBuildConfig: esbuild.BuildOptions = {
 
     console.log("✅ 后端服务构建完成: build/app.js");
     console.log("✅ Electron主进程构建完成: build/main.js");
+
+    // Worker builds
+    const workerEntries = [
+      "src/workers/script.worker.ts",
+      "src/workers/storyboard.worker.ts",
+      "src/workers/image.worker.ts",
+      "src/workers/video.worker.ts",
+      "src/workers/voice.worker.ts",
+      "src/workers/score.worker.ts",
+    ];
+
+    const commonWorkerConfig: esbuild.BuildOptions = {
+      bundle: true,
+      minify: false,
+      format: "cjs",
+      allowOverwrite: true,
+      platform: "node",
+      target: "esnext",
+      tsconfig: "./tsconfig.json",
+      alias: {
+        "@": "./src",
+      },
+      sourcemap: false,
+      external,
+    };
+
+    for (const entry of workerEntries) {
+      await esbuild.build({
+        ...commonWorkerConfig,
+        entryPoints: [entry],
+        outdir: "build/workers",
+      });
+    }
+
+    console.log(`✅ Workers构建完成: ${workerEntries.length} workers -> build/workers/`);
     console.log("\n🎉 所有构建任务完成!\n");
   } catch (err) {
     console.error("❌ 构建失败:", err);
