@@ -85,6 +85,21 @@ import route81 from "./routes/video/saveVideo";
 import route82 from "./routes/video/upDateVideoConfig";
 import route83 from "./routes/character/getCharacters";
 import route84 from "./routes/character/bindCharacterVoice";
+import route85 from "./routes/audio/generateSpeech";
+import route86 from "./routes/audio/batchGenerateSpeech";
+import route87 from "./routes/audio/generateScriptAudio";
+import route88 from "./routes/storyboard/reviewStoryboard";
+import route89 from "./routes/storyboard/saveStructuredShots";
+import route90 from "./routes/character/addCharacter";
+import route91 from "./routes/character/updateCharacter";
+import route92 from "./routes/character/delCharacter";
+import route93 from "./routes/character/getGlobalCharacters";
+import route94 from "./routes/character/importFromAssets";
+import route95 from "./routes/video/buildTimeline";
+import route96 from "./routes/video/batchGenerateVideo";
+import route97 from "./routes/distribution/getPublishHistory";
+import route98 from "./routes/project/cloneProject";
+import route99 from "./routes/project/autoSave";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -171,4 +186,19 @@ export default async (app: Express) => {
   app.use("/video/upDateVideoConfig", route82);
   app.use("/character/getCharacters", route83);
   app.use("/character/bindCharacterVoice", route84);
+  app.use("/audio/generateSpeech", route85);
+  app.use("/audio/batchGenerateSpeech", route86);
+  app.use("/audio/generateScriptAudio", route87);
+  app.use("/storyboard/reviewStoryboard", route88);
+  app.use("/storyboard/saveStructuredShots", route89);
+  app.use("/character/addCharacter", route90);
+  app.use("/character/updateCharacter", route91);
+  app.use("/character/delCharacter", route92);
+  app.use("/character/getGlobalCharacters", route93);
+  app.use("/character/importFromAssets", route94);
+  app.use("/video/buildTimeline", route95);
+  app.use("/video/batchGenerateVideo", route96);
+  app.use("/distribution/getPublishHistory", route97);
+  app.use("/project/cloneProject", route98);
+  app.use("/project/autoSave", route99);
 }

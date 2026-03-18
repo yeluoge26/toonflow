@@ -9,6 +9,8 @@ interface ImageConfig {
   name: string;
   describe: string;
   projectId: number;
+  referenceImages?: string[]; // base64 encoded reference images for character consistency
+  loraId?: string; // LoRA model identifier for character
 }
 
 interface AIConfig {

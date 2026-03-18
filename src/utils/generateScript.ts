@@ -96,7 +96,7 @@ ${quotesStr}
  * @param episode 已解析的Episode对象
  * @param novelData 原文内容
  */
-export async function generateScript(episode: Episode, novelData: string): Promise<string> {
+export async function generateScript(episode: Episode, novelData: string, style?: string): Promise<string> {
   const episodePrompt = formatEpisodePrompt(episode);
 
   const targetWordCount = Math.max(500, episode.outline.length * 3);
@@ -130,7 +130,18 @@ ${novelData}`;
 
   const prompts = await u.db("t_prompts").where("code", "script").first();
   const promptConfig = await u.getPromptAi("generateScript");
-  const mainPrompts = prompts?.customValue || prompts?.defaultValue || "不论用户说什么，请直接输出AI配置异常";
+  let mainPrompts = prompts?.customValue || prompts?.defaultValue || "不论用户说什么，请直接输出AI配置异常";
+
+  // Append style-specific prompt if provided
+  if (style) {
+    const stylePrompt = await u.db("t_prompts")
+      .where("code", `script-style-${style}`)
+      .first();
+    if (stylePrompt) {
+      const styleText = stylePrompt.customValue || stylePrompt.defaultValue;
+      mainPrompts += "\n\n" + styleText;
+    }
+  }
 
   const result = await u.ai.text.invoke(
     {

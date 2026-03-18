@@ -53,25 +53,134 @@ export async function generateSpeech(request: TTSRequest): Promise<TTSResult> {
   }
 }
 
-// Stub implementations - to be filled when integrating specific APIs
-async function cosyVoiceGenerate(config: TTSConfig, request: TTSRequest): Promise<TTSResult> {
-  // TODO: Implement CosyVoice API integration
-  throw new Error("CosyVoice集成开发中");
-}
-
-async function chatTTSGenerate(config: TTSConfig, request: TTSRequest): Promise<TTSResult> {
-  // TODO: Implement ChatTTS API integration
-  throw new Error("ChatTTS集成开发中");
-}
-
-async function fishSpeechGenerate(config: TTSConfig, request: TTSRequest): Promise<TTSResult> {
-  // TODO: Implement Fish Speech API integration
-  throw new Error("FishSpeech集成开发中");
-}
-
+// OpenAI TTS implementation
 async function openAITTSGenerate(config: TTSConfig, request: TTSRequest): Promise<TTSResult> {
-  // TODO: Implement OpenAI TTS API integration
-  throw new Error("OpenAI TTS集成开发中");
+  const axios = (await import("axios")).default;
+
+  const response = await axios.post(
+    `${config.baseUrl || "https://api.openai.com"}/v1/audio/speech`,
+    {
+      model: config.model || "tts-1-hd",
+      input: request.text,
+      voice: request.voiceId || "alloy",
+      speed: request.speed || 1.0,
+      response_format: "mp3",
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      responseType: "arraybuffer",
+      timeout: 60000,
+    }
+  );
+
+  const audioBuffer = Buffer.from(response.data);
+  // Estimate duration: MP3 ~128kbps = 16KB/sec
+  const estimatedDuration = Math.round(audioBuffer.length / 16000);
+
+  return {
+    audioBuffer,
+    duration: estimatedDuration,
+    format: "mp3",
+  };
+}
+
+// Fish Speech implementation (OpenAI-compatible endpoint)
+async function fishSpeechGenerate(config: TTSConfig, request: TTSRequest): Promise<TTSResult> {
+  const axios = (await import("axios")).default;
+
+  const response = await axios.post(
+    `${config.baseUrl}/v1/audio/speech`,
+    {
+      model: config.model || "fish-speech-1.5",
+      input: request.text,
+      voice: request.voiceId || "default",
+      speed: request.speed || 1.0,
+      response_format: "mp3",
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      responseType: "arraybuffer",
+      timeout: 60000,
+    }
+  );
+
+  return {
+    audioBuffer: Buffer.from(response.data),
+    duration: Math.round(response.data.length / 16000),
+    format: "mp3",
+  };
+}
+
+// CosyVoice implementation (DashScope-compatible API)
+async function cosyVoiceGenerate(config: TTSConfig, request: TTSRequest): Promise<TTSResult> {
+  const axios = (await import("axios")).default;
+
+  const response = await axios.post(
+    `${config.baseUrl}/api/v1/tts`,
+    {
+      model: config.model || "cosyvoice-v2",
+      input: { text: request.text },
+      voice: request.voiceId || "longxiaochun",
+      parameters: {
+        speed: request.speed || 1.0,
+        emotion: request.emotion || "neutral",
+        format: "mp3",
+      },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      responseType: "arraybuffer",
+      timeout: 60000,
+    }
+  );
+
+  return {
+    audioBuffer: Buffer.from(response.data),
+    duration: Math.round(response.data.length / 16000),
+    format: "mp3",
+  };
+}
+
+// ChatTTS implementation
+async function chatTTSGenerate(config: TTSConfig, request: TTSRequest): Promise<TTSResult> {
+  const axios = (await import("axios")).default;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (config.apiKey) {
+    headers["Authorization"] = `Bearer ${config.apiKey}`;
+  }
+
+  const response = await axios.post(
+    `${config.baseUrl}/generate`,
+    {
+      text: request.text,
+      voice: request.voiceId || "default",
+      speed: request.speed || 1.0,
+      temperature: 0.3,
+    },
+    {
+      headers,
+      responseType: "arraybuffer",
+      timeout: 60000,
+    }
+  );
+
+  return {
+    audioBuffer: Buffer.from(response.data),
+    duration: Math.round(response.data.length / 16000),
+    format: "wav",
+  };
 }
 
 // Parse script to extract dialogue lines with character names

@@ -9,6 +9,7 @@ import imageSplitting from "./imageSplitting";
 import path from "path";
 import sharp from "sharp";
 import { CharacterRef, getProjectCharacterRefs } from "@/utils/characterReference";
+import { reviewStoryboardShots } from "@/agents/director/storyboardReview";
 
 // ==================== 类型定义 ====================
 
@@ -300,6 +301,25 @@ ${sections.join("\n\n")}
       const addedInfo = added.map((a) => `分镜${a.id}(片段${a.segmentIndex})`).join(", ");
       this.log("添加分镜", `新增: [${addedInfo}], 跳过片段: [${skipped.join(", ")}]`);
       this.emit("shotsUpdated", this.shots);
+
+      // Auto-trigger director review for newly added shots
+      if (added.length > 0) {
+        const newShots = this.shots.filter((s) => added.some((a) => a.id === s.id));
+        for (const shot of newShots) {
+          this.emit("directorReview", { status: "reviewing", segmentId: shot.segmentId });
+          try {
+            const review = await reviewStoryboardShots(
+              this.projectId,
+              this.scriptId,
+              shot.segmentId,
+              [{ title: shot.title, cells: shot.cells, fragmentContent: shot.fragmentContent }]
+            );
+            this.emit("directorReview", { status: "complete", review });
+          } catch (err) {
+            this.emit("directorReview", { status: "error", segmentId: shot.segmentId });
+          }
+        }
+      }
 
       if (skipped.length) {
         return `已添加${addedInfo}；片段 ${skipped.join(", ")} 已存在分镜被跳过。当前共 ${this.shots.length} 个分镜`;

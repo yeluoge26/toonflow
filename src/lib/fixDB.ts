@@ -251,6 +251,46 @@ export default async (knex: Knex): Promise<void> => {
       },
     ]);
   }
+  // Script style templates migration
+  const scriptStylePrompts = [
+    {
+      id: 23,
+      code: "script-style-shuangwen",
+      name: "剧本风格-爽文",
+      type: "style",
+      parentCode: "script",
+      defaultValue:
+        "# 爽文风格剧本生成指南\n\n## 核心特征\n- **节奏极快**：每30秒一个爽点，绝不拖沓\n- **反转密集**：打脸、逆袭、实力碾压\n- **金句频出**：每个高潮点配经典台词\n- **情绪拉满**：从压抑到爆发的极致反差\n\n## 结构公式\n1. 开场压制（主角被看不起/欺负）→ 30秒内\n2. 初次展露（小试牛刀，观众知道主角厉害）→ 1分钟\n3. 大反转（真实身份/实力暴露）→ 高潮\n4. 碾压收场（所有人震惊/后悔）→ 爽感爆棚\n\n## 对白要求\n- 反派要足够嚣张（越嚣张打脸越爽）\n- 主角要足够淡定（越淡定越帅）\n- 配角要会\"解说\"（帮观众说出震惊）\n- 经典台词模板：\"你确定要这么做？\"\"不好意思，你可能不知道我是谁\"\n\n## 禁忌\n- 不要慢热铺垫\n- 不要复杂的内心描写\n- 不要模糊的结局\n- 要干脆利落的爽感",
+      customValue: null,
+    },
+    {
+      id: 24,
+      code: "script-style-emotion",
+      name: "剧本风格-情感",
+      type: "style",
+      parentCode: "script",
+      defaultValue:
+        "# 情感风格剧本生成指南\n\n## 核心特征\n- **情绪细腻**：注重人物内心变化和情感递进\n- **节奏舒缓**：留白和沉默也是表达\n- **细节动人**：一个眼神、一个动作胜过千言\n- **共鸣为王**：让观众代入角色的情感\n\n## 结构公式\n1. 日常建立（展示人物关系和情感基础）\n2. 裂痕出现（误会/分离/选择的困境）\n3. 情感爆发（压抑许久的情绪释放）\n4. 和解或释怀（不一定大团圆，但要有成长）\n\n## 对白要求\n- 对话要自然，像真实的人在说话\n- 重要的话往往说不出口——用动作和沉默表达\n- 经典台词要克制，一集只留1-2句点睛之笔\n- 善用\"未完成的句子\"（\"我其实……算了\"）\n\n## 镜头语言提示\n- 多用近景和特写捕捉微表情\n- 善用空镜（窗外的雨、桌上的两杯咖啡）传递情绪\n- 节奏上允许\"慢\"——3秒的沉默可能比3句台词更有力",
+      customValue: null,
+    },
+    {
+      id: 25,
+      code: "script-style-suspense",
+      name: "剧本风格-悬疑",
+      type: "style",
+      parentCode: "script",
+      defaultValue:
+        "# 悬疑风格剧本生成指南\n\n## 核心特征\n- **悬念驱动**：每个场景结束都留一个钩子\n- **信息控制**：观众知道的永远比角色少（或多）\n- **反转精密**：伏笔要早埋，揭晓要震撼\n- **氛围营造**：不安感贯穿始终\n\n## 结构公式\n1. 谜面抛出（发现异常/案件发生/诡异现象）\n2. 调查深入（线索收集，每条线索带出新疑问）\n3. 误导转折（以为的真相被推翻）\n4. 真相揭露（所有伏笔回收，真正的反转）\n\n## 对白要求\n- 角色说话要有\"双关性\"——事后回看发现另一层含义\n- 关键信息要自然地藏在日常对话中\n- 反派/嫌疑人的台词要让人\"细思极恐\"\n- 善用省略号和未说完的话制造悬念\n\n## 氛围要素\n- 时间设定偏好：深夜、黄昏、阴雨天\n- 空间设定：封闭环境（密室/孤岛/老宅）增加压迫感\n- 音效提示：在剧本中标注关键音效（脚步声/门响/时钟）\n- 每场结尾用一句话或一个画面制造\"钩子\"",
+      customValue: null,
+    },
+  ];
+  for (const prompt of scriptStylePrompts) {
+    const exists = await knex("t_prompts").where("code", prompt.code).first();
+    if (!exists) {
+      await knex("t_prompts").insert(prompt);
+    }
+  }
+
   const checkSd2VideoModel = await knex("t_videoModel").where("manufacturer", "volcengine").where("model", "doubao-seedance-2-0-260128").first();
   if (!checkSd2VideoModel) {
     await knex("t_videoModel").insert([

@@ -56,6 +56,12 @@ export default async (input: ImageConfig, config: AIConfig) => {
   //   startTime: Date.now(),
   //   projectId: input.projectId,
   // });
+  // Inject character reference images into imageBase64 for consistency
+  if (input.referenceImages && input.referenceImages.length > 0) {
+    if (!input.imageBase64) input.imageBase64 = [];
+    input.imageBase64.push(...input.referenceImages);
+  }
+
   // 补充图片的 base64 内容类型字符串
   if (input.imageBase64 && input.imageBase64.length > 0) {
     input.imageBase64 = input.imageBase64.map((img) => {

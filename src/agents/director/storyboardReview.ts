@@ -59,3 +59,76 @@ export interface DirectorReviewResult {
   }>;
   overall: string;
 }
+
+import u from "@/utils";
+
+// Execute a director review of storyboard shots
+export async function reviewStoryboardShots(
+  projectId: number,
+  scriptId: number,
+  segmentId: number,
+  shots: Array<{ title: string; cells: any[]; fragmentContent: string }>
+): Promise<DirectorReviewResult> {
+  // Get AI config for the storyboard agent (reuse same model)
+  const promptConfig = await u.getPromptAi("storyboardAgent");
+  if (!promptConfig || Object.keys(promptConfig).length === 0) {
+    return {
+      segmentId,
+      score: "B",
+      issues: [],
+      overall: "未配置AI模型，跳过导演审查",
+    };
+  }
+
+  // Build review input
+  const shotsDescription = shots.map((shot, i) =>
+    `镜头${i + 1}: ${shot.title}\n内容: ${shot.fragmentContent}\n格数: ${shot.cells.length}`
+  ).join("\n\n");
+
+  try {
+    const result = await u.ai.text.invoke(
+      {
+        messages: [
+          {
+            role: "system",
+            content: storyboardDirectorPrompt,
+          },
+          {
+            role: "user",
+            content: `请审查以下分镜序列（片段ID: ${segmentId}）：\n\n${shotsDescription}\n\n请以JSON格式返回审查结果，包含 score, issues, overall 字段。`,
+          },
+        ],
+      },
+      promptConfig,
+    );
+
+    // Parse the AI response
+    if (result?.text) {
+      try {
+        // Try to extract JSON from the response
+        const jsonMatch = result.text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return {
+            segmentId,
+            score: parsed.score || "B",
+            issues: parsed.issues || [],
+            overall: parsed.overall || "审查完成",
+          };
+        }
+      } catch {
+        // If JSON parsing fails, use the text as the overall comment
+        return {
+          segmentId,
+          score: "B",
+          issues: [],
+          overall: result.text.slice(0, 500),
+        };
+      }
+    }
+  } catch (err) {
+    console.error("Director review failed:", err);
+  }
+
+  return { segmentId, score: "B", issues: [], overall: "审查过程出错，使用默认评分" };
+}

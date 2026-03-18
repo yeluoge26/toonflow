@@ -27,9 +27,10 @@ export default router.post(
   validateFields({
     outlineId: z.number(),
     scriptId: z.number(),
+    style: z.enum(["shuangwen", "emotion", "suspense"]).optional(),
   }),
   async (req, res) => {
-    const { outlineId, scriptId } = req.body;
+    const { outlineId, scriptId, style } = req.body;
     const outlineData = await u.db("t_outline").where("id", outlineId).select("*").first();
     if (!outlineData) return res.status(400).send(error("大纲为空"));
     const parameter = JSON.parse(outlineData.data!);
@@ -44,7 +45,7 @@ export default router.post(
 
     const result: string = mergeNovelText(novelData);
     try {
-      const data = await generateScript(parameter ?? "", result ?? "");
+      const data = await generateScript(parameter ?? "", result ?? "", style);
       if (!data) return res.status(500).send({ message: "生成剧本失败" });
 
       await u.db("t_script").where("id", scriptId).update({

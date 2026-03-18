@@ -61,6 +61,10 @@ export default async function startServe(randomPort: Boolean = false) {
     }
   });
 
+  // Register task handlers (audio TTS, etc.)
+  const { registerTaskHandlers } = await import("@/lib/taskHandlers");
+  registerTaskHandlers();
+
   const router = await import("@/router");
   await router.default(app);
 
