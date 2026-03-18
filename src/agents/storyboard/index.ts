@@ -8,6 +8,7 @@ import generateImageTool from "./generateImageTool";
 import imageSplitting from "./imageSplitting";
 import path from "path";
 import sharp from "sharp";
+import { CharacterRef, getProjectCharacterRefs } from "@/utils/characterReference";
 
 // ==================== 类型定义 ====================
 
@@ -63,10 +64,24 @@ export default class Storyboard {
   private shotIdCounter: number = 0;
   // 存储正在生成分镜图的分镜ID
   private generatingShots: Set<number> = new Set();
+  // 角色参考图缓存
+  private characterRefs: CharacterRef[] = [];
 
   constructor(projectId: number, scriptId: number) {
     this.projectId = projectId;
     this.scriptId = scriptId;
+  }
+
+  private async loadCharacterRefs(): Promise<CharacterRef[]> {
+    if (this.characterRefs.length === 0) {
+      try {
+        this.characterRefs = await getProjectCharacterRefs(this.projectId);
+      } catch (e) {
+        // If loading fails, continue without character refs
+        this.characterRefs = [];
+      }
+    }
+    return this.characterRefs;
   }
 
   private trimHistory() {
@@ -81,6 +96,7 @@ export default class Storyboard {
     this.shots = [];
     this.shotIdCounter = 0;
     this.history = [];
+    this.characterRefs = [];
   }
 
   destroy() {
@@ -456,11 +472,15 @@ ${sections.join("\n\n")}
       // 通知前端正在生成该分镜
       this.emit("shotImageGenerateProgress", { shotId, status: "generating", message: "正在调用 AI 生成宫格图片" });
 
+      // Load character references for consistency injection
+      const charRefs = await this.loadCharacterRefs();
+
       // 根据所有镜头提示词生成宫格图片
       const gridImage = await generateImageTool(
         prompts.map((p) => ({ prompt: p })),
         this.scriptId,
         this.projectId,
+        charRefs,
       );
 
       // 通知前端正在分割图片

@@ -83,6 +83,8 @@ import route79 from "./routes/video/getVideoStoryboards";
 import route80 from "./routes/video/reviseVideoStoryboards";
 import route81 from "./routes/video/saveVideo";
 import route82 from "./routes/video/upDateVideoConfig";
+import route83 from "./routes/character/getCharacters";
+import route84 from "./routes/character/bindCharacterVoice";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -167,4 +169,6 @@ export default async (app: Express) => {
   app.use("/video/reviseVideoStoryboards", route80);
   app.use("/video/saveVideo", route81);
   app.use("/video/upDateVideoConfig", route82);
+  app.use("/character/getCharacters", route83);
+  app.use("/character/bindCharacterVoice", route84);
 }

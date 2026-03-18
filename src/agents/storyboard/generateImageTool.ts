@@ -2,6 +2,7 @@ import generateImagePromptsTool from "@/agents/storyboard/generateImagePromptsTo
 import u from "@/utils";
 import sharp from "sharp";
 import { z } from "zod";
+import { CharacterRef, matchCharactersInPrompt } from "@/utils/characterReference";
 
 interface AssetItem {
   name: string;
@@ -265,7 +266,7 @@ function buildResourcesMapPrompts(images: ImageInfo[]): string {
   return `其中人物、场景、道具参考对照关系如下：${mapping.join(", ")}。`;
 }
 
-export default async (cells: { prompt: string }[], scriptId: number, projectId: number) => {
+export default async (cells: { prompt: string }[], scriptId: number, projectId: number, characterRefs?: CharacterRef[]) => {
   const scriptData = await u.db("t_script").where({ id: scriptId, projectId }).first();
   const projectInfo = await u.db("t_project").where({ id: projectId }).first();
 
@@ -320,6 +321,28 @@ export default async (cells: { prompt: string }[], scriptId: number, projectId: 
   const prompts = promptsData.prompt;
 
   const processedImages = await processImages(filteredImages);
+
+  // Inject character reference images if available
+  let charRefBuffers: Buffer[] = [];
+  if (characterRefs && characterRefs.length > 0) {
+    const combinedPromptText = cellPrompts.join(" ");
+    const matchedChars = matchCharactersInPrompt(combinedPromptText, characterRefs);
+    if (matchedChars.length > 0) {
+      try {
+        const charBuffers = await Promise.all(
+          matchedChars.map(async (charRef) => {
+            const buf = await u.oss.getFile(charRef.referenceImage);
+            return compressImage(buf);
+          }),
+        );
+        charRefBuffers = charBuffers;
+      } catch (e) {
+        // If character reference loading fails, continue without them
+      }
+    }
+  }
+
+  const allImageBuffers = [...processedImages, ...charRefBuffers];
   const apiConfig = await u.getPromptAi("storyboardImage");
 
   const contentStr = await u.ai.image(
@@ -328,7 +351,7 @@ export default async (cells: { prompt: string }[], scriptId: number, projectId: 
       prompt: prompts,
       size: "4K",
       aspectRatio: projectInfo?.videoRatio ? (projectInfo.videoRatio as any) : "16:9",
-      imageBase64: processedImages.map((buf) => buf.toString("base64")),
+      imageBase64: allImageBuffers.map((buf) => buf.toString("base64")),
       taskClass: "分镜图生成",
       name: `分镜图-${outline?.title || "未知剧集"}`,
       describe: prompts,

@@ -77,6 +77,7 @@ export default async (knex: Knex, forceInit: boolean = false): Promise<void> => 
         table.integer("episode");
         table.text("data");
         table.integer("projectId");
+        table.integer("version").defaultTo(1);
         table.primary(["id"]);
         table.unique(["id"]);
       },
@@ -116,6 +117,7 @@ export default async (knex: Knex, forceInit: boolean = false): Promise<void> => 
         table.text("content");
         table.integer("projectId");
         table.integer("outlineId");
+        table.integer("version").defaultTo(1);
         table.primary(["id"]);
         table.unique(["id"]);
       },
@@ -1113,6 +1115,45 @@ export default async (knex: Knex, forceInit: boolean = false): Promise<void> => 
           //   type: JSON.stringify(["singleImage"]),
           // },
         ]);
+      },
+    },
+    {
+      name: "t_taskQueue",
+      builder: (table) => {
+        table.increments("id").primary();
+        table.text("type").notNullable();
+        table.text("status").defaultTo("pending");
+        table.integer("priority").defaultTo(0);
+        table.text("payload");
+        table.text("result");
+        table.integer("attempts").defaultTo(0);
+        table.integer("maxAttempts").defaultTo(3);
+        table.integer("projectId");
+        table.integer("scriptId");
+        table.integer("createdAt");
+        table.integer("startedAt");
+        table.integer("completedAt");
+        table.text("errorReason");
+        table.integer("progress").defaultTo(0);
+      },
+    },
+    {
+      name: "t_character",
+      builder: (table) => {
+        table.increments("id").primary();
+        table.text("name").notNullable();
+        table.text("description");
+        table.integer("projectId");
+        table.text("referenceImages");
+        table.text("loraId");
+        table.text("embeddingId");
+        table.text("voiceId");
+        table.text("personality");
+        table.text("stateHistory");
+        table.text("artStyle");
+        table.integer("isPublic").defaultTo(0);
+        table.integer("createdAt");
+        table.integer("updatedAt");
       },
     },
   ];

@@ -37,6 +37,51 @@ export default async (knex: Knex): Promise<void> => {
   //删除字段
   await dropColumn("t_config", "index");
 
+  // ToonFlow Pro: version fields
+  await addColumn("t_script", "version", "integer");
+  await addColumn("t_outline", "version", "integer");
+
+  // ToonFlow Pro: create t_taskQueue if not exists
+  if (!(await knex.schema.hasTable("t_taskQueue"))) {
+    await knex.schema.createTable("t_taskQueue", (table) => {
+      table.increments("id").primary();
+      table.text("type").notNullable();
+      table.text("status").defaultTo("pending");
+      table.integer("priority").defaultTo(0);
+      table.text("payload");
+      table.text("result");
+      table.integer("attempts").defaultTo(0);
+      table.integer("maxAttempts").defaultTo(3);
+      table.integer("projectId");
+      table.integer("scriptId");
+      table.integer("createdAt");
+      table.integer("startedAt");
+      table.integer("completedAt");
+      table.text("errorReason");
+      table.integer("progress").defaultTo(0);
+    });
+  }
+
+  // ToonFlow Pro: create t_character if not exists
+  if (!(await knex.schema.hasTable("t_character"))) {
+    await knex.schema.createTable("t_character", (table) => {
+      table.increments("id").primary();
+      table.text("name").notNullable();
+      table.text("description");
+      table.integer("projectId");
+      table.text("referenceImages");
+      table.text("loraId");
+      table.text("embeddingId");
+      table.text("voiceId");
+      table.text("personality");
+      table.text("stateHistory");
+      table.text("artStyle");
+      table.integer("isPublic").defaultTo(0);
+      table.integer("createdAt");
+      table.integer("updatedAt");
+    });
+  }
+
   // Prompt updates v1.0.7 - these overwrite defaultValue on every startup; user customizations are in customValue
   await knex("t_prompts")
     .update({
