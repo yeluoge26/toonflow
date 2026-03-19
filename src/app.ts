@@ -41,6 +41,12 @@ export default async function startServe(randomPort: Boolean = false) {
 
   app.use(express.static(rootDir));
 
+  // Admin dashboard - served before auth middleware
+  const webDir = path.join(typeof process.versions?.electron !== "undefined"
+    ? path.dirname(require("electron").app.getAppPath())
+    : process.cwd(), "scripts", "web");
+  app.use("/admin.html", express.static(path.join(webDir, "admin.html")));
+
   app.use(async (req, res, next) => {
     const setting = await u.db("t_setting").where("id", 1).select("tokenKey").first();
     if (!setting) return res.status(500).send({ message: "服务器未配置，请联系管理员" });
