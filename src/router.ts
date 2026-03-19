@@ -152,6 +152,9 @@ import route148 from "./routes/video/generateSubtitles";
 import route149 from "./routes/project/getProjectDashboard";
 import route150 from "./routes/queue/getQueueStats";
 import route151 from "./routes/queue/pauseQueue";
+import route152 from "./routes/system/getSystemStats";
+import route153 from "./routes/system/getCacheStats";
+import route154 from "./routes/system/flushCache";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -306,4 +309,7 @@ export default async (app: Express) => {
   app.use("/project/getProjectDashboard", route149);
   app.use("/queue/getQueueStats", route150);
   app.use("/queue/pauseQueue", route151);
+  app.use("/system/getSystemStats", route152);
+  app.use("/system/getCacheStats", route153);
+  app.use("/system/flushCache", route154);
 }
