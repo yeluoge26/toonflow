@@ -4,6 +4,7 @@ import sharp from "sharp";
 import { z } from "zod";
 import { CharacterRef, matchCharactersInPrompt } from "@/utils/characterReference";
 import { buildConsistencyInjection } from "@/lib/characterConsistency";
+import { getAntiDriftPromptForProject, getImagePrefix } from "@/lib/antiDrift";
 
 /**
  * 加载一致性收敛提示词（角色/背景/风格）
@@ -338,7 +339,8 @@ export default async (cells: { prompt: string }[], scriptId: number, projectId: 
 
   // 注意：请严格按照提示词内容生成图片，确保人物样貌、艺术风格、色调光影一致。
   // `;
-  const prompts = promptsData.prompt;
+  // Prepend anti-drift image prefix if configured
+  const prompts = imagePrefix ? `${imagePrefix}\n\n${promptsData.prompt}` : promptsData.prompt;
 
   const processedImages = await processImages(filteredImages);
 
@@ -389,10 +391,15 @@ export default async (cells: { prompt: string }[], scriptId: number, projectId: 
   // 加载一致性收敛提示词并注入到系统提示中
   const consistencyPrompts = await loadConsistencyPrompts();
 
-  // Combine: generic consistency prompts + character lock prompts + resource map
+  // Load anti-drift rules for the project
+  const antiDriftPrompt = await getAntiDriftPromptForProject(projectId);
+  const imagePrefix = await getImagePrefix(projectId);
+
+  // Combine: generic consistency prompts + character lock prompts + anti-drift + resource map
   const systemParts: string[] = [];
   if (consistencyPrompts) systemParts.push(consistencyPrompts);
   if (charLockPrompt) systemParts.push(charLockPrompt);
+  if (antiDriftPrompt) systemParts.push(antiDriftPrompt);
   if (resourcesMapPrompts) systemParts.push(resourcesMapPrompts);
   const fullSystemPrompt = systemParts.join("\n\n");
 

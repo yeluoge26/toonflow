@@ -168,6 +168,17 @@ import route164 from "./routes/batch/getProgress";
 import route165 from "./routes/batch/getTemplates";
 import route166 from "./routes/audio/generateEmotionVoice";
 import route167 from "./routes/audio/batchDialogue";
+import route168 from "./routes/project/getAntiDrift";
+import route169 from "./routes/project/saveAntiDrift";
+import route170 from "./routes/viral/analyze";
+import route171 from "./routes/viral/generate";
+import route172 from "./routes/viral/score";
+import route173 from "./routes/viral/templates";
+import route174 from "./routes/series/create";
+import route175 from "./routes/series/getDetail";
+import route176 from "./routes/series/list";
+import route177 from "./routes/series/generatePlan";
+import route178 from "./routes/series/materialize";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -337,4 +348,15 @@ export default async (app: Express) => {
   app.use("/batch/getTemplates", route165);
   app.use("/audio/generateEmotionVoice", route166);
   app.use("/audio/batchDialogue", route167);
+  app.use("/project/getAntiDrift", route168);
+  app.use("/project/saveAntiDrift", route169);
+  app.use("/viral/analyze", route170);
+  app.use("/viral/generate", route171);
+  app.use("/viral/score", route172);
+  app.use("/viral/templates", route173);
+  app.use("/series/create", route174);
+  app.use("/series/getDetail", route175);
+  app.use("/series/list", route176);
+  app.use("/series/generatePlan", route177);
+  app.use("/series/materialize", route178);
 }

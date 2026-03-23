@@ -272,6 +272,15 @@
     <div class="nav-item" data-module="videoConstraints" onclick="showModule('videoConstraints')">
       <span class="nav-icon">&#9881;</span><span class="nav-label">视频约束</span>
     </div>
+    <div class="nav-item" data-module="antiDrift" onclick="showModule('antiDrift')">
+      <span class="nav-icon">&#128274;</span><span class="nav-label">防跑偏规则</span>
+    </div>
+    <div class="nav-item" data-module="viralEngine" onclick="showModule('viralEngine')">
+      <span class="nav-icon">&#128293;</span><span class="nav-label">爆款引擎</span>
+    </div>
+    <div class="nav-item" data-module="seriesManager" onclick="showModule('seriesManager')">
+      <span class="nav-icon">&#127916;</span><span class="nav-label">系列管理</span>
+    </div>
     <div class="sidebar-footer">
       <span id="user-display"></span>
       <br>
@@ -1015,6 +1024,290 @@
         <div class="section">
           <div class="section-title">约束预览</div>
           <pre id="vc-preview" style="background:var(--bg-primary);padding:16px;border-radius:8px;border:1px solid var(--border);white-space:pre-wrap;font-size:13px;color:var(--text-secondary);max-height:300px;overflow-y:auto;">点击"加载约束"查看已保存的约束预览</pre>
+        </div>
+      </div>
+
+      <!-- ==================== Anti-Drift Rules ==================== -->
+      <div class="module" id="module-antiDrift">
+        <div class="section">
+          <div class="section-title">
+            防跑偏规则配置
+            <div>
+              <button class="btn btn-sm btn-outline" onclick="loaders.antiDrift()">刷新</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>项目ID</label>
+            <input type="number" id="ad-projectId" placeholder="输入项目ID" value="1">
+            <button class="btn btn-sm btn-primary" style="margin-top:8px;" onclick="loadAntiDriftUI()">加载配置</button>
+          </div>
+        </div>
+
+        <!-- 1. Lighting Lock -->
+        <div class="section">
+          <div class="section-title">
+            <label style="display:flex;align-items:center;gap:8px;margin:0;">
+              <input type="checkbox" id="ad-lighting-enabled" style="width:auto;"> 灯光锁死 (Lighting Lock)
+            </label>
+          </div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group"><label>全局灯光</label><input type="text" id="ad-lighting-global" placeholder="warm amber side lighting, golden hour"></div>
+              <div class="form-group"><label>时间</label><input type="text" id="ad-lighting-timeOfDay" placeholder="night / day / dawn"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>光源方向</label><input type="text" id="ad-lighting-source" placeholder="left side warm lamp + overhead cool fill"></div>
+              <div class="form-group"><label>阴影方向</label><input type="text" id="ad-lighting-shadow" placeholder="45 degrees right, soft edges"></div>
+            </div>
+            <div class="form-group"><label>色温</label><input type="text" id="ad-lighting-colorTemp" placeholder="3200K warm"></div>
+          </div>
+        </div>
+
+        <!-- 2. Character Entry Rule -->
+        <div class="section">
+          <div class="section-title">
+            <label style="display:flex;align-items:center;gap:8px;margin:0;">
+              <input type="checkbox" id="ad-charEntry-enabled" style="width:auto;"> 人物进入规则 (Character Entry)
+            </label>
+          </div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group"><label>每镜头最大人数</label><input type="number" id="ad-charEntry-max" value="3" min="1" max="10"></div>
+              <div class="form-group"><label>规则描述</label><input type="text" id="ad-charEntry-desc" placeholder="Only named characters may appear"></div>
+            </div>
+            <div class="form-group"><label>允许角色 (逗号分隔)</label><input type="text" id="ad-charEntry-allowed" placeholder="洛轻云, 萧君陌"></div>
+            <div class="form-group"><label>禁止元素 (逗号分隔)</label><input type="text" id="ad-charEntry-forbidden" placeholder="random people, crowd, extra characters"></div>
+          </div>
+        </div>
+
+        <!-- 3. Camera Constraints -->
+        <div class="section">
+          <div class="section-title">
+            <label style="display:flex;align-items:center;gap:8px;margin:0;">
+              <input type="checkbox" id="ad-camera-enabled" style="width:auto;"> 镜头限制 (Camera Constraints)
+            </label>
+          </div>
+          <div class="detail-panel">
+            <div class="form-group"><label>允许景别 (逗号分隔)</label><input type="text" id="ad-camera-types" placeholder="close_up, medium_shot, wide_shot"></div>
+            <div class="form-group"><label>禁止运镜 (逗号分隔)</label><input type="text" id="ad-camera-forbidden" placeholder="whip_pan, 360_orbit, shake"></div>
+            <div class="form-row">
+              <div class="form-group"><label>最大速度</label><input type="text" id="ad-camera-speed" placeholder="slow to medium"></div>
+              <div class="form-group"><label>默认镜头</label><input type="text" id="ad-camera-lens" placeholder="50mm"></div>
+            </div>
+            <div class="form-group"><label>景深</label><input type="text" id="ad-camera-dof" placeholder="shallow, f/1.8"></div>
+          </div>
+        </div>
+
+        <!-- 4. Core Convergence -->
+        <div class="section">
+          <div class="section-title">
+            <label style="display:flex;align-items:center;gap:8px;margin:0;">
+              <input type="checkbox" id="ad-convergence-enabled" style="width:auto;"> 核心收敛提示词 (Core Convergence)
+            </label>
+          </div>
+          <div class="detail-panel">
+            <div class="form-group"><label>必须包含 (每行一条)</label><textarea id="ad-convergence-always" rows="3" placeholder="masterpiece, best quality, cinematic lighting&#10;consistent character design, same outfit"></textarea></div>
+            <div class="form-group"><label>禁止包含 (每行一条)</label><textarea id="ad-convergence-never" rows="3" placeholder="text, watermark, subtitle, logo, deformed&#10;extra fingers, extra limbs, bad anatomy"></textarea></div>
+          </div>
+        </div>
+
+        <!-- 5. Unified Prefix -->
+        <div class="section">
+          <div class="section-title">
+            <label style="display:flex;align-items:center;gap:8px;margin:0;">
+              <input type="checkbox" id="ad-prefix-enabled" style="width:auto;"> 统一Prompt前缀 (Unified Prefix)
+            </label>
+          </div>
+          <div class="detail-panel">
+            <div class="form-group"><label>图片前缀</label><textarea id="ad-prefix-image" rows="2" placeholder="Prepended to every image prompt"></textarea></div>
+            <div class="form-group"><label>视频前缀</label><textarea id="ad-prefix-video" rows="2" placeholder="Prepended to every video prompt"></textarea></div>
+          </div>
+        </div>
+
+        <!-- 6. Character Uniform -->
+        <div class="section">
+          <div class="section-title">
+            <label style="display:flex;align-items:center;gap:8px;margin:0;">
+              <input type="checkbox" id="ad-charUniform-enabled" style="width:auto;"> 人物统一设定 (Character Uniform)
+            </label>
+            <button class="btn btn-sm btn-outline" onclick="addCharUniformRow()">+ 添加角色</button>
+          </div>
+          <div id="ad-charUniform-list"></div>
+        </div>
+
+        <div class="section" style="display:flex;gap:12px;justify-content:flex-end;">
+          <button class="btn btn-primary" onclick="saveAntiDriftUI()">保存防跑偏配置</button>
+          <button class="btn btn-outline" onclick="previewAntiDriftUI()">预览Prompt</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">防跑偏Prompt预览</div>
+          <pre id="ad-preview" style="background:var(--bg-primary);padding:16px;border-radius:8px;border:1px solid var(--border);white-space:pre-wrap;font-size:13px;color:var(--text-secondary);max-height:400px;overflow-y:auto;">点击"加载配置"或"预览Prompt"查看</pre>
+        </div>
+      </div>
+
+      <!-- ==================== Viral Engine 爆款引擎 ==================== -->
+      <div class="module" id="module-viralEngine">
+        <div class="section">
+          <div class="section-title">
+            爆款结构引擎
+            <div>
+              <button class="btn btn-sm btn-primary" onclick="loaders.viralEngine()">加载模板</button>
+            </div>
+          </div>
+          <p style="color:var(--text-secondary);margin-bottom:16px;">短视频爆款三段式: HOOK (前3秒) → MID (情绪递进) → ENDING (记忆点/反转)</p>
+        </div>
+
+        <!-- Templates Grid -->
+        <div class="section">
+          <div class="section-title">内置爆款模板</div>
+          <div id="viral-templates-grid" class="cards"></div>
+        </div>
+
+        <!-- Analyze Script -->
+        <div class="section">
+          <div class="section-title">分析脚本爆款潜力</div>
+          <div class="form-group">
+            <label>脚本内容</label>
+            <textarea id="viral-script-input" rows="5" placeholder="粘贴你的短视频脚本..."></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="analyzeViralScript()">分析爆款潜力</button>
+          <div id="viral-analysis-result" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- Generate Viral Structure -->
+        <div class="section">
+          <div class="section-title">AI生成爆款结构</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>创意想法</label>
+              <input type="text" id="viral-idea" placeholder="例如：一个调酒师的秘密">
+            </div>
+            <div class="form-group">
+              <label>选择模板</label>
+              <select id="viral-template-select"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>目标时长(毫秒)</label>
+              <input type="number" id="viral-duration" value="20000">
+            </div>
+            <div class="form-group">
+              <label>风格</label>
+              <input type="text" id="viral-style" value="cinematic" placeholder="cinematic / anime / ink">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="generateViralStructure()">生成爆款结构</button>
+          <div id="viral-generate-result" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- Score Structure -->
+        <div class="section">
+          <div class="section-title">结构评分</div>
+          <div class="form-group">
+            <label>ViralStructure JSON</label>
+            <textarea id="viral-score-input" rows="5" placeholder="粘贴ViralStructure JSON..."></textarea>
+          </div>
+          <button class="btn btn-primary" onclick="scoreViralStructure()">评分</button>
+          <div id="viral-score-result" style="margin-top:16px;"></div>
+        </div>
+      </div>
+
+      <!-- ==================== Series Manager 系列管理 ==================== -->
+      <div class="module" id="module-seriesManager">
+        <div class="section">
+          <div class="section-title">
+            系列管理
+            <div>
+              <button class="btn btn-sm btn-primary" onclick="loaders.seriesManager()">刷新</button>
+              <button class="btn btn-sm btn-outline" onclick="showCreateSeriesForm()">创建系列</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Series List -->
+        <div class="section">
+          <div class="section-title">系列列表</div>
+          <div id="series-list-container"></div>
+        </div>
+
+        <!-- Create Series Form (hidden by default) -->
+        <div class="section" id="create-series-form" style="display:none;">
+          <div class="section-title">创建新系列</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>系列名称</label>
+              <input type="text" id="series-name" placeholder="例如：TWhisky 情绪剧">
+            </div>
+            <div class="form-group">
+              <label>关联项目ID</label>
+              <input type="number" id="series-projectId" value="1">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>世界观-场景</label>
+              <input type="text" id="series-setting" placeholder="现代都市酒吧">
+            </div>
+            <div class="form-group">
+              <label>世界观-基调</label>
+              <input type="text" id="series-tone" placeholder="温暖治愈，微酸">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>世界观规则 (每行一条)</label>
+            <textarea id="series-rules" rows="3" placeholder="所有故事发生在同一个酒吧&#10;男主永远是调酒师"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>系列主题</label>
+              <input type="text" id="series-arc-theme" placeholder="从孤独到释怀">
+            </div>
+            <div class="form-group">
+              <label>情绪曲线 (逗号分隔)</label>
+              <input type="text" id="series-arc-curve" placeholder="孤独, 相遇, 心动, 误解, 和解, 释怀">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>美术风格</label>
+              <input type="text" id="series-art-style" placeholder="cinematic realistic">
+            </div>
+            <div class="form-group">
+              <label>色彩调性</label>
+              <input type="text" id="series-color-grading" placeholder="warm amber tones">
+            </div>
+            <div class="form-group">
+              <label>音乐主题</label>
+              <input type="text" id="series-music-theme" placeholder="lo-fi chill">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn btn-primary" onclick="submitCreateSeries()">创建系列</button>
+            <button class="btn btn-outline" onclick="document.getElementById('create-series-form').style.display='none'">取消</button>
+          </div>
+        </div>
+
+        <!-- Series Detail View -->
+        <div class="section" id="series-detail-view" style="display:none;">
+          <div class="section-title">
+            <span id="series-detail-title">系列详情</span>
+            <div>
+              <button class="btn btn-sm btn-outline" onclick="document.getElementById('series-detail-view').style.display='none'">关闭</button>
+            </div>
+          </div>
+          <div id="series-detail-info" style="margin-bottom:16px;"></div>
+          <div class="section-title">集数列表</div>
+          <div id="series-episode-grid"></div>
+          <div style="margin-top:16px;display:flex;gap:8px;">
+            <div class="form-group" style="width:120px;">
+              <label>集数</label>
+              <input type="number" id="series-episode-count" value="6" min="1" max="100">
+            </div>
+            <button class="btn btn-primary" style="align-self:flex-end;" onclick="generateSeriesPlan()">生成集数计划</button>
+            <button class="btn btn-outline" style="align-self:flex-end;background:var(--success);color:#fff;border-color:var(--success);" onclick="materializeSeriesEpisodes()">一键生成全部项目</button>
+          </div>
         </div>
       </div>
 
@@ -2919,6 +3212,488 @@
         }
       } catch (e) {
         toast('保存失败: ' + e.message, 'error');
+      }
+    }
+
+    // -------------------- Anti-Drift Rules --------------------
+    loaders.antiDrift = loadAntiDriftUI;
+
+    async function loadAntiDriftUI() {
+      const projectId = parseInt(document.getElementById('ad-projectId').value) || 1;
+      try {
+        const r = await api('/project/getAntiDrift', { projectId });
+        const cfg = r.data || {};
+
+        // Lighting Lock
+        const ll = cfg.lightingLock || {};
+        document.getElementById('ad-lighting-enabled').checked = !!ll.enabled;
+        document.getElementById('ad-lighting-global').value = ll.globalLighting || '';
+        document.getElementById('ad-lighting-timeOfDay').value = ll.timeOfDay || '';
+        document.getElementById('ad-lighting-source').value = ll.lightSource || '';
+        document.getElementById('ad-lighting-shadow').value = ll.shadowDirection || '';
+        document.getElementById('ad-lighting-colorTemp').value = ll.colorTemperature || '';
+
+        // Character Entry Rule
+        const ce = cfg.characterEntryRule || {};
+        document.getElementById('ad-charEntry-enabled').checked = !!ce.enabled;
+        document.getElementById('ad-charEntry-max').value = ce.maxCharactersPerShot || 3;
+        document.getElementById('ad-charEntry-desc').value = ce.entryDescription || '';
+        document.getElementById('ad-charEntry-allowed').value = (ce.allowedCharacters || []).join(', ');
+        document.getElementById('ad-charEntry-forbidden').value = (ce.forbiddenElements || []).join(', ');
+
+        // Camera Constraints
+        const cam = cfg.cameraConstraints || {};
+        document.getElementById('ad-camera-enabled').checked = !!cam.enabled;
+        document.getElementById('ad-camera-types').value = (cam.allowedTypes || []).join(', ');
+        document.getElementById('ad-camera-forbidden').value = (cam.forbiddenMovements || []).join(', ');
+        document.getElementById('ad-camera-speed').value = cam.maxCameraSpeed || '';
+        document.getElementById('ad-camera-lens').value = cam.defaultLens || '';
+        document.getElementById('ad-camera-dof').value = cam.depthOfField || '';
+
+        // Core Convergence
+        const conv = cfg.coreConvergence || {};
+        document.getElementById('ad-convergence-enabled').checked = !!conv.enabled;
+        document.getElementById('ad-convergence-always').value = (conv.alwaysInclude || []).join('\n');
+        document.getElementById('ad-convergence-never').value = (conv.neverInclude || []).join('\n');
+
+        // Unified Prefix
+        const pf = cfg.unifiedPrefix || {};
+        document.getElementById('ad-prefix-enabled').checked = !!pf.enabled;
+        document.getElementById('ad-prefix-image').value = pf.imagePrefix || '';
+        document.getElementById('ad-prefix-video').value = pf.videoPrefix || '';
+
+        // Character Uniform
+        const cu = cfg.characterUniform || {};
+        document.getElementById('ad-charUniform-enabled').checked = !!cu.enabled;
+        adCharUniformSettings = cu.settings || [];
+        renderCharUniformList();
+
+        toast('防跑偏配置已加载');
+      } catch (e) {
+        toast('加载失败: ' + e.message, 'error');
+      }
+    }
+
+    let adCharUniformSettings = [];
+
+    function renderCharUniformList() {
+      const container = document.getElementById('ad-charUniform-list');
+      if (adCharUniformSettings.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-text">暂无角色统一设定</div></div>';
+        return;
+      }
+      let html = '';
+      adCharUniformSettings.forEach((s, i) => {
+        html += '<div class="detail-panel" style="margin-bottom:12px;">' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>角色名</label><input type="text" value="' + escapeHtml(s.characterName || '') + '" onchange="adCharUniformSettings[' + i + '].characterName=this.value"></div>' +
+          '<div class="form-group"><label>固定种子</label><input type="number" value="' + (s.fixedSeed || 0) + '" onchange="adCharUniformSettings[' + i + '].fixedSeed=parseInt(this.value)||0"></div>' +
+          '</div>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>固定服装</label><input type="text" value="' + escapeHtml(s.fixedClothing || '') + '" onchange="adCharUniformSettings[' + i + '].fixedClothing=this.value"></div>' +
+          '<div class="form-group"><label>发型</label><input type="text" value="' + escapeHtml(s.fixedHairStyle || '') + '" onchange="adCharUniformSettings[' + i + '].fixedHairStyle=this.value"></div>' +
+          '</div>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>配饰</label><input type="text" value="' + escapeHtml(s.fixedAccessories || '') + '" onchange="adCharUniformSettings[' + i + '].fixedAccessories=this.value"></div>' +
+          '<div class="form-group"><label>姿态锁</label><input type="text" value="' + escapeHtml(s.postureLock || '') + '" onchange="adCharUniformSettings[' + i + '].postureLock=this.value"></div>' +
+          '</div>' +
+          '<button class="btn btn-sm btn-danger" onclick="adCharUniformSettings.splice(' + i + ',1);renderCharUniformList();">删除</button>' +
+          '</div>';
+      });
+      container.innerHTML = html;
+    }
+
+    function addCharUniformRow() {
+      adCharUniformSettings.push({ characterName: '', fixedSeed: 0, fixedClothing: '', fixedHairStyle: '', fixedAccessories: '', postureLock: '' });
+      renderCharUniformList();
+    }
+
+    function splitTrim(val) {
+      return val.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    function splitLines(val) {
+      return val.split('\n').map(s => s.trim()).filter(Boolean);
+    }
+
+    function buildAntiDriftConfigFromUI() {
+      const projectId = parseInt(document.getElementById('ad-projectId').value) || 1;
+      return {
+        projectId,
+        lightingLock: {
+          enabled: document.getElementById('ad-lighting-enabled').checked,
+          globalLighting: document.getElementById('ad-lighting-global').value.trim(),
+          timeOfDay: document.getElementById('ad-lighting-timeOfDay').value.trim(),
+          lightSource: document.getElementById('ad-lighting-source').value.trim(),
+          shadowDirection: document.getElementById('ad-lighting-shadow').value.trim(),
+          colorTemperature: document.getElementById('ad-lighting-colorTemp').value.trim(),
+        },
+        characterEntryRule: {
+          enabled: document.getElementById('ad-charEntry-enabled').checked,
+          maxCharactersPerShot: parseInt(document.getElementById('ad-charEntry-max').value) || 3,
+          allowedCharacters: splitTrim(document.getElementById('ad-charEntry-allowed').value),
+          forbiddenElements: splitTrim(document.getElementById('ad-charEntry-forbidden').value),
+          entryDescription: document.getElementById('ad-charEntry-desc').value.trim(),
+        },
+        cameraConstraints: {
+          enabled: document.getElementById('ad-camera-enabled').checked,
+          allowedTypes: splitTrim(document.getElementById('ad-camera-types').value),
+          forbiddenMovements: splitTrim(document.getElementById('ad-camera-forbidden').value),
+          maxCameraSpeed: document.getElementById('ad-camera-speed').value.trim(),
+          defaultLens: document.getElementById('ad-camera-lens').value.trim(),
+          depthOfField: document.getElementById('ad-camera-dof').value.trim(),
+        },
+        coreConvergence: {
+          enabled: document.getElementById('ad-convergence-enabled').checked,
+          alwaysInclude: splitLines(document.getElementById('ad-convergence-always').value),
+          neverInclude: splitLines(document.getElementById('ad-convergence-never').value),
+        },
+        unifiedPrefix: {
+          enabled: document.getElementById('ad-prefix-enabled').checked,
+          imagePrefix: document.getElementById('ad-prefix-image').value.trim(),
+          videoPrefix: document.getElementById('ad-prefix-video').value.trim(),
+        },
+        characterUniform: {
+          enabled: document.getElementById('ad-charUniform-enabled').checked,
+          settings: adCharUniformSettings,
+        },
+      };
+    }
+
+    async function saveAntiDriftUI() {
+      try {
+        const config = buildAntiDriftConfigFromUI();
+        const r = await api('/project/saveAntiDrift', config);
+        if (r.code === 200) {
+          toast('防跑偏配置保存成功');
+        } else {
+          toast(r.message || '保存失败', 'error');
+        }
+      } catch (e) {
+        toast('保存失败: ' + e.message, 'error');
+      }
+    }
+
+    function previewAntiDriftUI() {
+      const config = buildAntiDriftConfigFromUI();
+      // Build preview locally (simplified version of server-side buildAntiDriftPrompt)
+      const sections = [];
+      if (config.lightingLock.enabled) {
+        const l = config.lightingLock;
+        sections.push('LIGHTING LOCK:\n- All shots: ' + l.globalLighting + '\n- Time: ' + l.timeOfDay + '\n- Light source: ' + l.lightSource + '\n- Shadow: ' + l.shadowDirection + '\n- Color temp: ' + l.colorTemperature + '\n- DO NOT change lighting between shots');
+      }
+      if (config.characterEntryRule.enabled) {
+        const c = config.characterEntryRule;
+        let s = 'CHARACTER ENTRY RULES:\n- Max ' + c.maxCharactersPerShot + ' characters per shot';
+        if (c.allowedCharacters.length) s += '\n- ONLY: ' + c.allowedCharacters.join(', ');
+        if (c.forbiddenElements.length) s += '\n- FORBIDDEN: ' + c.forbiddenElements.join(', ');
+        s += '\n- ' + c.entryDescription;
+        sections.push(s);
+      }
+      if (config.cameraConstraints.enabled) {
+        const cam = config.cameraConstraints;
+        let s = 'CAMERA CONSTRAINTS:';
+        if (cam.allowedTypes.length) s += '\n- Allowed: ' + cam.allowedTypes.join(', ') + ' ONLY';
+        if (cam.forbiddenMovements.length) s += '\n- FORBIDDEN: ' + cam.forbiddenMovements.join(', ');
+        s += '\n- Speed: ' + cam.maxCameraSpeed + '\n- Lens: ' + cam.defaultLens + ', DOF ' + cam.depthOfField;
+        sections.push(s);
+      }
+      if (config.coreConvergence.enabled) {
+        let s = '';
+        if (config.coreConvergence.alwaysInclude.length) s += 'CORE CONVERGENCE (always):\n' + config.coreConvergence.alwaysInclude.map(x => '- ' + x).join('\n');
+        if (config.coreConvergence.neverInclude.length) s += '\n\nNEGATIVE (never):\n' + config.coreConvergence.neverInclude.map(x => '- ' + x).join('\n');
+        if (s) sections.push(s);
+      }
+      if (config.unifiedPrefix.enabled) {
+        let s = 'UNIFIED PREFIX:';
+        if (config.unifiedPrefix.imagePrefix) s += '\n- Image: ' + config.unifiedPrefix.imagePrefix;
+        if (config.unifiedPrefix.videoPrefix) s += '\n- Video: ' + config.unifiedPrefix.videoPrefix;
+        sections.push(s);
+      }
+      if (config.characterUniform.enabled && config.characterUniform.settings.length) {
+        let s = 'CHARACTER UNIFORM:';
+        config.characterUniform.settings.forEach(c => {
+          s += '\n\n[' + c.characterName + ']\n- Clothing: ' + c.fixedClothing + '\n- Hair: ' + c.fixedHairStyle + '\n- Accessories: ' + c.fixedAccessories + '\n- Posture: ' + c.postureLock;
+          if (c.fixedSeed) s += '\n- Seed: ' + c.fixedSeed;
+        });
+        sections.push(s);
+      }
+      const preview = sections.length > 0
+        ? '[ANTI-DRIFT RULES - MANDATORY]\n\n' + sections.join('\n\n') + '\n\n[/ANTI-DRIFT RULES]'
+        : '(No rules enabled)';
+      document.getElementById('ad-preview').textContent = preview;
+    }
+
+    // ============================================================
+    // Viral Engine (爆款引擎)
+    // ============================================================
+    let currentViralTemplates = [];
+
+    loaders.viralEngine = async () => {
+      try {
+        const r = await api('/viral/templates', {});
+        currentViralTemplates = r.data || [];
+        renderViralTemplates(currentViralTemplates);
+        // Populate template select dropdown
+        const sel = document.getElementById('viral-template-select');
+        sel.innerHTML = currentViralTemplates.filter(t => t.source === 'builtin').map(t =>
+          '<option value="' + t.key + '">' + t.key + ' (留存' + (t.retentionScore || '--') + ')</option>'
+        ).join('');
+      } catch (e) {
+        toast('加载爆款模板失败: ' + e.message, 'error');
+      }
+    };
+
+    function renderViralTemplates(templates) {
+      const grid = document.getElementById('viral-templates-grid');
+      grid.innerHTML = templates.map(t => {
+        const hook = t.hook || {};
+        const ending = t.ending || {};
+        return '<div class="card" style="cursor:pointer;" onclick=\'fillViralScoreInput(' + JSON.stringify(JSON.stringify(t)).replace(/'/g, "\\'") + ')\'>' +
+          '<div class="card-title">' + t.key + ' <span style="color:var(--accent);font-size:11px;">' + (t.source || '') + '</span></div>' +
+          '<div class="card-value" style="font-size:18px;color:var(--success);">' + (t.retentionScore || '--') + '<span style="font-size:12px;color:var(--text-secondary);">/100</span></div>' +
+          '<div class="card-sub">HOOK: ' + (hook.text || '--').substring(0, 20) + '</div>' +
+          '<div class="card-sub">ENDING: ' + (ending.text || '--').substring(0, 20) + '</div>' +
+          '<div class="card-sub" style="margin-top:4px;"><span style="background:rgba(99,102,241,0.2);padding:2px 6px;border-radius:4px;font-size:11px;">' + (hook.type || '') + '</span> ' +
+          '<span style="background:rgba(34,197,94,0.2);padding:2px 6px;border-radius:4px;font-size:11px;">' + (ending.type || '') + '</span></div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function fillViralScoreInput(jsonStr) {
+      try {
+        const obj = JSON.parse(jsonStr);
+        // Remove non-structure fields
+        delete obj.key; delete obj.source; delete obj.id; delete obj.name; delete obj.category;
+        document.getElementById('viral-score-input').value = JSON.stringify(obj, null, 2);
+      } catch(e) {}
+    }
+
+    async function analyzeViralScript() {
+      const script = document.getElementById('viral-script-input').value.trim();
+      if (!script) return toast('请输入脚本内容', 'error');
+      try {
+        const r = await api('/viral/analyze', { script });
+        const d = r.data;
+        const container = document.getElementById('viral-analysis-result');
+        container.innerHTML =
+          '<div class="cards">' +
+            '<div class="card"><div class="card-title">HOOK强度</div><div class="card-value" style="color:' + (d.hookStrength >= 70 ? 'var(--success)' : d.hookStrength >= 40 ? 'var(--warning)' : 'var(--danger)') + ';">' + d.hookStrength + '</div></div>' +
+            '<div class="card"><div class="card-title">情绪弧线</div><div class="card-value" style="font-size:14px;">' + d.emotionalArc + '</div></div>' +
+          '</div>' +
+          '<div class="section" style="margin-top:12px;">' +
+            '<div class="section-title">改进建议</div>' +
+            '<ul style="color:var(--text-secondary);padding-left:20px;">' +
+              (d.improvements || []).map(i => '<li style="margin-bottom:4px;">' + i + '</li>').join('') +
+            '</ul>' +
+          '</div>' +
+          '<div class="section" style="margin-top:12px;">' +
+            '<div class="section-title">推荐结构</div>' +
+            '<pre style="background:var(--bg-primary);padding:12px;border-radius:8px;border:1px solid var(--border);font-size:12px;max-height:300px;overflow:auto;white-space:pre-wrap;">' + JSON.stringify(d.suggestedStructure, null, 2) + '</pre>' +
+          '</div>';
+      } catch (e) {
+        toast('分析失败: ' + e.message, 'error');
+      }
+    }
+
+    async function generateViralStructure() {
+      const idea = document.getElementById('viral-idea').value.trim();
+      if (!idea) return toast('请输入创意想法', 'error');
+      const template = document.getElementById('viral-template-select').value;
+      const duration = parseInt(document.getElementById('viral-duration').value) || 20000;
+      const style = document.getElementById('viral-style').value || 'cinematic';
+      try {
+        const r = await api('/viral/generate', { idea, template, duration, style });
+        const d = r.data;
+        document.getElementById('viral-generate-result').innerHTML =
+          '<pre style="background:var(--bg-primary);padding:12px;border-radius:8px;border:1px solid var(--border);font-size:12px;max-height:400px;overflow:auto;white-space:pre-wrap;">' + JSON.stringify(d, null, 2) + '</pre>';
+        // Also fill score input
+        document.getElementById('viral-score-input').value = JSON.stringify(d, null, 2);
+      } catch (e) {
+        toast('生成失败: ' + e.message, 'error');
+      }
+    }
+
+    async function scoreViralStructure() {
+      const raw = document.getElementById('viral-score-input').value.trim();
+      if (!raw) return toast('请输入ViralStructure JSON', 'error');
+      let structure;
+      try { structure = JSON.parse(raw); } catch { return toast('JSON格式错误', 'error'); }
+      try {
+        const r = await api('/viral/score', { structure });
+        const d = r.data;
+        document.getElementById('viral-score-result').innerHTML =
+          '<div class="cards">' +
+            '<div class="card"><div class="card-title">综合评分</div><div class="card-value" style="color:' + (d.overall >= 70 ? 'var(--success)' : 'var(--warning)') + ';">' + d.overall + '</div></div>' +
+            '<div class="card"><div class="card-title">HOOK评分</div><div class="card-value">' + d.hookScore + '</div></div>' +
+            '<div class="card"><div class="card-title">节奏评分</div><div class="card-value">' + d.paceScore + '</div></div>' +
+            '<div class="card"><div class="card-title">结尾评分</div><div class="card-value">' + d.endingScore + '</div></div>' +
+          '</div>' +
+          '<div style="margin-top:12px;">' +
+            '<strong style="color:var(--text-secondary);">建议:</strong>' +
+            '<ul style="color:var(--text-secondary);padding-left:20px;margin-top:4px;">' +
+              (d.suggestions || []).map(s => '<li>' + s + '</li>').join('') +
+            '</ul>' +
+          '</div>';
+      } catch (e) {
+        toast('评分失败: ' + e.message, 'error');
+      }
+    }
+
+    // ============================================================
+    // Series Manager (系列管理)
+    // ============================================================
+    let currentSeriesDetailId = null;
+
+    loaders.seriesManager = async () => {
+      try {
+        const r = await api('/series/list', {});
+        const list = r.data || [];
+        renderSeriesList(list);
+      } catch (e) {
+        toast('加载系列列表失败: ' + e.message, 'error');
+      }
+    };
+
+    function renderSeriesList(list) {
+      const container = document.getElementById('series-list-container');
+      if (!list.length) {
+        container.innerHTML = '<p style="color:var(--text-secondary);">暂无系列，点击"创建系列"开始</p>';
+        return;
+      }
+      container.innerHTML = '<div class="table-wrap"><table><thead><tr>' +
+        '<th>ID</th><th>名称</th><th>状态</th><th>集数</th><th>进度</th><th>创建时间</th><th>操作</th>' +
+        '</tr></thead><tbody>' +
+        list.map(s => {
+          const eps = s.episodes || [];
+          const total = eps.length;
+          const produced = eps.filter(e => e.status === 'produced').length;
+          const pct = total > 0 ? Math.round(produced / total * 100) : 0;
+          return '<tr>' +
+            '<td>' + s.id + '</td>' +
+            '<td>' + (s.name || '--') + '</td>' +
+            '<td><span class="badge" style="background:' + (s.status === 'materialized' ? 'var(--success)' : 'var(--warning)') + ';color:#fff;padding:2px 8px;border-radius:4px;font-size:12px;">' + (s.status || 'draft') + '</span></td>' +
+            '<td>' + total + '集</td>' +
+            '<td>' +
+              '<div style="display:flex;align-items:center;gap:8px;">' +
+                '<div style="flex:1;height:8px;background:var(--bg-primary);border-radius:4px;overflow:hidden;">' +
+                  '<div style="width:' + pct + '%;height:100%;background:var(--success);border-radius:4px;"></div>' +
+                '</div>' +
+                '<span style="font-size:12px;color:var(--text-secondary);">' + produced + '/' + total + '</span>' +
+              '</div>' +
+            '</td>' +
+            '<td>' + (s.createdAt ? new Date(s.createdAt).toLocaleDateString() : '--') + '</td>' +
+            '<td><button class="btn btn-sm btn-outline" onclick="viewSeriesDetail(' + s.id + ')">详情</button></td>' +
+          '</tr>';
+        }).join('') +
+        '</tbody></table></div>';
+    }
+
+    function showCreateSeriesForm() {
+      document.getElementById('create-series-form').style.display = 'block';
+    }
+
+    async function submitCreateSeries() {
+      const name = document.getElementById('series-name').value.trim();
+      if (!name) return toast('请输入系列名称', 'error');
+      const projectId = parseInt(document.getElementById('series-projectId').value) || 1;
+      const setting = document.getElementById('series-setting').value.trim();
+      const tone = document.getElementById('series-tone').value.trim();
+      const rulesText = document.getElementById('series-rules').value.trim();
+      const rules = rulesText ? rulesText.split('\n').filter(l => l.trim()) : [];
+      const arcTheme = document.getElementById('series-arc-theme').value.trim();
+      const arcCurveText = document.getElementById('series-arc-curve').value.trim();
+      const emotionCurve = arcCurveText ? arcCurveText.split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
+
+      try {
+        const r = await api('/series/create', {
+          projectId,
+          name,
+          worldView: { setting, tone, rules },
+          sharedCharacters: [],
+          sharedScenes: [],
+          sharedStyle: {
+            artStyle: document.getElementById('series-art-style').value.trim() || '',
+            colorGrading: document.getElementById('series-color-grading').value.trim() || '',
+            musicTheme: document.getElementById('series-music-theme').value.trim() || '',
+          },
+          seriesArc: { theme: arcTheme, emotionCurve },
+        });
+        toast('系列创建成功 (ID: ' + r.data.id + ')');
+        document.getElementById('create-series-form').style.display = 'none';
+        loaders.seriesManager();
+      } catch (e) {
+        toast('创建失败: ' + e.message, 'error');
+      }
+    }
+
+    async function viewSeriesDetail(seriesId) {
+      currentSeriesDetailId = seriesId;
+      try {
+        const r = await api('/series/getDetail', { seriesId });
+        const s = r.data;
+        document.getElementById('series-detail-title').textContent = s.name + ' - 系列详情';
+        document.getElementById('series-detail-info').innerHTML =
+          '<div class="cards">' +
+            '<div class="card"><div class="card-title">世界观</div><div class="card-sub">' + (s.worldView?.setting || '--') + '</div><div class="card-sub" style="color:var(--accent);">' + (s.worldView?.tone || '') + '</div></div>' +
+            '<div class="card"><div class="card-title">系列主题</div><div class="card-sub">' + (s.seriesArc?.theme || '--') + '</div><div class="card-sub" style="color:var(--accent);">' + (s.seriesArc?.emotionCurve || []).join(' → ') + '</div></div>' +
+            '<div class="card"><div class="card-title">状态</div><div class="card-value" style="font-size:16px;">' + (s.status || 'draft') + '</div></div>' +
+          '</div>';
+
+        renderEpisodeGrid(s.episodes || []);
+        document.getElementById('series-detail-view').style.display = 'block';
+      } catch (e) {
+        toast('加载详情失败: ' + e.message, 'error');
+      }
+    }
+
+    function renderEpisodeGrid(episodes) {
+      const grid = document.getElementById('series-episode-grid');
+      if (!episodes.length) {
+        grid.innerHTML = '<p style="color:var(--text-secondary);">暂无集数计划，请先"生成集数计划"</p>';
+        return;
+      }
+      const statusColors = {
+        draft: 'var(--text-secondary)',
+        scripted: 'var(--warning)',
+        storyboarded: 'var(--accent)',
+        produced: 'var(--success)',
+      };
+      grid.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;">' +
+        episodes.map(ep => {
+          const color = statusColors[ep.status] || 'var(--text-secondary)';
+          return '<div class="card" style="border-left:3px solid ' + color + ';">' +
+            '<div class="card-title">' + ep.title + '</div>' +
+            '<div style="font-size:12px;color:var(--text-secondary);">变体: ' + (ep.variation || '--') + '</div>' +
+            '<div style="font-size:12px;color:var(--text-secondary);">模板: ' + (ep.viralTemplate || '--') + '</div>' +
+            '<div style="margin-top:6px;"><span style="background:' + color + ';color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;">' + ep.status + '</span></div>' +
+            (ep.projectId ? '<div style="font-size:11px;color:var(--accent);margin-top:4px;">项目ID: ' + ep.projectId + '</div>' : '') +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+
+    async function generateSeriesPlan() {
+      if (!currentSeriesDetailId) return;
+      const count = parseInt(document.getElementById('series-episode-count').value) || 6;
+      try {
+        const r = await api('/series/generatePlan', { seriesId: currentSeriesDetailId, episodeCount: count });
+        toast(r.data.message || '集数计划已生成');
+        viewSeriesDetail(currentSeriesDetailId);
+      } catch (e) {
+        toast('生成集数计划失败: ' + e.message, 'error');
+      }
+    }
+
+    async function materializeSeriesEpisodes() {
+      if (!currentSeriesDetailId) return;
+      if (!confirm('确认为所有集数创建独立项目？这将创建多个新项目。')) return;
+      try {
+        const r = await api('/series/materialize', { seriesId: currentSeriesDetailId });
+        toast(r.data.message || '项目已创建');
+        viewSeriesDetail(currentSeriesDetailId);
+      } catch (e) {
+        toast('创建项目失败: ' + e.message, 'error');
       }
     }
 

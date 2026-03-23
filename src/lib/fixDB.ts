@@ -785,4 +785,47 @@ export default async (knex: Knex): Promise<void> => {
       table.integer("createdAt");
     });
   }
+
+  // t_anti_drift_config (防跑偏规则)
+  if (!(await knex.schema.hasTable("t_anti_drift_config"))) {
+    await knex.schema.createTable("t_anti_drift_config", (table) => {
+      table.increments("id").primary();
+      table.integer("projectId");
+      table.text("configType");   // "lightingLock" | "characterEntryRule" | "cameraConstraints" | "coreConvergence" | "unifiedPrefix" | "characterUniform"
+      table.text("configData");   // JSON
+      table.integer("enabled").defaultTo(1);
+      table.integer("createdAt");
+    });
+  }
+
+  // t_viral_template (爆款结构自定义模板)
+  if (!(await knex.schema.hasTable("t_viral_template"))) {
+    await knex.schema.createTable("t_viral_template", (table) => {
+      table.increments("id").primary();
+      table.text("name");
+      table.text("category");
+      table.text("structure");    // JSON: full ViralStructure
+      table.text("tags");         // JSON array
+      table.integer("usageCount").defaultTo(0);
+      table.integer("createdAt");
+      table.integer("updatedAt");
+    });
+  }
+
+  // t_series (系列生产)
+  if (!(await knex.schema.hasTable("t_series"))) {
+    await knex.schema.createTable("t_series", (table) => {
+      table.increments("id").primary();
+      table.integer("projectId");
+      table.text("name");
+      table.text("worldView");           // JSON
+      table.text("sharedCharacters");    // JSON array of character identity IDs
+      table.text("sharedScenes");        // JSON array of scene asset IDs
+      table.text("sharedStyle");         // JSON
+      table.text("episodes");            // JSON array of SeriesEpisode
+      table.text("seriesArc");           // JSON
+      table.text("status").defaultTo("draft");
+      table.integer("createdAt");
+    });
+  }
 };

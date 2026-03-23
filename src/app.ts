@@ -47,6 +47,7 @@ export default async function startServe(randomPort: Boolean = false) {
     : process.cwd(), "scripts", "web");
   app.use("/favicon.ico", express.static(path.join(webDir, "favicon.ico")));
   app.use("/admin.html", express.static(path.join(webDir, "admin.html")));
+  app.use("/timeline.html", express.static(path.join(webDir, "timeline.html")));
   app.use("/index.html", express.static(path.join(webDir, "index.html")));
   // Unified portal as root entry
   app.get("/", (req, res) => {

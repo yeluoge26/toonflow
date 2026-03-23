@@ -411,7 +411,39 @@ export interface t_videoModel {
   'type'?: string | null;
 }
 
+export interface t_anti_drift_config {
+  'id'?: number;
+  'projectId'?: number | null;
+  'configType'?: string | null;
+  'configData'?: string | null;
+  'enabled'?: number | null;
+  'createdAt'?: number | null;
+}
+export interface t_viral_template {
+  'id'?: number;
+  'name'?: string | null;
+  'category'?: string | null;
+  'structure'?: string | null;
+  'tags'?: string | null;
+  'usageCount'?: number | null;
+  'createdAt'?: number | null;
+  'updatedAt'?: number | null;
+}
+export interface t_series {
+  'id'?: number;
+  'projectId'?: number | null;
+  'name'?: string | null;
+  'worldView'?: string | null;
+  'sharedCharacters'?: string | null;
+  'sharedScenes'?: string | null;
+  'sharedStyle'?: string | null;
+  'episodes'?: string | null;
+  'seriesArc'?: string | null;
+  'status'?: string | null;
+  'createdAt'?: number | null;
+}
 export interface DB {
+  "t_anti_drift_config": t_anti_drift_config;
   "t_aiModelMap": t_aiModelMap;
   "t_artStyle": t_artStyle;
   "t_assets": t_assets;
@@ -448,4 +480,6 @@ export interface DB {
   "t_video_constraints": t_video_constraints;
   "t_videoConfig": t_videoConfig;
   "t_videoModel": t_videoModel;
+  "t_viral_template": t_viral_template;
+  "t_series": t_series;
 }

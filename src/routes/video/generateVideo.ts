@@ -9,6 +9,7 @@ import sharp from "sharp";
 import fs from "fs";
 import path from "path";
 import { loadVideoConstraints, buildVideoConstraintPrompt } from "@/lib/videoConstraints";
+import { getAntiDriftPromptForProject, getVideoPrefix } from "@/lib/antiDrift";
 
 const router = express.Router();
 
@@ -169,10 +170,21 @@ async function generateVideoAsync(
       // Constraints not available, continue without
     }
 
+    // Load anti-drift rules
+    let antiDriftBlock = "";
+    let videoPrefix = "";
+    try {
+      antiDriftBlock = await getAntiDriftPromptForProject(projectId);
+      videoPrefix = await getVideoPrefix(projectId);
+    } catch (_) {
+      // Anti-drift not available, continue without
+    }
+
     const inputPrompt = `
-请完全参照以下内容生成视频：
+${videoPrefix ? videoPrefix + "\n" : ""}请完全参照以下内容生成视频：
 ${prompt}
 ${constraintBlock}
+${antiDriftBlock ? "\n" + antiDriftBlock + "\n" : ""}
 重要强调：
 风格高度保持${projectData?.artStyle || "CG"}风格，保证人物一致性
 1. 视频整体风格、色调、光影、人脸五官与参考图片保持高度一致

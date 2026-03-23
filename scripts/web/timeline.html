@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToonFlow - Timeline Director Mode</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-primary: #0f1117;
+      --bg-secondary: #1a1d27;
+      --bg-card: #242736;
+      --bg-track: #181b24;
+      --text-primary: #e4e6eb;
+      --text-secondary: #8b8fa3;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --border: #2d3044;
+      --shot-bg: #2a2d3e;
+      --shot-selected: #3d4066;
+      --shot-hover: #33365a;
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg-primary); color: var(--text-primary); display: flex; flex-direction: column; }
+
+    /* Header Bar */
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .top-bar-left { display: flex; align-items: center; gap: 16px; }
+    .top-bar-left h1 { font-size: 16px; color: var(--accent); white-space: nowrap; }
+    .top-bar-left .project-name { font-size: 14px; color: var(--text-secondary); }
+    .top-bar-right { display: flex; gap: 8px; }
+
+    /* Buttons */
+    .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover:not(:disabled) { background: #16a34a; }
+    .btn-outline { background: transparent; color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover:not(:disabled) { background: #dc2626; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-icon { padding: 6px 8px; min-width: 32px; justify-content: center; }
+
+    /* Main Layout */
+    .workspace { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+    /* Left Sidebar */
+    .left-sidebar { width: 220px; min-width: 220px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+    .sidebar-section { border-bottom: 1px solid var(--border); }
+    .sidebar-section-header { padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+    .sidebar-section-header:hover { color: var(--text-primary); }
+    .sidebar-section-body { padding: 6px 10px 10px; max-height: 200px; overflow-y: auto; }
+    .sidebar-section.collapsed .sidebar-section-body { display: none; }
+
+    /* Character/Scene/Template cards */
+    .res-card { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: grab; transition: background 0.15s; margin-bottom: 4px; font-size: 13px; }
+    .res-card:hover { background: rgba(99,102,241,0.12); }
+    .res-card.dragging { opacity: 0.5; }
+    .res-avatar { width: 32px; height: 32px; border-radius: 6px; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; overflow: hidden; }
+    .res-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .res-info { flex: 1; min-width: 0; }
+    .res-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .res-sub { font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .template-card { padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: background 0.15s; margin-bottom: 4px; font-size: 12px; border: 1px solid transparent; }
+    .template-card:hover { background: rgba(99,102,241,0.12); border-color: var(--accent); }
+
+    /* Center Area */
+    .center-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+    /* Preview + Properties */
+    .preview-props { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+    /* Preview */
+    .preview-pane { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; min-width: 0; }
+    .preview-container { width: 100%; max-width: 640px; aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid var(--border); }
+    .preview-container img, .preview-container video { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .preview-placeholder { color: var(--text-secondary); font-size: 14px; text-align: center; }
+    .preview-shot-label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.7); padding: 3px 8px; border-radius: 4px; font-size: 11px; }
+
+    /* Properties Panel */
+    .props-panel { width: 280px; min-width: 280px; background: var(--bg-secondary); border-left: 1px solid var(--border); overflow-y: auto; padding: 14px; }
+    .props-title { font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--accent); }
+    .prop-group { margin-bottom: 12px; }
+    .prop-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: block; }
+    .prop-input, .prop-select, .prop-textarea { width: 100%; padding: 7px 10px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 13px; outline: none; font-family: inherit; }
+    .prop-input:focus, .prop-select:focus, .prop-textarea:focus { border-color: var(--accent); }
+    .prop-select { cursor: pointer; }
+    .prop-select option { background: var(--bg-primary); }
+    .prop-textarea { min-height: 60px; resize: vertical; }
+    .prop-row { display: flex; gap: 8px; }
+    .prop-row .prop-group { flex: 1; }
+
+    /* Duration slider */
+    .duration-display { display: flex; align-items: center; gap: 8px; }
+    .duration-display input[type="range"] { flex: 1; accent-color: var(--accent); }
+    .duration-display .dur-val { font-size: 13px; font-weight: 600; min-width: 28px; text-align: right; }
+
+    /* Shot role refs */
+    .shot-roles { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .shot-role-tag { display: flex; align-items: center; gap: 4px; padding: 2px 8px; background: rgba(99,102,241,0.15); border-radius: 4px; font-size: 11px; color: var(--accent); }
+    .shot-role-tag .remove-role { cursor: pointer; color: var(--danger); font-weight: bold; margin-left: 2px; }
+
+    /* No selection */
+    .no-selection { text-align: center; color: var(--text-secondary); padding: 40px 20px; font-size: 14px; }
+
+    /* Timeline Area */
+    .timeline-area { flex-shrink: 0; background: var(--bg-track); border-top: 1px solid var(--border); display: flex; flex-direction: column; }
+
+    /* Timeline controls */
+    .timeline-controls { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--border); background: var(--bg-secondary); flex-shrink: 0; }
+    .timeline-controls .tc-left { display: flex; align-items: center; gap: 8px; }
+    .timeline-controls .tc-right { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--text-secondary); }
+    .tc-total { font-weight: 600; color: var(--text-primary); }
+
+    /* Timeline track */
+    .timeline-track-wrapper { overflow-x: auto; overflow-y: hidden; padding: 12px 16px 16px; min-height: 100px; }
+    .timeline-track { display: flex; align-items: flex-end; gap: 4px; min-width: max-content; position: relative; padding-bottom: 22px; }
+
+    /* Time ruler */
+    .time-ruler { height: 20px; display: flex; position: absolute; bottom: 0; left: 0; right: 0; pointer-events: none; }
+    .time-mark { position: absolute; font-size: 10px; color: var(--text-secondary); bottom: 0; transform: translateX(-50%); }
+
+    /* Shot blocks */
+    .shot-block { background: var(--shot-bg); border: 2px solid transparent; border-radius: 6px; cursor: pointer; user-select: none; display: flex; flex-direction: column; transition: border-color 0.15s, background 0.15s; position: relative; min-width: 60px; height: 72px; overflow: hidden; }
+    .shot-block:hover { background: var(--shot-hover); border-color: var(--border); }
+    .shot-block.selected { background: var(--shot-selected); border-color: var(--accent); }
+    .shot-block.drag-over { border-color: var(--warning); }
+    .shot-block-thumb { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(0,0,0,0.3); }
+    .shot-block-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .shot-block-thumb .shot-icon { font-size: 16px; color: var(--text-secondary); }
+    .shot-block-info { padding: 3px 6px; display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: var(--text-secondary); }
+    .shot-block-info .shot-label { font-weight: 600; color: var(--text-primary); }
+    .shot-block-info .shot-dur { color: var(--accent); }
+    .shot-type-badge { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); padding: 1px 4px; border-radius: 3px; font-size: 9px; color: var(--warning); }
+
+    /* Resize handles */
+    .shot-resize-handle { position: absolute; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 2; }
+    .shot-resize-handle.left { left: -3px; }
+    .shot-resize-handle.right { right: -3px; }
+    .shot-resize-handle:hover { background: rgba(99,102,241,0.3); }
+
+    /* Add shot button in track */
+    .add-shot-block { background: transparent; border: 2px dashed var(--border); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; min-width: 50px; height: 72px; color: var(--text-secondary); font-size: 22px; transition: all 0.15s; }
+    .add-shot-block:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Login overlay */
+    .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-primary); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+    .login-overlay.hidden { display: none; }
+    .login-box { background: var(--bg-card); border-radius: 16px; padding: 40px; width: 400px; max-width: 90vw; border: 1px solid var(--border); text-align: center; }
+    .login-box h2 { font-size: 22px; margin-bottom: 8px; color: var(--accent); }
+    .login-box p { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
+    .login-box input { width: 100%; padding: 10px 14px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 14px; outline: none; margin-bottom: 12px; }
+    .login-box input:focus { border-color: var(--accent); }
+
+    /* Toast */
+    .toast { position: fixed; top: 20px; right: 20px; padding: 10px 18px; border-radius: 8px; font-size: 13px; z-index: 2000; animation: slideIn 0.3s; max-width: 360px; }
+    @keyframes slideIn { from { transform: translateX(80px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .toast-success { background: var(--success); color: white; }
+    .toast-error { background: var(--danger); color: white; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--bg-card); border-radius: 16px; padding: 24px; width: 560px; max-width: 90vw; max-height: 80vh; overflow-y: auto; border: 1px solid var(--border); }
+    .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .left-sidebar { width: 180px; min-width: 180px; }
+      .props-panel { width: 240px; min-width: 240px; }
+    }
+    @media (max-width: 700px) {
+      .left-sidebar { display: none; }
+      .props-panel { width: 200px; min-width: 200px; }
+    }
+
+    /* Project selector */
+    .project-selector { display: flex; align-items: center; gap: 8px; }
+    .project-selector select { padding: 5px 8px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 13px; outline: none; }
+    .project-selector select:focus { border-color: var(--accent); }
+
+    .episode-selector select { padding: 5px 8px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 13px; outline: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div class="login-overlay" id="login-overlay">
+    <div class="login-box">
+      <h2>ToonFlow Timeline</h2>
+      <p>Director Mode</p>
+      <input type="text" id="login-user" placeholder="Username" autocomplete="username">
+      <input type="password" id="login-pass" placeholder="Password" autocomplete="current-password">
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Login</button>
+    </div>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <h1>Director Mode</h1>
+      <div class="project-selector">
+        <select id="project-select" onchange="onProjectChange()"></select>
+      </div>
+      <div class="episode-selector">
+        <select id="episode-select" onchange="onEpisodeChange()"></select>
+      </div>
+      <span class="project-name" id="project-name"></span>
+    </div>
+    <div class="top-bar-right">
+      <button class="btn btn-outline btn-sm" onclick="addShotAtEnd()">+ Add Shot</button>
+      <button class="btn btn-outline btn-sm" onclick="showExportModal()">Export DSL</button>
+      <button class="btn btn-success btn-sm" onclick="saveAllShots()">Save</button>
+    </div>
+  </div>
+
+  <!-- Main Workspace -->
+  <div class="workspace">
+
+    <!-- Left Sidebar -->
+    <div class="left-sidebar">
+      <!-- Characters -->
+      <div class="sidebar-section" id="sec-characters">
+        <div class="sidebar-section-header" onclick="toggleSection('sec-characters')">
+          <span>Characters</span>
+          <span class="toggle-icon">&#9660;</span>
+        </div>
+        <div class="sidebar-section-body" id="char-list">
+          <div style="color:var(--text-secondary);font-size:12px;padding:8px;">Select a project to load</div>
+        </div>
+      </div>
+
+      <!-- Scenes -->
+      <div class="sidebar-section" id="sec-scenes">
+        <div class="sidebar-section-header" onclick="toggleSection('sec-scenes')">
+          <span>Scenes</span>
+          <span class="toggle-icon">&#9660;</span>
+        </div>
+        <div class="sidebar-section-body" id="scene-list">
+          <div style="color:var(--text-secondary);font-size:12px;padding:8px;">Select a project to load</div>
+        </div>
+      </div>
+
+      <!-- Shot Templates -->
+      <div class="sidebar-section" id="sec-templates">
+        <div class="sidebar-section-header" onclick="toggleSection('sec-templates')">
+          <span>Shot Templates</span>
+          <span class="toggle-icon">&#9660;</span>
+        </div>
+        <div class="sidebar-section-body" id="template-list"></div>
+      </div>
+
+      <!-- Props -->
+      <div class="sidebar-section" id="sec-props">
+        <div class="sidebar-section-header" onclick="toggleSection('sec-props')">
+          <span>Props</span>
+          <span class="toggle-icon">&#9660;</span>
+        </div>
+        <div class="sidebar-section-body" id="prop-list">
+          <div style="color:var(--text-secondary);font-size:12px;padding:8px;">Select a project to load</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center -->
+    <div class="center-area">
+      <div class="preview-props">
+        <!-- Preview -->
+        <div class="preview-pane">
+          <div class="preview-container" id="preview-container">
+            <div class="preview-placeholder" id="preview-placeholder">Select a shot to preview</div>
+            <img id="preview-img" style="display:none;" alt="">
+            <video id="preview-video" style="display:none;" controls></video>
+            <div class="preview-shot-label" id="preview-label" style="display:none;"></div>
+          </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <div class="props-panel" id="props-panel">
+          <div class="no-selection" id="no-selection">
+            <div style="font-size: 32px; margin-bottom: 12px;">&#127916;</div>
+            Click a shot on the timeline to edit its properties
+          </div>
+          <div id="props-form" style="display:none;">
+            <div class="props-title">Shot <span id="prop-shot-idx">1</span> Properties</div>
+
+            <div class="prop-row">
+              <div class="prop-group">
+                <label class="prop-label">Camera Type</label>
+                <select class="prop-select" id="prop-cameraType" onchange="updateShotProp('cameraType', this.value)">
+                  <option value="close_up">CU Close-up</option>
+                  <option value="extreme_close_up">ECU Extreme Close-up</option>
+                  <option value="medium_shot">MS Medium Shot</option>
+                  <option value="wide_shot">WS Wide Shot</option>
+                  <option value="extreme_wide">EWS Extreme Wide</option>
+                  <option value="over_shoulder">OTS Over-the-Shoulder</option>
+                  <option value="pov">POV Point of View</option>
+                </select>
+              </div>
+              <div class="prop-group">
+                <label class="prop-label">Camera Movement</label>
+                <select class="prop-select" id="prop-cameraMove" onchange="updateShotProp('cameraMove', this.value)">
+                  <option value="static">Static</option>
+                  <option value="push_in">Push In</option>
+                  <option value="pull_out">Pull Out</option>
+                  <option value="pan_left">Pan Left</option>
+                  <option value="pan_right">Pan Right</option>
+                  <option value="tilt_up">Tilt Up</option>
+                  <option value="tilt_down">Tilt Down</option>
+                  <option value="dolly">Dolly</option>
+                  <option value="orbit">Orbit</option>
+                  <option value="crane">Crane</option>
+                  <option value="handheld">Handheld</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="prop-row">
+              <div class="prop-group">
+                <label class="prop-label">Emotion</label>
+                <select class="prop-select" id="prop-emotion" onchange="updateShotProp('emotion', this.value)">
+                  <option value="peaceful">Peaceful</option>
+                  <option value="tense">Tense</option>
+                  <option value="sad">Sad</option>
+                  <option value="happy">Happy</option>
+                  <option value="angry">Angry</option>
+                  <option value="mysterious">Mysterious</option>
+                  <option value="romantic">Romantic</option>
+                  <option value="terrifying">Terrifying</option>
+                  <option value="epic">Epic</option>
+                </select>
+              </div>
+              <div class="prop-group">
+                <label class="prop-label">Transition</label>
+                <select class="prop-select" id="prop-transition" onchange="updateShotProp('transition', this.value)">
+                  <option value="cut">Hard Cut</option>
+                  <option value="dissolve">Dissolve</option>
+                  <option value="fade_in">Fade In</option>
+                  <option value="fade_out">Fade Out</option>
+                  <option value="wipe">Wipe</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="prop-group">
+              <label class="prop-label">Duration</label>
+              <div class="duration-display">
+                <input type="range" id="prop-duration" min="1" max="10" step="0.5" value="4" oninput="onDurationSlide(this.value)">
+                <span class="dur-val" id="prop-duration-val">4s</span>
+              </div>
+            </div>
+
+            <div class="prop-group">
+              <label class="prop-label">Dialogue</label>
+              <textarea class="prop-textarea" id="prop-dialogue" placeholder="Character dialogue..." oninput="updateShotProp('dialogue', this.value)" rows="2"></textarea>
+            </div>
+
+            <div class="prop-group">
+              <label class="prop-label">Sound Effect</label>
+              <input class="prop-input" id="prop-soundEffect" placeholder="e.g. wind, sword clash..." oninput="updateShotProp('soundEffect', this.value)">
+            </div>
+
+            <div class="prop-group">
+              <label class="prop-label">Scene / Location</label>
+              <input class="prop-input" id="prop-location" placeholder="Location..." oninput="updateShotProp('locationRef', this.value)">
+            </div>
+
+            <div class="prop-group">
+              <label class="prop-label">Prompt Override</label>
+              <textarea class="prop-textarea" id="prop-prompt" placeholder="Custom image prompt..." oninput="updateShotProp('prompt', this.value)" rows="3"></textarea>
+            </div>
+
+            <div class="prop-group">
+              <label class="prop-label">Characters in Shot</label>
+              <div class="shot-roles" id="prop-roles"></div>
+              <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Drag a character from the sidebar to add</div>
+            </div>
+
+            <div style="display:flex;gap:6px;margin-top:12px;">
+              <button class="btn btn-sm btn-outline" onclick="duplicateShot()">Duplicate</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteSelectedShot()">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="timeline-area">
+        <div class="timeline-controls">
+          <div class="tc-left">
+            <button class="btn btn-icon btn-sm btn-outline" id="btn-play" onclick="togglePlayback()" title="Play">&#9654;</button>
+            <button class="btn btn-icon btn-sm btn-outline" onclick="resetPlayback()" title="Reset">&#8634;</button>
+            <button class="btn btn-icon btn-sm btn-outline" onclick="zoomIn()" title="Zoom In">+</button>
+            <button class="btn btn-icon btn-sm btn-outline" onclick="zoomOut()" title="Zoom Out">-</button>
+          </div>
+          <div class="tc-right">
+            <span id="playback-time">00:00.0</span> /
+            <span class="tc-total" id="total-duration">00:00.0</span>
+            <span style="margin-left:8px;font-size:12px;">(<span id="shot-count">0</span> shots)</span>
+          </div>
+        </div>
+        <div class="timeline-track-wrapper" id="track-wrapper">
+          <div class="timeline-track" id="timeline-track">
+            <!-- Shot blocks rendered here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div class="modal-overlay" id="export-modal">
+    <div class="modal">
+      <div class="modal-title">Export Timeline as DSL JSON <button class="btn btn-sm btn-outline" style="float:right;" onclick="closeExportModal()">X</button></div>
+      <textarea id="export-json" style="width:100%;height:400px;background:var(--bg-primary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+        <button class="btn btn-outline" onclick="copyExportJSON()">Copy</button>
+        <button class="btn btn-primary" onclick="downloadExportJSON()">Download</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // State
+    // ============================================================
+    const API_BASE = '';
+    let TOKEN = localStorage.getItem('toonflow_token') || '';
+    let shots = [];
+    let selectedShotIndex = -1;
+    let projects = [];
+    let currentProjectId = null;
+    let currentEpisodeId = null;
+    let characters = [];
+    let scenes = [];
+    let props = [];
+    let scripts = [];
+    let zoomLevel = 1;
+    let isPlaying = false;
+    let playTimer = null;
+    let playCurrentTime = 0;
+
+    // Camera type display names
+    const CAMERA_TYPE_LABELS = {
+      close_up: 'CU', extreme_close_up: 'ECU', medium_shot: 'MS',
+      wide_shot: 'WS', extreme_wide: 'EWS', over_shoulder: 'OTS', pov: 'POV'
+    };
+
+    const CAMERA_TYPE_NAMES = {
+      close_up: 'Close-up', extreme_close_up: 'Extreme Close-up', medium_shot: 'Medium Shot',
+      wide_shot: 'Wide Shot', extreme_wide: 'Extreme Wide', over_shoulder: 'Over-the-Shoulder', pov: 'POV'
+    };
+
+    const EMOTION_COLORS = {
+      peaceful: '#3b82f6', tense: '#ef4444', sad: '#6366f1', happy: '#f59e0b',
+      angry: '#dc2626', mysterious: '#8b5cf6', romantic: '#ec4899', terrifying: '#1f2937', epic: '#d97706'
+    };
+
+    // Shot Templates
+    const SHOT_TEMPLATES = [
+      { name: 'Close-up Dialogue', type: 'close_up', move: 'static', emotion: 'peaceful', dur: 4, desc: 'Character close-up with dialogue' },
+      { name: 'Wide Establishing', type: 'wide_shot', move: 'static', emotion: 'epic', dur: 5, desc: 'Wide establishing shot of location' },
+      { name: 'OTS Conversation', type: 'over_shoulder', move: 'static', emotion: 'peaceful', dur: 3, desc: 'Over-the-shoulder conversation shot' },
+      { name: 'Dramatic Push-In', type: 'medium_shot', move: 'push_in', emotion: 'tense', dur: 4, desc: 'Dramatic push-in on character' },
+      { name: 'Reveal Pull-Out', type: 'close_up', move: 'pull_out', emotion: 'mysterious', dur: 5, desc: 'Pull out to reveal surroundings' },
+      { name: 'Action Pan', type: 'medium_shot', move: 'pan_right', emotion: 'tense', dur: 3, desc: 'Quick pan following action' },
+      { name: 'Emotional Close-up', type: 'extreme_close_up', move: 'static', emotion: 'sad', dur: 4, desc: 'Tight close-up for emotional beat' },
+      { name: 'Epic Crane Shot', type: 'wide_shot', move: 'crane', emotion: 'epic', dur: 6, desc: 'Crane shot over epic scenery' },
+      { name: 'POV Discovery', type: 'pov', move: 'dolly', emotion: 'mysterious', dur: 4, desc: 'First-person point of view discovery' },
+      { name: 'Battle Orbit', type: 'medium_shot', move: 'orbit', emotion: 'tense', dur: 5, desc: 'Orbiting around combat scene' },
+    ];
+
+    // ============================================================
+    // API
+    // ============================================================
+    async function api(path, data = {}) {
+      try {
+        const res = await fetch(API_BASE + path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': TOKEN },
+          body: JSON.stringify(data),
+        });
+        const json = await res.json();
+        return json.data !== undefined ? json : { code: res.status, data: json, message: json.message || '' };
+      } catch (e) {
+        console.error('API Error:', path, e);
+        return { code: 500, data: null, message: e.message };
+      }
+    }
+
+    function toast(msg, type = 'success') {
+      const t = document.createElement('div');
+      t.className = 'toast toast-' + type;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+    }
+
+    // ============================================================
+    // Auth
+    // ============================================================
+    function checkLogin() {
+      if (TOKEN) {
+        document.getElementById('login-overlay').classList.add('hidden');
+        init();
+      }
+    }
+
+    async function doLogin() {
+      const name = document.getElementById('login-user').value;
+      const password = document.getElementById('login-pass').value;
+      if (!name || !password) return toast('Please enter credentials', 'error');
+      const r = await api('/other/login', { name, password });
+      if (r.code === 200 && r.data?.token) {
+        TOKEN = 'Bearer ' + r.data.token;
+        localStorage.setItem('toonflow_token', TOKEN);
+        document.getElementById('login-overlay').classList.add('hidden');
+        init();
+      } else {
+        toast(r.message || 'Login failed', 'error');
+      }
+    }
+
+    // ============================================================
+    // Init
+    // ============================================================
+    async function init() {
+      renderTemplateList();
+      await loadProjects();
+    }
+
+    async function loadProjects() {
+      const r = await api('/project/getProject', {});
+      if (r.code === 200 && r.data) {
+        projects = Array.isArray(r.data) ? r.data : (r.data.list || []);
+        const sel = document.getElementById('project-select');
+        sel.innerHTML = '<option value="">-- Select Project --</option>';
+        projects.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name || ('Project #' + p.id);
+          sel.appendChild(opt);
+        });
+        // Auto-select first project
+        if (projects.length > 0) {
+          sel.value = projects[0].id;
+          onProjectChange();
+        }
+      }
+    }
+
+    async function onProjectChange() {
+      const pid = parseInt(document.getElementById('project-select').value);
+      if (!pid) return;
+      currentProjectId = pid;
+      const proj = projects.find(p => p.id === pid);
+      document.getElementById('project-name').textContent = proj ? (proj.type || '') + ' | ' + (proj.artStyle || '') : '';
+
+      // Load assets
+      await loadAssets(pid);
+      // Load scripts/episodes
+      await loadScripts(pid);
+    }
+
+    async function loadAssets(projectId) {
+      const r = await api('/assets/getAssets', { projectId });
+      if (r.code === 200 && r.data) {
+        const list = Array.isArray(r.data) ? r.data : (r.data.list || r.data || []);
+        characters = list.filter(a => a.type === 'character' || a.type === 'characters' || a.type === '\u89d2\u8272');
+        scenes = list.filter(a => a.type === 'scene' || a.type === 'scenes' || a.type === '\u573a\u666f');
+        props = list.filter(a => a.type === 'prop' || a.type === 'props' || a.type === '\u9053\u5177');
+        renderCharList();
+        renderSceneList();
+        renderPropList();
+      }
+    }
+
+    async function loadScripts(projectId) {
+      try {
+        const r = await api('/assets/getScriptList', { projectId });
+        if (r.code === 200 && r.data) {
+          scripts = Array.isArray(r.data) ? r.data : (r.data.list || []);
+          const sel = document.getElementById('episode-select');
+          sel.innerHTML = '<option value="">-- Episode --</option>';
+          scripts.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name || ('Ep ' + s.id);
+            sel.appendChild(opt);
+          });
+          if (scripts.length > 0) {
+            sel.value = scripts[0].id;
+            onEpisodeChange();
+          }
+        }
+      } catch (e) {
+        // If getScriptList fails, try loading storyboard directly
+        scripts = [];
+      }
+    }
+
+    async function onEpisodeChange() {
+      const sid = parseInt(document.getElementById('episode-select').value);
+      if (!sid || !currentProjectId) return;
+      currentEpisodeId = sid;
+      await loadStoryboard(currentProjectId, sid);
+    }
+
+    async function loadStoryboard(projectId, scriptId) {
+      const r = await api('/storyboard/getStoryboard', { projectId, scriptId });
+      if (r.code === 200 && r.data) {
+        const data = r.data;
+        const rawShots = data.shots || data.list || data || [];
+        if (Array.isArray(rawShots)) {
+          shots = rawShots.map((s, i) => normalizeShot(s, i));
+        } else {
+          shots = [];
+        }
+        selectedShotIndex = shots.length > 0 ? 0 : -1;
+        renderTimeline();
+        updatePropsPanel();
+        updatePreview();
+      } else {
+        shots = [];
+        selectedShotIndex = -1;
+        renderTimeline();
+        updatePropsPanel();
+        updatePreview();
+      }
+    }
+
+    function normalizeShot(raw, index) {
+      return {
+        index: raw.shotIndex ?? raw.index ?? index,
+        name: raw.name || ('S' + (index + 1)),
+        cameraType: raw.cameraType || raw.type || 'medium_shot',
+        cameraMove: raw.cameraMove || raw.cameraMovement || 'static',
+        emotion: raw.emotion || raw.state || 'peaceful',
+        duration: parseFloat(raw.duration) || (raw.durationMs ? raw.durationMs / 1000 : 4),
+        dialogue: raw.dialogue || '',
+        soundEffect: raw.soundEffect || '',
+        transition: raw.transition || 'cut',
+        locationRef: raw.locationRef || '',
+        roleRefs: parseRoleRefs(raw.roleRefs),
+        prompt: raw.prompt || '',
+        filePath: raw.filePath || '',
+        videoPrompt: raw.videoPrompt || '',
+        segmentId: raw.segmentId || null,
+        id: raw.id || null,
+      };
+    }
+
+    function parseRoleRefs(refs) {
+      if (!refs) return [];
+      if (Array.isArray(refs)) return refs;
+      try { return JSON.parse(refs); } catch { return refs.split(',').map(s => s.trim()).filter(Boolean); }
+    }
+
+    // ============================================================
+    // Sidebar Rendering
+    // ============================================================
+    function toggleSection(id) {
+      document.getElementById(id).classList.toggle('collapsed');
+    }
+
+    function renderCharList() {
+      const el = document.getElementById('char-list');
+      if (characters.length === 0) {
+        el.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;padding:8px;">No characters found</div>';
+        return;
+      }
+      el.innerHTML = characters.map((c, i) => {
+        const thumb = c.filePath ? '<img src="' + c.filePath + '" alt="">' : '&#128100;';
+        return '<div class="res-card" draggable="true" ondragstart="dragCharStart(event,' + i + ')">' +
+          '<div class="res-avatar">' + thumb + '</div>' +
+          '<div class="res-info"><div class="res-name">' + esc(c.name) + '</div><div class="res-sub">' + esc(c.intro || c.remark || '') + '</div></div></div>';
+      }).join('');
+    }
+
+    function renderSceneList() {
+      const el = document.getElementById('scene-list');
+      if (scenes.length === 0) {
+        el.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;padding:8px;">No scenes found</div>';
+        return;
+      }
+      el.innerHTML = scenes.map(s => {
+        const thumb = s.filePath ? '<img src="' + s.filePath + '" alt="">' : '&#127748;';
+        return '<div class="res-card">' +
+          '<div class="res-avatar">' + thumb + '</div>' +
+          '<div class="res-info"><div class="res-name">' + esc(s.name) + '</div><div class="res-sub">' + esc(s.intro || s.remark || '') + '</div></div></div>';
+      }).join('');
+    }
+
+    function renderPropList() {
+      const el = document.getElementById('prop-list');
+      if (props.length === 0) {
+        el.innerHTML = '<div style="color:var(--text-secondary);font-size:12px;padding:8px;">No props found</div>';
+        return;
+      }
+      el.innerHTML = props.map(p => {
+        const thumb = p.filePath ? '<img src="' + p.filePath + '" alt="">' : '&#128295;';
+        return '<div class="res-card">' +
+          '<div class="res-avatar">' + thumb + '</div>' +
+          '<div class="res-info"><div class="res-name">' + esc(p.name) + '</div></div></div>';
+      }).join('');
+    }
+
+    function renderTemplateList() {
+      const el = document.getElementById('template-list');
+      el.innerHTML = SHOT_TEMPLATES.map((t, i) =>
+        '<div class="template-card" onclick="applyTemplate(' + i + ')" title="' + esc(t.desc) + '">' +
+        '<div style="font-weight:600;">' + esc(t.name) + '</div>' +
+        '<div style="color:var(--text-secondary);font-size:11px;">' + CAMERA_TYPE_LABELS[t.type] + ' | ' + t.move.replace(/_/g, ' ') + ' | ' + t.dur + 's</div>' +
+        '</div>'
+      ).join('');
+    }
+
+    // ============================================================
+    // Character Drag & Drop
+    // ============================================================
+    let dragCharIndex = -1;
+
+    function dragCharStart(e, idx) {
+      dragCharIndex = idx;
+      e.dataTransfer.setData('text/plain', 'char:' + idx);
+      e.dataTransfer.effectAllowed = 'copy';
+    }
+
+    // ============================================================
+    // Timeline Rendering
+    // ============================================================
+    function renderTimeline() {
+      const track = document.getElementById('timeline-track');
+      const PX_PER_SEC = 30 * zoomLevel;
+
+      let html = '';
+      let accTime = 0;
+
+      shots.forEach((shot, i) => {
+        const w = Math.max(shot.duration * PX_PER_SEC, 50);
+        const isSelected = i === selectedShotIndex;
+        const emotionColor = EMOTION_COLORS[shot.emotion] || '#555';
+        const typeLabel = CAMERA_TYPE_LABELS[shot.cameraType] || 'MS';
+        const thumbHtml = shot.filePath
+          ? '<img src="' + shot.filePath + '" alt="">'
+          : '<span class="shot-icon">' + typeLabel + '</span>';
+
+        html += '<div class="shot-block' + (isSelected ? ' selected' : '') + '" ' +
+          'style="width:' + w + 'px;border-bottom:3px solid ' + emotionColor + ';" ' +
+          'data-idx="' + i + '" ' +
+          'draggable="true" ' +
+          'onclick="selectShot(' + i + ')" ' +
+          'ondragstart="shotDragStart(event,' + i + ')" ' +
+          'ondragover="shotDragOver(event,' + i + ')" ' +
+          'ondragleave="shotDragLeave(event)" ' +
+          'ondrop="shotDrop(event,' + i + ')" ' +
+          '>' +
+          '<div class="shot-resize-handle left" onmousedown="startResize(event,' + i + ',\'left\')"></div>' +
+          '<div class="shot-block-thumb">' + thumbHtml + '</div>' +
+          '<div class="shot-block-info"><span class="shot-label">S' + (i + 1) + '</span><span class="shot-dur">' + shot.duration.toFixed(1) + 's</span></div>' +
+          '<div class="shot-type-badge">' + typeLabel + '</div>' +
+          '<div class="shot-resize-handle right" onmousedown="startResize(event,' + i + ',\'right\')"></div>' +
+          '</div>';
+
+        accTime += shot.duration;
+      });
+
+      // Add shot button
+      html += '<div class="add-shot-block" onclick="addShotAtEnd()">+</div>';
+
+      track.innerHTML = html;
+
+      // Enable character drop on shot blocks
+      track.querySelectorAll('.shot-block').forEach(block => {
+        block.addEventListener('dragover', e => {
+          if (dragCharIndex >= 0) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            block.classList.add('drag-over');
+          }
+        });
+        block.addEventListener('dragleave', () => block.classList.remove('drag-over'));
+        block.addEventListener('drop', e => {
+          block.classList.remove('drag-over');
+          const data = e.dataTransfer.getData('text/plain');
+          if (data.startsWith('char:')) {
+            e.preventDefault();
+            const ci = parseInt(data.split(':')[1]);
+            const si = parseInt(block.dataset.idx);
+            if (ci >= 0 && ci < characters.length && si >= 0 && si < shots.length) {
+              const charName = characters[ci].name;
+              if (!shots[si].roleRefs.includes(charName)) {
+                shots[si].roleRefs.push(charName);
+                if (si === selectedShotIndex) updatePropsPanel();
+                renderTimeline();
+              }
+            }
+          }
+          dragCharIndex = -1;
+        });
+      });
+
+      // Update stats
+      const totalDur = shots.reduce((s, sh) => s + sh.duration, 0);
+      document.getElementById('total-duration').textContent = formatTime(totalDur);
+      document.getElementById('shot-count').textContent = shots.length;
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return String(m).padStart(2, '0') + ':' + s.toFixed(1).padStart(4, '0');
+    }
+
+    // ============================================================
+    // Shot Selection
+    // ============================================================
+    function selectShot(idx) {
+      if (idx < 0 || idx >= shots.length) return;
+      selectedShotIndex = idx;
+      renderTimeline();
+      updatePropsPanel();
+      updatePreview();
+    }
+
+    function updatePropsPanel() {
+      if (selectedShotIndex < 0 || selectedShotIndex >= shots.length) {
+        document.getElementById('no-selection').style.display = '';
+        document.getElementById('props-form').style.display = 'none';
+        return;
+      }
+      document.getElementById('no-selection').style.display = 'none';
+      document.getElementById('props-form').style.display = '';
+
+      const shot = shots[selectedShotIndex];
+      document.getElementById('prop-shot-idx').textContent = selectedShotIndex + 1;
+      document.getElementById('prop-cameraType').value = shot.cameraType;
+      document.getElementById('prop-cameraMove').value = shot.cameraMove;
+      document.getElementById('prop-emotion').value = shot.emotion;
+      document.getElementById('prop-transition').value = shot.transition;
+      document.getElementById('prop-duration').value = shot.duration;
+      document.getElementById('prop-duration-val').textContent = shot.duration.toFixed(1) + 's';
+      document.getElementById('prop-dialogue').value = shot.dialogue;
+      document.getElementById('prop-soundEffect').value = shot.soundEffect;
+      document.getElementById('prop-location').value = shot.locationRef;
+      document.getElementById('prop-prompt').value = shot.prompt;
+
+      // Role refs
+      const rolesEl = document.getElementById('prop-roles');
+      if (shot.roleRefs.length === 0) {
+        rolesEl.innerHTML = '<span style="font-size:11px;color:var(--text-secondary);">None</span>';
+      } else {
+        rolesEl.innerHTML = shot.roleRefs.map((r, ri) =>
+          '<span class="shot-role-tag">' + esc(r) +
+          ' <span class="remove-role" onclick="removeRole(' + ri + ')">&times;</span></span>'
+        ).join('');
+      }
+    }
+
+    function updatePreview() {
+      const img = document.getElementById('preview-img');
+      const vid = document.getElementById('preview-video');
+      const ph = document.getElementById('preview-placeholder');
+      const label = document.getElementById('preview-label');
+
+      if (selectedShotIndex < 0 || selectedShotIndex >= shots.length) {
+        img.style.display = 'none';
+        vid.style.display = 'none';
+        ph.style.display = '';
+        label.style.display = 'none';
+        return;
+      }
+
+      const shot = shots[selectedShotIndex];
+      label.style.display = '';
+      label.textContent = 'S' + (selectedShotIndex + 1) + ' | ' + (CAMERA_TYPE_NAMES[shot.cameraType] || shot.cameraType) + ' | ' + shot.duration + 's';
+
+      if (shot.filePath) {
+        const isVideo = /\.(mp4|webm|mov)$/i.test(shot.filePath);
+        if (isVideo) {
+          img.style.display = 'none';
+          vid.style.display = '';
+          vid.src = shot.filePath;
+          ph.style.display = 'none';
+        } else {
+          vid.style.display = 'none';
+          img.style.display = '';
+          img.src = shot.filePath;
+          ph.style.display = 'none';
+        }
+      } else {
+        img.style.display = 'none';
+        vid.style.display = 'none';
+        ph.style.display = '';
+        ph.textContent = 'S' + (selectedShotIndex + 1) + ' — No image generated yet';
+      }
+    }
+
+    // ============================================================
+    // Shot Property Updates
+    // ============================================================
+    function updateShotProp(prop, value) {
+      if (selectedShotIndex < 0 || selectedShotIndex >= shots.length) return;
+      shots[selectedShotIndex][prop] = value;
+      if (prop === 'cameraType' || prop === 'emotion' || prop === 'duration') {
+        renderTimeline();
+      }
+    }
+
+    function onDurationSlide(val) {
+      const v = parseFloat(val);
+      document.getElementById('prop-duration-val').textContent = v.toFixed(1) + 's';
+      updateShotProp('duration', v);
+    }
+
+    function removeRole(ri) {
+      if (selectedShotIndex < 0) return;
+      shots[selectedShotIndex].roleRefs.splice(ri, 1);
+      updatePropsPanel();
+    }
+
+    // ============================================================
+    // Shot Operations
+    // ============================================================
+    function addShotAtEnd() {
+      const newShot = {
+        index: shots.length,
+        name: 'S' + (shots.length + 1),
+        cameraType: 'medium_shot',
+        cameraMove: 'static',
+        emotion: 'peaceful',
+        duration: 4,
+        dialogue: '',
+        soundEffect: '',
+        transition: 'cut',
+        locationRef: '',
+        roleRefs: [],
+        prompt: '',
+        filePath: '',
+        videoPrompt: '',
+        segmentId: null,
+        id: null,
+      };
+      shots.push(newShot);
+      selectedShotIndex = shots.length - 1;
+      renderTimeline();
+      updatePropsPanel();
+      updatePreview();
+      // Scroll to end
+      const wrapper = document.getElementById('track-wrapper');
+      setTimeout(() => wrapper.scrollLeft = wrapper.scrollWidth, 50);
+    }
+
+    function duplicateShot() {
+      if (selectedShotIndex < 0) return;
+      const clone = JSON.parse(JSON.stringify(shots[selectedShotIndex]));
+      clone.id = null;
+      clone.filePath = '';
+      shots.splice(selectedShotIndex + 1, 0, clone);
+      reindexShots();
+      selectedShotIndex++;
+      renderTimeline();
+      updatePropsPanel();
+      updatePreview();
+    }
+
+    function deleteSelectedShot() {
+      if (selectedShotIndex < 0 || shots.length === 0) return;
+      shots.splice(selectedShotIndex, 1);
+      reindexShots();
+      if (selectedShotIndex >= shots.length) selectedShotIndex = shots.length - 1;
+      renderTimeline();
+      updatePropsPanel();
+      updatePreview();
+    }
+
+    function reindexShots() {
+      shots.forEach((s, i) => {
+        s.index = i;
+        s.name = 'S' + (i + 1);
+      });
+    }
+
+    function applyTemplate(templateIdx) {
+      const t = SHOT_TEMPLATES[templateIdx];
+      if (selectedShotIndex >= 0 && selectedShotIndex < shots.length) {
+        // Apply to selected shot
+        shots[selectedShotIndex].cameraType = t.type;
+        shots[selectedShotIndex].cameraMove = t.move;
+        shots[selectedShotIndex].emotion = t.emotion;
+        shots[selectedShotIndex].duration = t.dur;
+        renderTimeline();
+        updatePropsPanel();
+        toast('Template applied to S' + (selectedShotIndex + 1));
+      } else {
+        // Create new shot from template
+        const newShot = {
+          index: shots.length,
+          name: 'S' + (shots.length + 1),
+          cameraType: t.type,
+          cameraMove: t.move,
+          emotion: t.emotion,
+          duration: t.dur,
+          dialogue: '',
+          soundEffect: '',
+          transition: 'cut',
+          locationRef: '',
+          roleRefs: [],
+          prompt: '',
+          filePath: '',
+          videoPrompt: '',
+          segmentId: null,
+          id: null,
+        };
+        shots.push(newShot);
+        selectedShotIndex = shots.length - 1;
+        renderTimeline();
+        updatePropsPanel();
+        updatePreview();
+        toast('New shot created from template');
+      }
+    }
+
+    // ============================================================
+    // Drag & Drop Reorder
+    // ============================================================
+    let dragShotIdx = -1;
+
+    function shotDragStart(e, idx) {
+      dragShotIdx = idx;
+      e.dataTransfer.setData('text/plain', 'shot:' + idx);
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => {
+        const blocks = document.querySelectorAll('.shot-block');
+        if (blocks[idx]) blocks[idx].classList.add('dragging');
+      }, 0);
+    }
+
+    function shotDragOver(e, idx) {
+      if (dragShotIdx >= 0 && dragShotIdx !== idx) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const blocks = document.querySelectorAll('.shot-block');
+        if (blocks[idx]) blocks[idx].classList.add('drag-over');
+      }
+    }
+
+    function shotDragLeave(e) {
+      e.target.closest('.shot-block')?.classList.remove('drag-over');
+    }
+
+    function shotDrop(e, targetIdx) {
+      e.preventDefault();
+      document.querySelectorAll('.shot-block').forEach(b => b.classList.remove('drag-over', 'dragging'));
+      if (dragShotIdx < 0 || dragShotIdx === targetIdx) return;
+
+      const data = e.dataTransfer.getData('text/plain');
+      if (!data.startsWith('shot:')) return;
+
+      const moved = shots.splice(dragShotIdx, 1)[0];
+      shots.splice(targetIdx, 0, moved);
+      reindexShots();
+
+      if (selectedShotIndex === dragShotIdx) {
+        selectedShotIndex = targetIdx;
+      } else if (selectedShotIndex > dragShotIdx && selectedShotIndex <= targetIdx) {
+        selectedShotIndex--;
+      } else if (selectedShotIndex < dragShotIdx && selectedShotIndex >= targetIdx) {
+        selectedShotIndex++;
+      }
+
+      dragShotIdx = -1;
+      renderTimeline();
+      updatePropsPanel();
+    }
+
+    // ============================================================
+    // Resize Duration by Dragging Edge
+    // ============================================================
+    let resizeState = null;
+
+    function startResize(e, idx, side) {
+      e.preventDefault();
+      e.stopPropagation();
+      resizeState = { idx, side, startX: e.clientX, startDur: shots[idx].duration };
+      document.addEventListener('mousemove', onResize);
+      document.addEventListener('mouseup', endResize);
+    }
+
+    function onResize(e) {
+      if (!resizeState) return;
+      const PX_PER_SEC = 30 * zoomLevel;
+      const dx = e.clientX - resizeState.startX;
+      let deltaSec = dx / PX_PER_SEC;
+      if (resizeState.side === 'left') deltaSec = -deltaSec;
+      const newDur = Math.max(1, Math.min(10, resizeState.startDur + deltaSec));
+      shots[resizeState.idx].duration = Math.round(newDur * 2) / 2; // Snap to 0.5s
+      renderTimeline();
+      if (resizeState.idx === selectedShotIndex) updatePropsPanel();
+    }
+
+    function endResize() {
+      resizeState = null;
+      document.removeEventListener('mousemove', onResize);
+      document.removeEventListener('mouseup', endResize);
+    }
+
+    // ============================================================
+    // Zoom
+    // ============================================================
+    function zoomIn() {
+      zoomLevel = Math.min(3, zoomLevel + 0.25);
+      renderTimeline();
+    }
+
+    function zoomOut() {
+      zoomLevel = Math.max(0.5, zoomLevel - 0.25);
+      renderTimeline();
+    }
+
+    // ============================================================
+    // Playback
+    // ============================================================
+    function togglePlayback() {
+      if (isPlaying) {
+        stopPlayback();
+      } else {
+        startPlayback();
+      }
+    }
+
+    function startPlayback() {
+      if (shots.length === 0) return;
+      isPlaying = true;
+      document.getElementById('btn-play').innerHTML = '&#9646;&#9646;';
+      if (selectedShotIndex < 0) selectedShotIndex = 0;
+      playCurrentTime = 0;
+
+      // Calculate cumulative times
+      let accum = 0;
+      const shotStarts = shots.map(s => { const start = accum; accum += s.duration; return start; });
+      const totalDur = accum;
+      let startTs = Date.now() - playCurrentTime * 1000;
+
+      playTimer = setInterval(() => {
+        const elapsed = (Date.now() - startTs) / 1000;
+        playCurrentTime = elapsed;
+        document.getElementById('playback-time').textContent = formatTime(elapsed);
+
+        if (elapsed >= totalDur) {
+          stopPlayback();
+          return;
+        }
+
+        // Find current shot
+        for (let i = shots.length - 1; i >= 0; i--) {
+          if (elapsed >= shotStarts[i]) {
+            if (selectedShotIndex !== i) {
+              selectedShotIndex = i;
+              renderTimeline();
+              updatePropsPanel();
+              updatePreview();
+            }
+            break;
+          }
+        }
+      }, 100);
+    }
+
+    function stopPlayback() {
+      isPlaying = false;
+      clearInterval(playTimer);
+      document.getElementById('btn-play').innerHTML = '&#9654;';
+    }
+
+    function resetPlayback() {
+      stopPlayback();
+      playCurrentTime = 0;
+      document.getElementById('playback-time').textContent = '00:00.0';
+      if (shots.length > 0) {
+        selectedShotIndex = 0;
+        renderTimeline();
+        updatePropsPanel();
+        updatePreview();
+      }
+    }
+
+    // ============================================================
+    // Save
+    // ============================================================
+    async function saveAllShots() {
+      if (!currentProjectId || !currentEpisodeId) {
+        toast('Select a project and episode first', 'error');
+        return;
+      }
+      const payload = shots.map((s, i) => ({
+        shotIndex: i,
+        name: s.name,
+        type: s.cameraType,
+        cameraMove: s.cameraMove,
+        emotion: s.emotion,
+        duration: String(s.duration),
+        durationMs: Math.round(s.duration * 1000),
+        dialogue: s.dialogue,
+        soundEffect: s.soundEffect,
+        transition: s.transition,
+        locationRef: s.locationRef,
+        roleRefs: JSON.stringify(s.roleRefs),
+        prompt: s.prompt,
+        filePath: s.filePath,
+        videoPrompt: s.videoPrompt,
+        segmentId: s.segmentId,
+      }));
+
+      try {
+        const r = await api('/storyboard/saveStructuredShots', {
+          projectId: currentProjectId,
+          scriptId: currentEpisodeId,
+          shots: payload,
+        });
+        if (r.code === 200) {
+          toast('Timeline saved successfully');
+        } else {
+          toast(r.message || 'Save failed', 'error');
+        }
+      } catch (e) {
+        toast('Save failed: ' + e.message, 'error');
+      }
+    }
+
+    // ============================================================
+    // Export
+    // ============================================================
+    function showExportModal() {
+      const dsl = buildDSLExport();
+      document.getElementById('export-json').value = JSON.stringify(dsl, null, 2);
+      document.getElementById('export-modal').classList.add('show');
+    }
+
+    function closeExportModal() {
+      document.getElementById('export-modal').classList.remove('show');
+    }
+
+    function buildDSLExport() {
+      const proj = projects.find(p => p.id === currentProjectId) || {};
+      return {
+        projectId: currentProjectId,
+        episode: currentEpisodeId,
+        scene: 1,
+        globalStyle: {
+          artStyle: proj.artStyle || '',
+          genre: proj.type || '',
+          colorGrading: '',
+          camera: '50mm cinematic',
+        },
+        location: {
+          id: '',
+          name: '',
+          description: '',
+          lockPrompt: '',
+        },
+        transition: 'cut',
+        shots: shots.map((s, i) => ({
+          index: i,
+          durationMs: Math.round(s.duration * 1000),
+          timeOfDay: 'day',
+          camera: {
+            type: s.cameraType,
+            angle: 'eye_level',
+            movement: s.cameraMove,
+            composition: 'rule_of_thirds',
+          },
+          emotion: s.emotion,
+          characters: s.roleRefs.map(name => ({
+            id: name,
+            name: name,
+            action: '',
+            expression: s.emotion,
+            position: 'center',
+          })),
+          dialogue: s.dialogue ? { speaker: s.roleRefs[0] || '', text: s.dialogue, emotion: s.emotion } : null,
+          soundEffects: s.soundEffect ? [{ type: 'ambient', description: s.soundEffect }] : [],
+          transition: s.transition,
+          prompt: s.prompt,
+          locationRef: s.locationRef,
+        })),
+      };
+    }
+
+    function copyExportJSON() {
+      const el = document.getElementById('export-json');
+      el.select();
+      navigator.clipboard.writeText(el.value).then(() => toast('Copied to clipboard'));
+    }
+
+    function downloadExportJSON() {
+      const json = document.getElementById('export-json').value;
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'timeline-dsl-' + (currentProjectId || 'export') + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Downloaded');
+    }
+
+    // ============================================================
+    // Utilities
+    // ============================================================
+    function esc(str) {
+      if (!str) return '';
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      // Escape to close modals
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
+      }
+      // Don't handle shortcuts when typing in inputs
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+      if (e.key === 'ArrowRight') {
+        if (selectedShotIndex < shots.length - 1) selectShot(selectedShotIndex + 1);
+      } else if (e.key === 'ArrowLeft') {
+        if (selectedShotIndex > 0) selectShot(selectedShotIndex - 1);
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        deleteSelectedShot();
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        togglePlayback();
+      } else if (e.key === 'd' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        duplicateShot();
+      } else if (e.key === '+' || e.key === '=') {
+        zoomIn();
+      } else if (e.key === '-') {
+        zoomOut();
+      }
+    });
+
+    // Login enter key
+    document.getElementById('login-pass').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+
+    // ============================================================
+    // Init on load
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      checkLogin();
+    });
+  </script>
+</body>
+</html>
