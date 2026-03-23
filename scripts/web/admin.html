@@ -1750,7 +1750,7 @@
       };
 
       try {
-        var response = await fetch(BASE + '/project/oneClickGenerate', {
+        var response = await fetch('/project/oneClickGenerate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('tf-token') || '') },
           body: JSON.stringify(params),
