@@ -305,12 +305,71 @@
       <!-- ==================== Projects ==================== -->
       <div class="module" id="module-projects">
         <div class="section">
-          <div class="section-title">项目列表</div>
+          <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+            项目列表
+            <button class="btn btn-primary" onclick="openModal('oneclick-modal')">一句话生成</button>
+          </div>
           <div id="project-list"></div>
         </div>
         <div class="section" id="project-detail-section" style="display:none;">
           <div class="section-title" id="project-detail-title">项目详情</div>
           <div id="project-detail"></div>
+        </div>
+
+        <!-- 一句话生成 Modal -->
+        <div class="modal-overlay" id="oneclick-modal">
+          <div class="modal" style="width:600px;">
+            <button class="modal-close" onclick="closeModal('oneclick-modal')">&times;</button>
+            <div class="modal-title">一句话生成剧本</div>
+            <div class="form-group">
+              <label>创作灵感 *</label>
+              <textarea id="oc-idea" rows="3" placeholder="例：一个调酒师和失恋女孩在酒吧相遇的故事" style="min-height:80px;"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>集数</label>
+                <select id="oc-episodeCount">
+                  <option value="3">3 集</option>
+                  <option value="5" selected>5 集</option>
+                  <option value="8">8 集</option>
+                  <option value="10">10 集</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>类型</label>
+                <select id="oc-type">
+                  <option value="短剧" selected>短剧</option>
+                  <option value="甜宠">甜宠</option>
+                  <option value="悬疑">悬疑</option>
+                  <option value="都市">都市</option>
+                  <option value="古装">古装</option>
+                  <option value="奇幻">奇幻</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>画风</label>
+                <input type="text" id="oc-artStyle" value="龙族传说" placeholder="画风/风格">
+              </div>
+              <div class="form-group">
+                <label>画幅</label>
+                <select id="oc-videoRatio">
+                  <option value="16:9" selected>16:9 横屏</option>
+                  <option value="9:16">9:16 竖屏</option>
+                  <option value="1:1">1:1 方形</option>
+                </select>
+              </div>
+            </div>
+            <div id="oc-progress" style="display:none;margin-bottom:16px;">
+              <div style="font-size:13px;color:var(--text-secondary);margin-bottom:8px;">生成进度</div>
+              <div id="oc-progress-list" style="font-size:13px;line-height:2;max-height:200px;overflow-y:auto;background:var(--bg-primary);border-radius:8px;padding:12px;"></div>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;">
+              <button class="btn btn-outline" onclick="closeModal('oneclick-modal')">取消</button>
+              <button class="btn btn-primary" id="oc-submit-btn" onclick="startOneClickGenerate()">开始创作</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1665,6 +1724,83 @@
           '</div>';
       } catch(e) {
         el.innerHTML = '<div class="card" style="color:var(--danger);">加载详情失败: ' + e.message + '</div>';
+      }
+    }
+
+    // -------------------- 一句话生成 --------------------
+    async function startOneClickGenerate() {
+      var idea = document.getElementById('oc-idea').value.trim();
+      if (!idea) { alert('请输入创作灵感'); return; }
+
+      var btn = document.getElementById('oc-submit-btn');
+      btn.disabled = true;
+      btn.textContent = '生成中...';
+
+      var progressEl = document.getElementById('oc-progress');
+      var listEl = document.getElementById('oc-progress-list');
+      progressEl.style.display = '';
+      listEl.innerHTML = '';
+
+      var params = {
+        idea: idea,
+        episodeCount: parseInt(document.getElementById('oc-episodeCount').value),
+        type: document.getElementById('oc-type').value,
+        artStyle: document.getElementById('oc-artStyle').value,
+        videoRatio: document.getElementById('oc-videoRatio').value,
+      };
+
+      try {
+        var response = await fetch(BASE + '/project/oneClickGenerate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('tf-token') || '') },
+          body: JSON.stringify(params),
+        });
+
+        var reader = response.body.getReader();
+        var decoder = new TextDecoder();
+        var buffer = '';
+        var finalProjectId = null;
+
+        while (true) {
+          var result = await reader.read();
+          if (result.done) break;
+          buffer += decoder.decode(result.value, { stream: true });
+
+          var lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (!line.startsWith('data: ')) continue;
+            try {
+              var evt = JSON.parse(line.substring(6));
+              var stageIcons = { project: '&#128218;', storyline: '&#9997;', outline: '&#128203;', script: '&#127916;', assets: '&#127912;', complete: '&#9989;', error: '&#10060;' };
+              var icon = stageIcons[evt.stage] || '&#8226;';
+              var color = evt.stage === 'error' ? 'var(--danger)' : evt.stage === 'complete' ? 'var(--success)' : 'var(--text-primary)';
+              listEl.innerHTML += '<div style="color:' + color + '">' + icon + ' ' + (evt.message || '') + '</div>';
+              listEl.scrollTop = listEl.scrollHeight;
+
+              if (evt.projectId) finalProjectId = evt.projectId;
+
+              if (evt.stage === 'complete') {
+                btn.textContent = '创作完成!';
+                setTimeout(function() {
+                  btn.disabled = false;
+                  btn.textContent = '开始创作';
+                  if (loaders.projects) loaders.projects();
+                }, 1500);
+              }
+              if (evt.stage === 'error') {
+                btn.disabled = false;
+                btn.textContent = '开始创作';
+              }
+            } catch(pe) {}
+          }
+        }
+      } catch(e) {
+        listEl.innerHTML += '<div style="color:var(--danger)">&#10060; 请求失败: ' + e.message + '</div>';
+        btn.disabled = false;
+        btn.textContent = '开始创作';
       }
     }
 

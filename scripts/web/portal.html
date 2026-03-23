@@ -140,6 +140,56 @@
     .login-box button:hover { opacity: .9; }
     .login-error { color: var(--danger); font-size: 12px; margin-top: 8px; min-height: 18px; }
     .hidden { display: none !important; }
+
+    /* Quick Action Bar */
+    .quick-bar {
+      display: none;
+      height: 52px;
+      background: linear-gradient(90deg, var(--surface), #1e2130);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .quick-bar.show { display: flex; }
+    .quick-bar-label { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+    .quick-input {
+      flex: 1;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      max-width: 500px;
+    }
+    .quick-input:focus { border-color: var(--primary); }
+    .quick-input::placeholder { color: var(--text-secondary); }
+    .quick-btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .quick-btn:hover { opacity: .9; }
+    .quick-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .quick-status {
+      font-size: 12px;
+      color: var(--text-secondary);
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .quick-status.success { color: var(--success); }
+    .quick-status.error { color: var(--danger); }
   </style>
 </head>
 <body>
@@ -169,6 +219,20 @@
       <span id="user-name"></span>
       <button class="logout-btn" onclick="doLogout()">退出</button>
     </div>
+  </div>
+
+  <!-- Quick Action Bar: 一句话生成 -->
+  <div class="quick-bar" id="quick-bar">
+    <div class="quick-bar-label">一句话生成</div>
+    <input class="quick-input" id="quick-idea" placeholder="输入创意灵感，例：一个调酒师和失恋女孩在酒吧相遇的故事" onkeydown="if(event.key==='Enter')quickGenerate()">
+    <select style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:12px;outline:none;">
+      <option value="5">5集</option>
+      <option value="3">3集</option>
+      <option value="8">8集</option>
+      <option value="10">10集</option>
+    </select>
+    <button class="quick-btn" id="quick-btn" onclick="quickGenerate()">生成剧本</button>
+    <div class="quick-status" id="quick-status"></div>
   </div>
 
   <!-- Content Frames -->
@@ -219,6 +283,7 @@
   function showApp() {
     document.getElementById('login-overlay').classList.add('hidden');
     document.getElementById('top-bar').style.display = 'flex';
+    document.getElementById('quick-bar').classList.add('show');
 
     // Load both frames with token
     var studioFrame = document.getElementById('frame-studio');
@@ -278,6 +343,70 @@
         '<div class="pill"><div class="dot ' + gpuColor + '"></div>GPU ' + (s.gpu||0) + '%</div>' +
         '<div class="pill"><div class="dot ' + redisColor + '"></div>Redis</div>';
     } catch(e) {}
+  }
+
+  // ============ Quick Generate ============
+  async function quickGenerate() {
+    var idea = document.getElementById('quick-idea').value.trim();
+    if (!idea) { document.getElementById('quick-status').textContent = '请输入创意灵感'; return; }
+
+    var btn = document.getElementById('quick-btn');
+    var statusEl = document.getElementById('quick-status');
+    btn.disabled = true;
+    btn.textContent = '生成中...';
+    statusEl.textContent = '正在创建项目...';
+    statusEl.className = 'quick-status';
+
+    var epSelect = document.querySelector('#quick-bar select');
+    var episodeCount = parseInt(epSelect.value) || 5;
+
+    try {
+      var response = await fetch('/project/oneClickGenerate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': TOKEN || '' },
+        body: JSON.stringify({ idea: idea, episodeCount: episodeCount })
+      });
+
+      var reader = response.body.getReader();
+      var decoder = new TextDecoder();
+      var buffer = '';
+
+      while (true) {
+        var result = await reader.read();
+        if (result.done) break;
+        buffer += decoder.decode(result.value, { stream: true });
+
+        var lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i].trim();
+          if (!line.startsWith('data: ')) continue;
+          try {
+            var evt = JSON.parse(line.substring(6));
+            statusEl.textContent = evt.message || '';
+
+            if (evt.stage === 'complete') {
+              statusEl.className = 'quick-status success';
+              statusEl.textContent = '创作完成! 项目ID: ' + evt.projectId + ' (' + evt.episodes + '集, ' + evt.assets + '个资产)';
+              btn.textContent = '生成剧本';
+              btn.disabled = false;
+              document.getElementById('quick-idea').value = '';
+            }
+            if (evt.stage === 'error') {
+              statusEl.className = 'quick-status error';
+              btn.textContent = '生成剧本';
+              btn.disabled = false;
+            }
+          } catch(pe) {}
+        }
+      }
+    } catch(e) {
+      statusEl.textContent = '请求失败: ' + e.message;
+      statusEl.className = 'quick-status error';
+      btn.textContent = '生成剧本';
+      btn.disabled = false;
+    }
   }
 
   // ============ Auto-login ============

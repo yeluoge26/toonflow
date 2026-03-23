@@ -179,6 +179,8 @@ import route175 from "./routes/series/getDetail";
 import route176 from "./routes/series/list";
 import route177 from "./routes/series/generatePlan";
 import route178 from "./routes/series/materialize";
+import route179 from "./routes/project/oneClickGenerate";
+import route180 from "./routes/project/quickGenerate";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -359,4 +361,6 @@ export default async (app: Express) => {
   app.use("/series/list", route176);
   app.use("/series/generatePlan", route177);
   app.use("/series/materialize", route178);
+  app.use("/project/oneClickGenerate", route179);
+  app.use("/project/quickGenerate", route180);
 }
