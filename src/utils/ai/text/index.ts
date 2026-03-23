@@ -6,6 +6,8 @@ import { parse } from "best-effort-json-parser";
 import { getModelList } from "./modelList";
 import { z } from "zod";
 import { OpenAIProvider } from "@ai-sdk/openai";
+import { trackModelUsage } from "@/utils/getPromptAi";
+
 interface AIInput<T extends Record<string, z.ZodTypeAny> | undefined = undefined> {
   system?: string;
   tools?: Record<string, Tool>;
@@ -20,6 +22,9 @@ interface AIConfig {
   apiKey?: string;
   baseURL?: string;
   manufacturer?: string;
+  configId?: number;
+  fallbacks?: AIConfig[];
+  moduleKey?: string;
 }
 
 const buildOptions = async (input: AIInput<any>, config: AIConfig = {}) => {
@@ -46,7 +51,6 @@ const buildOptions = async (input: AIInput<any>, config: AIConfig = {}) => {
         2,
       )}\n请输出JSON格式，只返回结果，不要将Schema返回。`;
       input.system = (input.system ?? "") + schemaPrompt;
-      // 返回验证模式
       return Output.object({ schema: z.object(s) });
     },
     object: () => {
@@ -56,7 +60,6 @@ const buildOptions = async (input: AIInput<any>, config: AIConfig = {}) => {
         2,
       )}\n请输出JSON格式，只返回结果，不要将Schema返回。`;
       input.system = (input.system ?? "") + jsonSchemaPrompt;
-      // return Output.json();
     },
   };
 
@@ -67,6 +70,7 @@ const buildOptions = async (input: AIInput<any>, config: AIConfig = {}) => {
   return {
     config: {
       model: modelFn as LanguageModel,
+      maxTokens: 32768,
       ...(input.system && { system: input.system }),
       ...(input.prompt ? { prompt: input.prompt } : { messages: input.messages! }),
       ...(input.tools && owned.tool && { tools: input.tools }),
@@ -85,26 +89,99 @@ const ai = Object.create({}) as {
 };
 
 ai.invoke = async (input: AIInput<any>, config: AIConfig) => {
-  const options = await buildOptions(input, config);
+  const configs = [config, ...(config.fallbacks || [])];
+  let lastError: Error | null = null;
 
-  const result = await generateText(options.config);
-  if (options.responseFormat === "object" && input.output) {
-    const pattern = /{[^{}]*}|{(?:[^{}]*|{[^{}]*})*}/g;
-    const jsonLikeTexts = Array.from(result.text.matchAll(pattern), (m) => m[0]);
+  for (let i = 0; i < configs.length; i++) {
+    const currentConfig = configs[i];
+    const startTime = Date.now();
+    try {
+      const options = await buildOptions(input, currentConfig);
+      const result = await generateText(options.config);
 
-    const res = jsonLikeTexts.map((jsonText) => parse(jsonText));
-    return res[0];
+      // Track successful usage
+      trackModelUsage({
+        configId: currentConfig.configId,
+        manufacturer: currentConfig.manufacturer,
+        model: currentConfig.model,
+        moduleKey: config.moduleKey,
+        inputTokens: result.usage?.promptTokens || 0,
+        outputTokens: result.usage?.completionTokens || 0,
+        duration: Date.now() - startTime,
+        status: "success",
+      });
+
+      if (options.responseFormat === "object" && input.output) {
+        const pattern = /{[^{}]*}|{(?:[^{}]*|{[^{}]*})*}/g;
+        const jsonLikeTexts = Array.from(result.text.matchAll(pattern), (m) => m[0]);
+        const res = jsonLikeTexts.map((jsonText) => parse(jsonText));
+        return res[0];
+      }
+      if (options.responseFormat === "schema" && input.output) {
+        return JSON.parse(result.text);
+      }
+      return result;
+    } catch (err: any) {
+      lastError = err;
+      // Track failed usage
+      trackModelUsage({
+        configId: currentConfig.configId,
+        manufacturer: currentConfig.manufacturer,
+        model: currentConfig.model,
+        moduleKey: config.moduleKey,
+        duration: Date.now() - startTime,
+        status: "failed",
+        errorMsg: err.message?.substring(0, 200),
+      });
+
+      if (i < configs.length - 1) {
+        console.warn(`[AI Fallback] ${currentConfig.manufacturer}/${currentConfig.model} failed: ${err.message?.substring(0, 80)}, trying fallback ${i + 2}...`);
+      }
+    }
   }
-  if (options.responseFormat === "schema" && input.output) {
-    return JSON.parse(result.text);
-  }
-  return result;
+  throw lastError || new Error("所有模型均调用失败");
 };
 
 ai.stream = async (input: AIInput, config: AIConfig) => {
-  const options = await buildOptions(input, config);
+  const configs = [config, ...(config.fallbacks || [])];
+  let lastError: Error | null = null;
 
-  return streamText(options.config);
+  for (let i = 0; i < configs.length; i++) {
+    const currentConfig = configs[i];
+    const startTime = Date.now();
+    try {
+      const options = await buildOptions(input, currentConfig);
+      const result = streamText(options.config);
+
+      // Track usage (stream - we can't get exact tokens, track as started)
+      trackModelUsage({
+        configId: currentConfig.configId,
+        manufacturer: currentConfig.manufacturer,
+        model: currentConfig.model,
+        moduleKey: config.moduleKey,
+        duration: 0,
+        status: "streaming",
+      });
+
+      return result;
+    } catch (err: any) {
+      lastError = err;
+      trackModelUsage({
+        configId: currentConfig.configId,
+        manufacturer: currentConfig.manufacturer,
+        model: currentConfig.model,
+        moduleKey: config.moduleKey,
+        duration: Date.now() - startTime,
+        status: "failed",
+        errorMsg: err.message?.substring(0, 200),
+      });
+
+      if (i < configs.length - 1) {
+        console.warn(`[AI Fallback] ${currentConfig.manufacturer}/${currentConfig.model} stream failed, trying fallback ${i + 2}...`);
+      }
+    }
+  }
+  throw lastError || new Error("所有模型均调用失败");
 };
 
 export default ai;

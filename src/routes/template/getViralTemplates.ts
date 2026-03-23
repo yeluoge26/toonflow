@@ -15,10 +15,7 @@ export default router.post(
     if (req.body.category) {
       templates = templates.filter(t => t.category === req.body.category);
     }
-    res.status(200).send(success({
-      templates,
-      categories: [...new Set(VIRAL_TEMPLATES.map(t => t.category))],
-      total: templates.length,
-    }));
+    // Return array directly for admin.html compatibility
+    res.status(200).send(success(templates));
   }
 );

@@ -14,11 +14,21 @@ import modelScope from "./owned/modelScope";
 import grsai from "./owned/grsai";
 import { tr } from "zod/locales";
 import formal from "./owned/formal";
-const urlToBase64 = async (url: string): Promise<string> => {
-  const res = await axios.get(url, { responseType: "arraybuffer" });
-  const base64 = Buffer.from(res.data).toString("base64");
-  const mimeType = res.headers["content-type"] || "image/png";
-  return `data:${mimeType};base64,${base64}`;
+import sd from "./owned/sd";
+const urlToBase64 = async (url: string, retries = 3): Promise<string> => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await axios.get(url, { responseType: "arraybuffer", timeout: 30000 });
+      const base64 = Buffer.from(res.data).toString("base64");
+      const mimeType = res.headers["content-type"] || "image/png";
+      return `data:${mimeType};base64,${base64}`;
+    } catch (err: any) {
+      if (i === retries - 1) throw err;
+      // Wait before retry (DNS issues are often transient)
+      await new Promise(r => setTimeout(r, 2000 * (i + 1)));
+    }
+  }
+  throw new Error("urlToBase64 failed after retries");
 };
 
 const modelInstance = {
@@ -32,12 +42,15 @@ const modelInstance = {
   other,
   grsai,
   formal,
+  sd,
 } as const;
 
 export default async (input: ImageConfig, config: AIConfig) => {
   const { model, apiKey, baseURL, manufacturer } = { ...config };
 
-  if (!config || !config?.model || !config?.apiKey || !config?.manufacturer) throw new Error("请检查模型配置是否正确");
+  // SD local doesn't require apiKey
+  if (!config || !config?.model || !config?.manufacturer) throw new Error("请检查模型配置是否正确");
+  if (manufacturer !== "sd" && !config?.apiKey) throw new Error("请检查模型配置是否正确（缺少API Key）");
 
   const manufacturerFn = modelInstance[manufacturer as keyof typeof modelInstance];
   if (!manufacturerFn) throw new Error("不支持的图片厂商");

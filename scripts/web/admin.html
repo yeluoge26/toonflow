@@ -227,6 +227,9 @@
       <h1>ToonFlow</h1>
       <p>AI视频工厂控制台</p>
     </div>
+    <div class="nav-item" data-module="projects" onclick="showModule('projects')">
+      <span class="nav-icon">&#128218;</span><span class="nav-label">项目管理</span>
+    </div>
     <div class="nav-item active" data-module="dashboard" onclick="showModule('dashboard')">
       <span class="nav-icon">&#9633;</span><span class="nav-label">仪表盘</span>
     </div>
@@ -284,6 +287,18 @@
 
     <div class="content">
 
+      <!-- ==================== Projects ==================== -->
+      <div class="module" id="module-projects">
+        <div class="section">
+          <div class="section-title">项目列表</div>
+          <div id="project-list"></div>
+        </div>
+        <div class="section" id="project-detail-section" style="display:none;">
+          <div class="section-title" id="project-detail-title">项目详情</div>
+          <div id="project-detail"></div>
+        </div>
+      </div>
+
       <!-- ==================== Dashboard ==================== -->
       <div class="module active" id="module-dashboard">
         <div class="cards" id="dash-stats"></div>
@@ -298,6 +313,10 @@
         <div class="section">
           <div class="section-title">今日成本</div>
           <div class="cards" id="dash-cost"></div>
+        </div>
+        <div class="section">
+          <div class="section-title">Token 用量（累计）</div>
+          <div class="cards" id="dash-tokens"></div>
         </div>
       </div>
 
@@ -582,6 +601,7 @@
               <div class="tab" data-ptype="subAgent" onclick="filterPrompts('subAgent')">子Agent</div>
               <div class="tab" data-ptype="style" onclick="filterPrompts('style')">风格</div>
               <div class="tab" data-ptype="helper" onclick="filterPrompts('helper')">辅助</div>
+              <div class="tab" data-ptype="consistency" onclick="filterPrompts('consistency')">一致性</div>
             </div>
           </div>
           <div id="prompt-list"><div class="loading"><span class="spinner"></span>加载中...</div></div>
@@ -704,8 +724,16 @@
       <!-- ==================== Cost Control ==================== -->
       <div class="module" id="module-cost">
         <div class="section">
-          <div class="section-title">今日摘要</div>
+          <div class="section-title">成本概览</div>
           <div class="cards" id="cost-summary"></div>
+        </div>
+        <div class="section">
+          <div class="section-title">模型用量明细（今日）</div>
+          <div id="cost-breakdown"><div class="loading"><span class="spinner"></span>加载中...</div></div>
+        </div>
+        <div class="section">
+          <div class="section-title">模型计费标准 <small style="color:var(--text-secondary);">文本=每百万token | 图片=每张 | 视频=每秒</small></div>
+          <div id="cost-pricing"><div class="loading"><span class="spinner"></span>加载中...</div></div>
         </div>
         <div class="section">
           <div class="section-title">设置预算</div>
@@ -1050,6 +1078,120 @@
     // ============================================================
     const loaders = {};
 
+    // -------------------- Projects --------------------
+    loaders.projects = async () => {
+      try {
+        const res = await api('/project/getProject');
+        const projects = res.data || [];
+        const el = document.getElementById('project-list');
+        if (!projects.length) {
+          el.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:var(--text-secondary);">暂无项目</div>';
+          return;
+        }
+        el.innerHTML = '<table class="data-table"><thead><tr>' +
+          '<th>ID</th><th>项目名</th><th>类型</th><th>风格</th><th>比例</th><th>创建时间</th><th>操作</th>' +
+          '</tr></thead><tbody>' +
+          projects.map(function(p) {
+            var t = p.createTime ? new Date(Number(p.createTime)).toLocaleString() : '-';
+            return '<tr>' +
+              '<td>' + p.id + '</td>' +
+              '<td><strong>' + (p.name||'') + '</strong><br><small style="color:var(--text-secondary)">' + (p.intro||'').substring(0,40) + '</small></td>' +
+              '<td>' + (p.type||'-') + '</td>' +
+              '<td>' + (p.artStyle||'-') + '</td>' +
+              '<td>' + (p.videoRatio||'-') + '</td>' +
+              '<td style="font-size:12px;">' + t + '</td>' +
+              '<td><button class="btn btn-sm btn-primary" onclick="loadProjectDetail(' + p.id + ')">详情</button></td>' +
+            '</tr>';
+          }).join('') +
+          '</tbody></table>';
+      } catch(e) {
+        document.getElementById('project-list').innerHTML = '<div class="card" style="color:var(--danger);">加载失败: ' + e.message + '</div>';
+      }
+    };
+
+    async function loadProjectDetail(projectId) {
+      document.getElementById('project-detail-section').style.display = '';
+      document.getElementById('project-detail-title').textContent = '项目 #' + projectId + ' 详情';
+      var el = document.getElementById('project-detail');
+      el.innerHTML = '<div style="color:var(--text-secondary);">加载中...</div>';
+
+      try {
+        var pRes = await api('/project/getSingleProject', { id: projectId });
+        var pArr = pRes.data || [];
+        var p = Array.isArray(pArr) ? pArr[0] || {} : pArr;
+
+        // Get novel count
+        var novelRes = await api('/novel/getNovel', { projectId: projectId });
+        var novels = novelRes.data || [];
+
+        // Get outlines
+        var outlineRes = await api('/outline/getOutline', { projectId: projectId });
+        var outlines = outlineRes.data || [];
+
+        // Get storyline
+        var slRes = await api('/outline/getStoryline', { projectId: projectId });
+        var storyline = slRes.data;
+
+        // Get assets count by type (each type requires separate call)
+        var roleRes = await api('/assets/getAssets', { projectId: projectId, type: '角色' });
+        var sceneRes = await api('/assets/getAssets', { projectId: projectId, type: '场景' });
+        var propRes = await api('/assets/getAssets', { projectId: projectId, type: '道具' });
+        var sbRes = await api('/assets/getAssets', { projectId: projectId, type: '分镜' });
+        var roleCount = (roleRes.data || []).length;
+        var sceneCount = (sceneRes.data || []).length;
+        var propCount = (propRes.data || []).length;
+        var sbCount = (sbRes.data || []).length;
+
+        // Get all scripts in one call (POST, only needs projectId)
+        var allScriptsRes = await api('/script/geScriptApi', { projectId: projectId });
+        var allScripts = allScriptsRes.data || [];
+        var scriptItems = '';
+        for (var i = 0; i < outlines.length; i++) {
+          var matchScript = allScripts.find(function(s) { return s.outlineId === outlines[i].id; });
+          var contentLen = matchScript && matchScript.content ? matchScript.content.length : 0;
+          scriptItems += '<tr><td>第' + (i+1) + '集</td><td>' + (outlines[i].episode || i+1) + '</td><td>' + contentLen + ' 字</td><td>' + (contentLen > 0 ? '<span style="color:var(--success)">已生成</span>' : '<span style="color:var(--danger)">未生成</span>') + '</td></tr>';
+        }
+
+        el.innerHTML = '' +
+          '<div class="cards">' +
+            '<div class="card"><div class="card-title">项目信息</div><div style="font-size:13px;line-height:1.8;">' +
+              '<strong>' + (p.name||'') + '</strong><br>' +
+              '类型: ' + (p.type||'-') + ' | 风格: ' + (p.artStyle||'-') + ' | 比例: ' + (p.videoRatio||'-') + '<br>' +
+              '简介: ' + (p.intro||'-') +
+            '</div></div>' +
+            '<div class="card"><div class="card-title">小说原文</div><div class="card-value">' + novels.length + '<span style="font-size:14px;color:var(--text-secondary)"> 章</span></div></div>' +
+            '<div class="card"><div class="card-title">故事线</div><div class="card-value">' + (storyline ? '<span style="color:var(--success)">已生成</span>' : '<span style="color:var(--danger)">未生成</span>') + '</div></div>' +
+            '<div class="card"><div class="card-title">大纲</div><div class="card-value">' + outlines.length + '<span style="font-size:14px;color:var(--text-secondary)"> 集</span></div></div>' +
+          '</div>' +
+          '<div class="cards" style="margin-top:12px;">' +
+            '<div class="card"><div class="card-title">角色资产</div><div class="card-value">' + roleCount + '</div></div>' +
+            '<div class="card"><div class="card-title">场景资产</div><div class="card-value">' + sceneCount + '</div></div>' +
+            '<div class="card"><div class="card-title">道具资产</div><div class="card-value">' + propCount + '</div></div>' +
+            '<div class="card"><div class="card-title">分镜</div><div class="card-value">' + sbCount + '</div></div>' +
+          '</div>' +
+          '<div class="section" style="margin-top:16px;">' +
+            '<div class="section-title">剧本状态</div>' +
+            '<table class="data-table"><thead><tr><th>集数</th><th>集号</th><th>字数</th><th>状态</th></tr></thead><tbody>' +
+            scriptItems +
+            '</tbody></table>' +
+          '</div>' +
+          '<div class="section" style="margin-top:16px;">' +
+            '<div class="section-title">流水线进度</div>' +
+            '<div class="progress" style="height:24px;border-radius:12px;">' +
+              '<div class="progress-bar green" style="width:' + (novels.length > 0 ? 15 : 0) + '%" title="小说"></div>' +
+              '<div class="progress-bar" style="width:' + (storyline ? 10 : 0) + '%;background:var(--primary)" title="故事线"></div>' +
+              '<div class="progress-bar" style="width:' + (outlines.length > 0 ? 15 : 0) + '%;background:#9b59b6" title="大纲"></div>' +
+              '<div class="progress-bar" style="width:' + (scriptItems.includes('已生成') ? 15 : 0) + '%;background:#e67e22" title="剧本"></div>' +
+              '<div class="progress-bar" style="width:' + (roleCount > 0 ? 10 : 0) + '%;background:#1abc9c" title="资产"></div>' +
+              '<div class="progress-bar" style="width:' + (sbCount > 0 ? 15 : 0) + '%;background:#e74c3c" title="分镜"></div>' +
+            '</div>' +
+            '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">小说 → 故事线 → 大纲 → 剧本 → 资产 → 分镜 → 视频</div>' +
+          '</div>';
+      } catch(e) {
+        el.innerHTML = '<div class="card" style="color:var(--danger);">加载详情失败: ' + e.message + '</div>';
+      }
+    }
+
     // -------------------- Dashboard --------------------
     loaders.dashboard = async () => {
       try {
@@ -1084,6 +1226,12 @@
           '<div class="card">' +
             '<div class="card-title">运行时间</div>' +
             '<div class="card-value" style="font-size:22px;">' + uptimeStr + '</div>' +
+          '</div>' +
+          '<div class="card">' +
+            '<div class="card-title">GPU ' + (stats.gpuName || '') + '</div>' +
+            '<div class="card-value">' + (typeof stats.gpu === 'number' ? stats.gpu : 0) + '<span style="font-size:16px;color:var(--text-secondary)">%</span></div>' +
+            '<div class="progress" style="margin-top:8px;"><div class="progress-bar ' + ((stats.gpu||0) > 80 ? 'red' : (stats.gpu||0) > 50 ? 'yellow' : 'green') + '" style="width:' + Math.min(stats.gpu||0, 100) + '%"></div></div>' +
+            '<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">显存: ' + (stats.gpuMemory||0) + '% | 温度: ' + (stats.gpuTemp||0) + '°C</div>' +
           '</div>' +
           '<div class="card">' +
             '<div class="card-title">Redis</div>' +
@@ -1126,6 +1274,26 @@
           '<div class="card"><div class="card-title">今日已用</div><div class="card-value" style="color:var(--warning);">&yen;' + (typeof costUsed === 'number' ? costUsed.toFixed(2) : costUsed) + '</div></div>' +
           '<div class="card"><div class="card-title">每日预算</div><div class="card-value">&yen;' + (typeof costBudget === 'number' ? costBudget.toFixed(2) : costBudget) + '</div></div>' +
           '<div class="card"><div class="card-title">剩余预算</div><div class="card-value" style="color:' + (costRemaining > 0 ? 'var(--success)' : 'var(--danger)') + ';">&yen;' + (typeof costRemaining === 'number' ? costRemaining.toFixed(2) : costRemaining) + '</div></div>';
+
+        // Token usage from model usage tracking
+        try {
+          var usageRes = await api('/cost/getDailySummary');
+          var ud = usageRes.data || {};
+          var tu = ud.totalUsage || {};
+          var totalIn = Number(tu.totalInputTokens || 0);
+          var totalOut = Number(tu.totalOutputTokens || 0);
+          var totalTok = totalIn + totalOut;
+          var totalCalls = Number(tu.totalCalls || 0);
+
+          var tokenEl = document.getElementById('dash-tokens');
+          if (tokenEl) {
+            tokenEl.innerHTML = '' +
+              '<div class="card"><div class="card-title">总调用次数</div><div class="card-value">' + totalCalls + '</div></div>' +
+              '<div class="card"><div class="card-title">Input Tokens</div><div class="card-value">' + (totalIn > 1000000 ? (totalIn/1000000).toFixed(1) + 'M' : totalIn > 1000 ? (totalIn/1000).toFixed(1) + 'K' : totalIn) + '</div></div>' +
+              '<div class="card"><div class="card-title">Output Tokens</div><div class="card-value">' + (totalOut > 1000000 ? (totalOut/1000000).toFixed(1) + 'M' : totalOut > 1000 ? (totalOut/1000).toFixed(1) + 'K' : totalOut) + '</div></div>' +
+              '<div class="card"><div class="card-title">总Token</div><div class="card-value">' + (totalTok > 1000000 ? (totalTok/1000000).toFixed(1) + 'M' : totalTok > 1000 ? (totalTok/1000).toFixed(1) + 'K' : totalTok) + '</div></div>';
+          }
+        } catch(te) {}
 
       } catch (e) {
         console.error('Dashboard load error:', e);
@@ -1614,65 +1782,53 @@
     }
 
     // -------------------- AI Models --------------------
+    // Global model config cache
+    var _allConfigs = [];
+
     loaders.model = async () => {
       try {
-        const [listRes, mapRes] = await Promise.all([
+        const [mapRes, settingRes] = await Promise.all([
           api('/setting/getAiModelMap'),
           api('/setting/getSetting'),
         ]);
 
-        const models = listRes.data || [];
-        const settings = mapRes.data || {};
-        const container = document.getElementById('model-list');
+        const modelMap = mapRes.data || [];
+        _allConfigs = settingRes.data || [];
 
-        if (Array.isArray(models) && models.length > 0) {
-          let html = '<div class="table-wrap"><table><thead><tr><th>模型</th><th>类型</th><th>厂商</th><th>状态</th><th>用途</th></tr></thead><tbody>';
-          models.forEach(m => {
-            const status = m.status || m.active !== false ? '启用' : '禁用';
-            const statusBadge = status === '启用' ? 'badge-success' : 'badge-danger';
-
-            html += '<tr>' +
-              '<td><strong>' + escapeHtml(m.model || m.name || '--') + '</strong></td>' +
-              '<td><span class="badge badge-info">' + escapeHtml(m.type || '--') + '</span></td>' +
-              '<td>' + escapeHtml(m.manufacturer || m.provider || '--') + '</td>' +
-              '<td><span class="badge ' + statusBadge + '">' + status + '</span></td>' +
-              '<td>' + escapeHtml(m.usage || m.purpose || '--') + '</td>' +
+        // Model list table (all t_config entries with ID)
+        var container = document.getElementById('model-list');
+        if (_allConfigs.length > 0) {
+          var listHtml = '<table class="data-table"><thead><tr><th>ID</th><th>类型</th><th>厂商</th><th>模型</th><th>创建时间</th></tr></thead><tbody>';
+          _allConfigs.forEach(function(c) {
+            var t = c.createTime ? new Date(Number(c.createTime)).toLocaleString() : '-';
+            listHtml += '<tr>' +
+              '<td><strong>' + c.id + '</strong></td>' +
+              '<td><span class="badge badge-info">' + (c.type||'-') + '</span></td>' +
+              '<td>' + escapeHtml(c.manufacturer||'-') + '</td>' +
+              '<td>' + escapeHtml(c.model||'-') + '</td>' +
+              '<td style="font-size:12px;">' + t + '</td>' +
             '</tr>';
           });
-          html += '</tbody></table></div>';
-          container.innerHTML = html;
-        } else if (typeof models === 'object' && !Array.isArray(models)) {
-          // models might be a map object
-          let html = '<div class="table-wrap"><table><thead><tr><th>用途</th><th>模型</th><th>厂商</th></tr></thead><tbody>';
-          Object.entries(models).forEach(([usage, m]) => {
-            if (typeof m === 'object') {
-              html += '<tr><td><strong>' + escapeHtml(usage) + '</strong></td><td>' + escapeHtml(m.model || m.name || '--') + '</td><td>' + escapeHtml(m.manufacturer || m.provider || '--') + '</td></tr>';
-            } else {
-              html += '<tr><td><strong>' + escapeHtml(usage) + '</strong></td><td colspan="2">' + escapeHtml(String(m)) + '</td></tr>';
-            }
-          });
-          html += '</tbody></table></div>';
-          container.innerHTML = html;
+          listHtml += '</tbody></table>';
+          container.innerHTML = listHtml;
         } else {
-          container.innerHTML = '<div class="empty-state"><div class="empty-state-text">暂无模型数据</div></div>';
+          container.innerHTML = '<div style="color:var(--text-secondary);">暂无模型，请先添加。</div>';
         }
 
-        // Model mapping - show from settings
-        const mapContainer = document.getElementById('model-map');
-        const usageSlots = ['scriptGeneration', 'storyboardGeneration', 'imageGeneration', 'videoGeneration', 'voiceSynthesis', 'scoring', 'review', 'outline', 'chat'];
-        const usageNames = { scriptGeneration: '脚本生成', storyboardGeneration: '分镜生成', imageGeneration: '图片生成', videoGeneration: '视频生成', voiceSynthesis: '语音合成', scoring: '质量评分', review: '审核', outline: '大纲生成', chat: '对话' };
-
-        let mapHtml = '<div class="table-wrap"><table><thead><tr><th>用途</th><th>当前模型</th><th>操作</th></tr></thead><tbody>';
-        usageSlots.forEach(slot => {
-          const current = (settings.modelMap && settings.modelMap[slot]) || (models && models[slot]) || '--';
-          const modelName = typeof current === 'object' ? (current.model || current.name || '--') : current;
+        // Model Map table (module -> config binding with fallback)
+        var mapContainer = document.getElementById('model-map');
+        var mapHtml = '<table class="data-table"><thead><tr><th>功能模块</th><th>主模型</th><th>厂商</th><th>备用1</th><th>备用2</th><th>操作</th></tr></thead><tbody>';
+        modelMap.forEach(function(m) {
           mapHtml += '<tr>' +
-            '<td>' + (usageNames[slot] || slot) + '</td>' +
-            '<td>' + escapeHtml(String(modelName)) + '</td>' +
-            '<td><button class="btn btn-sm btn-outline" onclick="showModelConfig(\'' + slot + '\', \'' + escapeHtml(String(modelName)) + '\')">配置</button></td>' +
+            '<td><strong>' + escapeHtml(m.name || m.key) + '</strong><br><small style="color:var(--text-secondary)">' + m.key + '</small></td>' +
+            '<td>' + (m.model ? '<span class="badge badge-success">' + escapeHtml(m.model) + '</span>' : '<span class="badge badge-danger">未配置</span>') + '</td>' +
+            '<td>' + escapeHtml(m.manufacturer || '-') + '</td>' +
+            '<td>' + (m.model2 ? escapeHtml(m.model2) : '<span style="color:var(--text-secondary)">无</span>') + '</td>' +
+            '<td>' + (m.model3 ? escapeHtml(m.model3) : '<span style="color:var(--text-secondary)">无</span>') + '</td>' +
+            '<td><button class="btn btn-sm btn-primary" onclick="showModelConfig(' + m.id + ',\'' + escapeHtml(m.name || m.key) + '\',' + (m.configId||0) + ',' + (m.configId2||0) + ',' + (m.configId3||0) + ')">配置</button></td>' +
           '</tr>';
         });
-        mapHtml += '</tbody></table></div>';
+        mapHtml += '</tbody></table>';
         mapContainer.innerHTML = mapHtml;
 
       } catch (e) {
@@ -1681,15 +1837,17 @@
     };
 
     async function addModel() {
-      const type = document.getElementById('model-type').value;
-      const model = document.getElementById('model-name').value.trim();
-      const manufacturer = document.getElementById('model-manufacturer').value.trim();
-      const baseUrl = document.getElementById('model-baseurl').value.trim();
-      const apiKey = document.getElementById('model-apikey').value.trim();
+      var type = document.getElementById('model-type').value;
+      var model = document.getElementById('model-name').value.trim();
+      var manufacturer = document.getElementById('model-manufacturer').value.trim();
+      var baseUrl = document.getElementById('model-baseurl').value.trim();
+      var apiKey = document.getElementById('model-apikey').value.trim();
 
       if (!model) { toast('请填写模型名称', 'error'); return; }
+      if (!manufacturer) { toast('请填写厂商', 'error'); return; }
+      if (!apiKey) { toast('请填写API Key', 'error'); return; }
 
-      const r = await api('/setting/addModel', { type, model, manufacturer, baseUrl, apiKey });
+      var r = await api('/setting/addModel', { type: type, model: model, manufacturer: manufacturer, baseUrl: baseUrl, apiKey: apiKey, modelType: type });
       if (r.data !== undefined) {
         toast('模型添加成功');
         document.getElementById('model-add-form').style.display = 'none';
@@ -1699,36 +1857,46 @@
       }
     }
 
-    function showModelConfig(slot, currentModel) {
-      const section = document.getElementById('model-config-section');
-      section.style.display = 'block';
+    function buildConfigSelect(id, label, currentVal) {
+      var options = '<option value="0">-- 不选择 --</option>';
+      _allConfigs.forEach(function(c) {
+        var selected = c.id === currentVal ? ' selected' : '';
+        options += '<option value="' + c.id + '"' + selected + '>[' + c.id + '] ' + escapeHtml(c.manufacturer||'') + '/' + escapeHtml(c.model||'') + ' (' + c.type + ')</option>';
+      });
+      return '<div class="form-group"><label>' + label + '</label><select id="' + id + '" style="width:100%">' + options + '</select></div>';
+    }
 
-      const usageNames = { scriptGeneration: '脚本生成', storyboardGeneration: '分镜生成', imageGeneration: '图片生成', videoGeneration: '视频生成', voiceSynthesis: '语音合成', scoring: '质量评分', review: '审核', outline: '大纲生成', chat: '对话' };
+    function showModelConfig(mapId, mapName, cur1, cur2, cur3) {
+      var section = document.getElementById('model-config-section');
+      section.style.display = 'block';
 
       document.getElementById('model-config').innerHTML = '' +
         '<div class="detail-panel">' +
-          '<div class="form-group"><label>用途: ' + (usageNames[slot] || slot) + '</label></div>' +
-          '<div class="form-group"><label>当前模型: ' + escapeHtml(currentModel) + '</label></div>' +
-          '<div class="form-group">' +
-            '<label>新模型名称</label>' +
-            '<input type="text" id="config-model-name" placeholder="输入要分配的模型名称" value="' + escapeHtml(currentModel === '--' ? '' : currentModel) + '">' +
+          '<div class="form-group"><label><strong>配置: ' + escapeHtml(mapName) + '</strong></label></div>' +
+          '<div class="form-row">' +
+            buildConfigSelect('cfg-primary', '主模型', cur1 || 0) +
+            buildConfigSelect('cfg-fallback1', '备用模型1 (fallback)', cur2 || 0) +
+            buildConfigSelect('cfg-fallback2', '备用模型2 (fallback)', cur3 || 0) +
           '</div>' +
-          '<button class="btn btn-primary" onclick="configureModel(\'' + slot + '\')">保存配置</button>' +
+          '<button class="btn btn-primary" onclick="saveModelConfig(' + mapId + ')">保存</button>' +
+          ' <button class="btn btn-sm btn-outline" onclick="document.getElementById(\'model-config-section\').style.display=\'none\'">取消</button>' +
         '</div>';
       section.scrollIntoView({ behavior: 'smooth' });
     }
 
-    async function configureModel(slot) {
-      const model = document.getElementById('config-model-name').value.trim();
-      if (!model) { toast('请输入模型名称', 'error'); return; }
-      const r = await api('/setting/configurationModel', { usage: slot, model });
-      if (r.data !== undefined) {
-        toast('模型配置已更新');
-        document.getElementById('model-config-section').style.display = 'none';
-        loaders.model();
-      } else {
-        toast(r.message || '配置失败', 'error');
-      }
+    async function saveModelConfig(mapId) {
+      var configId = parseInt(document.getElementById('cfg-primary').value) || null;
+      var configId2 = parseInt(document.getElementById('cfg-fallback1').value) || null;
+      var configId3 = parseInt(document.getElementById('cfg-fallback2').value) || null;
+
+      if (!configId) { toast('请选择主模型', 'error'); return; }
+
+      var r = await api('/setting/configurationModel', { id: mapId, configId: configId, configId2: configId2, configId3: configId3 });
+      if (!r.data && r.data !== '') { toast(r.message || '配置失败', 'error'); return; }
+
+      toast('模型配置已更新（主模型 + fallback）');
+      document.getElementById('model-config-section').style.display = 'none';
+      loaders.model();
     }
 
     // -------------------- Prompts --------------------
@@ -2038,35 +2206,83 @@
         const r = await api('/cost/getDailySummary');
         const d = r.data || r || {};
 
-        const used = safeVal(d.used || d.totalCost || d.todayCost, 0);
-        const budget = safeVal(d.budget || d.dailyBudget, 100);
-        const remaining = safeVal(d.remaining, budget - used);
-        const usageRate = budget > 0 ? pct(used, budget) : 0;
+        const totalUsage = d.totalUsage || {};
+        const totalTokens = Number(totalUsage.totalInputTokens || 0) + Number(totalUsage.totalOutputTokens || 0);
+        const totalCalls = Number(totalUsage.totalCalls || 0);
+
+        // Calculate total estimated cost from model breakdown
+        var modelCosts = d.usageByModel || [];
+        var todayCost = modelCosts.reduce(function(s, m) { return s + (m.estimatedCost || 0); }, 0);
+        var budget = d.budget || 100;
 
         document.getElementById('cost-summary').innerHTML = '' +
-          '<div class="card">' +
-            '<div class="card-title">今日已用</div>' +
-            '<div class="card-value" style="color:var(--warning);">&yen;' + (typeof used === 'number' ? used.toFixed(2) : used) + '</div>' +
-            '<div class="progress" style="margin-top:8px;"><div class="progress-bar ' + (usageRate > 80 ? 'red' : usageRate > 50 ? 'yellow' : 'green') + '" style="width:' + Math.min(usageRate, 100) + '%"></div></div>' +
-            '<div class="card-sub">使用率: ' + usageRate + '%</div>' +
-          '</div>' +
-          '<div class="card">' +
-            '<div class="card-title">每日预算</div>' +
-            '<div class="card-value">&yen;' + (typeof budget === 'number' ? budget.toFixed(2) : budget) + '</div>' +
-          '</div>' +
-          '<div class="card">' +
-            '<div class="card-title">剩余预算</div>' +
-            '<div class="card-value" style="color:' + (remaining > 0 ? 'var(--success)' : 'var(--danger)') + ';">&yen;' + (typeof remaining === 'number' ? remaining.toFixed(2) : remaining) + '</div>' +
-          '</div>';
+          '<div class="card"><div class="card-title">今日成本</div><div class="card-value" style="color:var(--warning);">&yen;' + todayCost.toFixed(4) + '</div></div>' +
+          '<div class="card"><div class="card-title">总调用次数</div><div class="card-value">' + totalCalls + '</div></div>' +
+          '<div class="card"><div class="card-title">总Token用量</div><div class="card-value">' + (totalTokens > 1000000 ? (totalTokens/1000000).toFixed(1) + 'M' : totalTokens > 1000 ? (totalTokens/1000).toFixed(1) + 'K' : totalTokens) + '</div></div>' +
+          '<div class="card"><div class="card-title">每日预算</div><div class="card-value">&yen;' + budget + '</div></div>';
 
-        // Breakdown if available
-        if (d.breakdown && typeof d.breakdown === 'object') {
-          let breakdownHtml = '<div class="section"><div class="section-title">成本明细</div><div class="table-wrap"><table><thead><tr><th>类别</th><th>费用</th></tr></thead><tbody>';
-          Object.entries(d.breakdown).forEach(([k, v]) => {
-            breakdownHtml += '<tr><td>' + escapeHtml(k) + '</td><td>&yen;' + (typeof v === 'number' ? v.toFixed(4) : v) + '</td></tr>';
+        // Model usage breakdown table
+        var breakdownEl = document.getElementById('cost-breakdown');
+        if (modelCosts.length > 0) {
+          var unitLabels = { text: 'token', image: '张', video: '秒' };
+          var html = '<table class="data-table"><thead><tr><th>厂商</th><th>模型</th><th>调用次数</th><th>成功/失败</th><th>Input Tokens</th><th>Output Tokens</th><th>耗时</th><th>预估成本</th></tr></thead><tbody>';
+          modelCosts.forEach(function(m) {
+            html += '<tr>' +
+              '<td>' + escapeHtml(m.manufacturer || '-') + '</td>' +
+              '<td><strong>' + escapeHtml(m.model || '-') + '</strong></td>' +
+              '<td>' + (m.calls || 0) + '</td>' +
+              '<td><span style="color:var(--success)">' + (m.successCalls || 0) + '</span>/<span style="color:var(--danger)">' + (m.failedCalls || 0) + '</span></td>' +
+              '<td>' + (m.inputTokens || 0) + '</td>' +
+              '<td>' + (m.outputTokens || 0) + '</td>' +
+              '<td>' + ((m.totalDuration || 0) / 1000).toFixed(1) + 's</td>' +
+              '<td style="color:var(--warning);">&yen;' + (m.estimatedCost || 0).toFixed(4) + '</td>' +
+            '</tr>';
           });
-          breakdownHtml += '</tbody></table></div></div>';
-          document.getElementById('cost-summary').insertAdjacentHTML('afterend', breakdownHtml);
+          html += '</tbody></table>';
+          breakdownEl.innerHTML = html;
+        } else {
+          breakdownEl.innerHTML = '<div style="color:var(--text-secondary);">暂无今日用量数据</div>';
+        }
+
+        // Pricing config table (editable)
+        var pricing = d.pricing || [];
+        var configs = d.configs || [];
+        var pricingEl = document.getElementById('cost-pricing');
+        if (pricingEl) {
+          var typeLabels = { text: '文本(每百万token)', image: '图片(每张)', video: '视频(每秒)' };
+          var ph = '<table class="data-table"><thead><tr><th>厂商</th><th>模型</th><th>类型</th><th>输入价格(¥)</th><th>输出价格(¥)</th><th>计费单位</th></tr></thead><tbody>';
+
+          // Show existing pricing + unmapped configs
+          var shownModels = new Set();
+          pricing.forEach(function(p) {
+            shownModels.add(p.manufacturer + '/' + p.model);
+            ph += '<tr>' +
+              '<td>' + escapeHtml(p.manufacturer) + '</td>' +
+              '<td>' + escapeHtml(p.model) + '</td>' +
+              '<td>' + (typeLabels[p.type] || p.type) + '</td>' +
+              '<td><input type="number" step="0.001" value="' + (p.inputPrice || 0) + '" id="price-in-' + p.id + '" style="width:80px"></td>' +
+              '<td><input type="number" step="0.001" value="' + (p.outputPrice || 0) + '" id="price-out-' + p.id + '" style="width:80px"></td>' +
+              '<td>' + (p.unit || '-') + '</td>' +
+            '</tr>';
+          });
+
+          // Show unconfigured models
+          configs.forEach(function(c) {
+            var key = c.manufacturer + '/' + c.model;
+            if (!shownModels.has(key)) {
+              ph += '<tr style="opacity:0.6">' +
+                '<td>' + escapeHtml(c.manufacturer) + '</td>' +
+                '<td>' + escapeHtml(c.model) + ' <span class="badge badge-danger">未配置</span></td>' +
+                '<td>' + c.type + '</td>' +
+                '<td colspan="2"><button class="btn btn-sm btn-outline" onclick="addPricing(\'' + escapeHtml(c.manufacturer) + '\',\'' + escapeHtml(c.model) + '\',\'' + c.type + '\')">添加计费</button></td>' +
+                '<td>-</td>' +
+              '</tr>';
+            }
+          });
+
+          ph += '</tbody></table>';
+          ph += '<button class="btn btn-primary" style="margin-top:8px;" onclick="savePricing()">保存计费配置</button>';
+          pricingEl.innerHTML = ph;
         }
 
         if (budget) document.getElementById('cost-budget').value = budget;
@@ -2074,6 +2290,31 @@
         console.error('Cost load error:', e);
       }
     };
+
+    async function addPricing(manufacturer, model, type) {
+      var unitMap = { text: 'per_1m_tokens', image: 'per_image', video: 'per_second' };
+      await api('/cost/setBudget', { pricing: [{ manufacturer: manufacturer, model: model, type: type, inputPrice: 0, outputPrice: 0, unit: unitMap[type] || 'per_1m_tokens' }] });
+      toast('已添加计费配置');
+      loaders.cost();
+    }
+
+    async function savePricing() {
+      // Collect all pricing inputs
+      var inputs = document.querySelectorAll('[id^="price-in-"]');
+      var pricing = [];
+      inputs.forEach(function(el) {
+        var id = parseInt(el.id.replace('price-in-', ''));
+        var outEl = document.getElementById('price-out-' + id);
+        if (outEl) {
+          pricing.push({ id: id, manufacturer: '', model: '', type: 'text', inputPrice: parseFloat(el.value) || 0, outputPrice: parseFloat(outEl.value) || 0, unit: '' });
+        }
+      });
+      if (pricing.length) {
+        await api('/cost/setBudget', { pricing: pricing });
+        toast('计费配置已保存');
+        loaders.cost();
+      }
+    }
 
     async function setBudget() {
       const budget = parseFloat(document.getElementById('cost-budget').value) || 100;

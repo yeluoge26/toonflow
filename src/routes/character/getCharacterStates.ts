@@ -7,8 +7,22 @@ const router = express.Router();
 
 export default router.post(
   "/",
-  validateFields({ characterId: z.number() }),
+  validateFields({ characterId: z.number().optional() }),
   async (req, res) => {
+    // If no characterId, return all characters with their states
+    if (!req.body.characterId) {
+      const chars = await u.db("t_character").select("*");
+      const result = chars.map((char: any) => ({
+        id: char.id,
+        name: char.name,
+        states: char.stateHistory ? JSON.parse(char.stateHistory) : [],
+        referenceImages: char.referenceImages ? JSON.parse(char.referenceImages) : [],
+        currentLoRA: char.loraId || null,
+        currentVoice: char.voiceId || null,
+      }));
+      return res.status(200).send(success(result));
+    }
+
     const char = await u.db("t_character").where("id", req.body.characterId).first();
     if (!char) return res.status(404).send(error("角色不存在"));
 

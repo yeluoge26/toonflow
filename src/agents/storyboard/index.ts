@@ -39,7 +39,19 @@ interface Shot {
   title: string;
   x: number;
   y: number;
-  cells: Array<{ src?: string; prompt?: string; id?: string }>; // 镜头数组，每个cell是一个镜头
+  cells: Array<{
+    src?: string;
+    prompt?: string;
+    id?: string;
+    durationMs?: number;
+    timeOfDay?: string;
+    cameraMove?: string;
+    dialogue?: string;
+    soundEffect?: string;
+    roleRefs?: string;
+    locationRef?: string;
+    transition?: string;
+  }>;
   fragmentContent: string;
   assetsTags: AssetsType[];
 }
@@ -52,7 +64,7 @@ interface AssetsType {
 export default class Storyboard {
   private readonly projectId: number;
   private readonly scriptId: number;
-  private readonly MAX_HISTORY_LENGTH = 50;
+  private readonly MAX_HISTORY_LENGTH = 10;
   readonly emitter = new EventEmitter();
   history: ModelMessage[] = [];
   novelChapters: DB["t_novel"][] = [];
@@ -180,10 +192,10 @@ export default class Storyboard {
         return "暂无资产数据";
       }
 
-      // 分类提取资源并格式化
-      const characters = outline?.characters?.map((item: any) => `- ${item.name}${item.description ? `：${item.description}` : ""}`) ?? [];
-      const props = outline?.props?.map((item: any) => `- ${item.name}${item.description ? `：${item.description}` : ""}`) ?? [];
-      const scenes = outline?.scenes?.map((item: any) => `- ${item.name}${item.description ? `：${item.description}` : ""}`) ?? [];
+      // 分类提取资源并格式化（精简模式：只返回名称，避免上下文膨胀）
+      const characters = outline?.characters?.map((item: any) => `- ${item.name}`) ?? [];
+      const props = outline?.props?.map((item: any) => `- ${item.name}`) ?? [];
+      const scenes = outline?.scenes?.map((item: any) => `- ${item.name}`) ?? [];
 
       const sections = [
         characters.length ? `【角色】\n${characters.join("\n")}` : "",
@@ -255,13 +267,26 @@ ${sections.join("\n\n")}
    */
   addShots = tool({
     title: "addShots",
-    description: "添加新的分镜。每个分镜有独立ID，包含多个镜头（每个镜头对应一个提示词）。如果片段已存在分镜会跳过",
+    description: "添加专业分镜脚本。每个片段包含场景、过渡方式和多个镜头，每个镜头包含时长、动作描述、角色/场景引用、对白和音效。",
     inputSchema: z.object({
       shots: z
         .array(
           z.object({
             segmentIndex: z.number().describe("对应的片段序号"),
-            prompts: z.array(z.string()).describe("镜头提示词数组，每个提示词对应一个镜头（中文）"),
+            scene: z.string().optional().describe("场景名称"),
+            transition: z.string().optional().describe("分镜过渡方式：硬切/溶解/淡入淡出"),
+            storyboardScript: z.array(
+              z.object({
+                prompt: z.string().describe("完整的分镜描述文本（含时间、场景、动作、环境音等）"),
+                durationMs: z.number().optional().describe("镜头时长（毫秒）"),
+                timeOfDay: z.string().optional().describe("时间：日/夜/黄昏/清晨"),
+                cameraMove: z.string().optional().describe("镜头运动：固定/推/拉/摇/移/跟/升降/环绕"),
+                dialogue: z.string().optional().describe("角色对白（含音色描述）"),
+                soundEffect: z.string().optional().describe("环境音/音效描述"),
+                roleRefs: z.array(z.string()).optional().describe("引用的角色名称列表"),
+                locationRef: z.string().optional().describe("引用的场景名称"),
+              }),
+            ).describe("镜头列表"),
             assetsTags: z.array(
               z.object({
                 type: z.enum(["role", "props", "scene"]).describe("资源类型"),
@@ -272,7 +297,22 @@ ${sections.join("\n\n")}
         )
         .describe("要添加的分镜数组"),
     }),
-    execute: async ({ shots }: { shots: Array<{ segmentIndex: number; prompts: string[]; assetsTags: AssetsType[] }> }) => {
+    execute: async ({ shots }: { shots: Array<{
+      segmentIndex: number;
+      scene?: string;
+      transition?: string;
+      storyboardScript: Array<{
+        prompt: string;
+        durationMs?: number;
+        timeOfDay?: string;
+        cameraMove?: string;
+        dialogue?: string;
+        soundEffect?: string;
+        roleRefs?: string[];
+        locationRef?: string;
+      }>;
+      assetsTags: AssetsType[];
+    }> }) => {
       const added: { id: number; segmentIndex: number }[] = [];
       const skipped: number[] = [];
 
@@ -282,7 +322,6 @@ ${sections.join("\n\n")}
           skipped.push(item.segmentIndex);
           continue;
         }
-        // 分配独立的分镜ID
         this.shotIdCounter++;
         const shotId = this.shotIdCounter;
         this.shots.push({
@@ -291,7 +330,18 @@ ${sections.join("\n\n")}
           title: `分镜 ${shotId}`,
           x: 0,
           y: 0,
-          cells: item.prompts.map((prompt) => ({ id: u.uuid(), prompt })),
+          cells: item.storyboardScript.map((s) => ({
+            id: u.uuid(),
+            prompt: s.prompt,
+            durationMs: s.durationMs || 4000,
+            timeOfDay: s.timeOfDay,
+            cameraMove: s.cameraMove,
+            dialogue: s.dialogue,
+            soundEffect: s.soundEffect,
+            roleRefs: s.roleRefs?.join(","),
+            locationRef: s.locationRef || item.scene,
+            transition: item.transition,
+          })),
           fragmentContent: this.segments[item.segmentIndex - 1]?.description,
           assetsTags: item.assetsTags,
         });
@@ -681,7 +731,11 @@ ${task}
       shotAgent: shotAgent,
     };
 
-    const context = await this.buildFullContext(task);
+    // For shotAgent, use minimal context to avoid token overflow
+    // shotAgent has getSegments/getScript/getAssets tools to fetch data on demand
+    const context = agentType === "shotAgent"
+      ? `${await this.buildEnvironmentContext()}\n\n<当前任务>\n${task}\n</当前任务>\n\n注意：请先调用 getSegments 获取片段数据，然后为每个片段调用 addShots 保存镜头提示词。每次调用 addShots 可以包含1-3个片段的分镜数据，分多次调用完成所有片段。`
+      : await this.buildFullContext(task);
 
     const { fullStream } = await u.ai.text.stream(
       {
@@ -743,7 +797,7 @@ ${task}
       ),
       shotAgent: this.createSubAgentTool(
         "shotAgent",
-        "调用分镜师。负责根据片段生成分镜提示词，会自行调用 getSegments 获取片段数据，并调用 addShots/updateShots 保存分镜结果。",
+        "调用分镜师。负责根据片段生成分镜提示词。注意：每次只处理2-3个片段，如果有更多片段请多次调用分镜师。分镜师会自行调用 getSegments 获取片段数据，并调用 addShots 保存结果。",
       ),
       // this.createSubAgentTool("director", "调用导演。负责审核故事线和大纲，会自行调用 updateOutline 或 saveStoryline 进行修改。"),
       getScript: this.getScript,

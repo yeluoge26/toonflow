@@ -1,4 +1,5 @@
 import os from "os";
+import { execSync } from "child_process";
 
 interface SystemStats {
   cpu: {
@@ -71,6 +72,19 @@ class ResourceMonitor {
       cacheStats = await cache.getStats();
     } catch {}
 
+    // Get GPU stats via nvidia-smi
+    let gpuStats = { usage: 0, memUsage: 0, name: "N/A", temperature: 0 };
+    try {
+      const nvOut = execSync("nvidia-smi --query-gpu=utilization.gpu,utilization.memory,name,temperature.gpu --format=csv,noheader,nounits", { timeout: 5000 }).toString().trim();
+      const parts = nvOut.split(",").map((s: string) => s.trim());
+      gpuStats = {
+        usage: parseInt(parts[0]) || 0,
+        memUsage: parseInt(parts[1]) || 0,
+        name: parts[2] || "N/A",
+        temperature: parseInt(parts[3]) || 0,
+      };
+    } catch {}
+
     return {
       cpu: {
         usage: this.getCpuUsage(),
@@ -83,6 +97,7 @@ class ResourceMonitor {
         free: freeMem,
         usagePercent: Math.round((usedMem / totalMem) * 100),
       },
+      gpu: gpuStats,
       process: {
         uptime: Math.round(process.uptime()),
         memoryUsage: processMemory,

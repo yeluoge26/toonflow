@@ -4,6 +4,25 @@ import sharp from "sharp";
 import { z } from "zod";
 import { CharacterRef, matchCharactersInPrompt } from "@/utils/characterReference";
 
+/**
+ * 加载一致性收敛提示词（角色/背景/风格）
+ * 优先使用 customValue，否则使用 defaultValue
+ */
+async function loadConsistencyPrompts(): Promise<string> {
+  const codes = ["consistency-character", "consistency-background", "consistency-style"];
+  const rows = await u.db("t_prompts").whereIn("code", codes);
+  if (!rows || rows.length === 0) return "";
+
+  const parts: string[] = [];
+  for (const row of rows) {
+    const value = row.customValue || row.defaultValue;
+    if (value) {
+      parts.push(value);
+    }
+  }
+  return parts.join("\n\n");
+}
+
 interface AssetItem {
   name: string;
   description: string;
@@ -345,9 +364,15 @@ export default async (cells: { prompt: string }[], scriptId: number, projectId: 
   const allImageBuffers = [...processedImages, ...charRefBuffers];
   const apiConfig = await u.getPromptAi("storyboardImage");
 
+  // 加载一致性收敛提示词并注入到系统提示中
+  const consistencyPrompts = await loadConsistencyPrompts();
+  const fullSystemPrompt = consistencyPrompts
+    ? `${consistencyPrompts}\n\n${resourcesMapPrompts}`
+    : resourcesMapPrompts;
+
   const contentStr = await u.ai.image(
     {
-      systemPrompt: resourcesMapPrompts,
+      systemPrompt: fullSystemPrompt,
       prompt: prompts,
       size: "4K",
       aspectRatio: projectInfo?.videoRatio ? (projectInfo.videoRatio as any) : "16:9",

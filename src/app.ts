@@ -41,11 +41,17 @@ export default async function startServe(randomPort: Boolean = false) {
 
   app.use(express.static(rootDir));
 
-  // Admin dashboard - served before auth middleware
+  // Frontend files - served before auth middleware
   const webDir = path.join(typeof process.versions?.electron !== "undefined"
     ? path.dirname(require("electron").app.getAppPath())
     : process.cwd(), "scripts", "web");
+  app.use("/favicon.ico", express.static(path.join(webDir, "favicon.ico")));
   app.use("/admin.html", express.static(path.join(webDir, "admin.html")));
+  app.use("/index.html", express.static(path.join(webDir, "index.html")));
+  // Unified portal as root entry
+  app.get("/", (req, res) => {
+    res.sendFile(path.join(webDir, "portal.html"));
+  });
 
   app.use(async (req, res, next) => {
     const setting = await u.db("t_setting").where("id", 1).select("tokenKey").first();

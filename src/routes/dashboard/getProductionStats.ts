@@ -46,35 +46,31 @@ export default router.post("/", async (req, res) => {
     )
     .first();
 
+  const totalBatches = Number(batchStats?.totalBatches || 0);
+  const totalVideos = Number(batchStats?.totalVideos || 0);
+  const successRate = totalVideos > 0
+    ? Math.round((Number(batchStats?.successVideos || 0) / totalVideos) * 100) : 0;
+  const cost = costTracker.getTodaySummary();
+
+  // Flat structure matching admin.html expectations
   res.status(200).send(success({
-    production: {
-      totalBatches: Number(batchStats?.totalBatches || 0),
-      totalVideos: Number(batchStats?.totalVideos || 0),
-      successRate: batchStats?.totalVideos > 0
-        ? Math.round((Number(batchStats?.successVideos || 0) / Number(batchStats?.totalVideos)) * 100)
-        : 0,
-    },
-    quality: {
-      totalScored: Number(scoreStats?.total || 0),
-      avgScore: Math.round(Number(scoreStats?.avgScore || 0) * 10) / 10,
-      distribution: {
-        high: Number(scoreStats?.highCount || 0),
-        medium: Number(scoreStats?.mediumCount || 0),
-        low: Number(scoreStats?.lowCount || 0),
-      },
-    },
+    totalBatches,
+    totalVideos,
+    successRate,
+    activeBatches: 0,
+    completedToday: 0,
+    qualityHigh: Number(scoreStats?.highCount || 0),
+    qualityMedium: Number(scoreStats?.mediumCount || 0),
+    qualityLow: Number(scoreStats?.lowCount || 0),
+    costUsed: cost?.used || 0,
+    costBudget: cost?.budget || 50,
     pipeline: pipelineStats.map((s: any) => ({
       step: s.step,
       total: Number(s.total),
       success: Number(s.success),
       failed: Number(s.failed),
-      successRate: s.total > 0 ? Math.round((Number(s.success) / Number(s.total)) * 100) : 0,
     })),
-    performance: {
-      totalViews: Number(metricsStats?.totalViews || 0),
-      totalLikes: Number(metricsStats?.totalLikes || 0),
-      avgCompletionRate: Math.round(Number(metricsStats?.avgCompletionRate || 0) * 100) / 100,
-    },
-    cost: costTracker.getTodaySummary(),
+    totalViews: Number(metricsStats?.totalViews || 0),
+    totalLikes: Number(metricsStats?.totalLikes || 0),
   }));
 });

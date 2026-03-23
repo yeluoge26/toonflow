@@ -72,7 +72,7 @@ const episodeSchema = z.object({
 
 export default class OutlineScript {
   private readonly projectId: number;
-  private readonly MAX_HISTORY_LENGTH = 50;
+  private readonly MAX_HISTORY_LENGTH = 10;
   readonly emitter = new EventEmitter();
   history: Array<ModelMessage> = [];
   novelChapters: DB["t_novel"][] = [];
@@ -505,15 +505,17 @@ ${formatList(ep.classicQuotes, (q) => q)}
 
   getChapter = tool({
     title: "getChapter",
-    description: "根据章节编号获取小说章节的完整原文内容，支持批量获取",
+    description: "根据章节编号获取小说章节的完整原文内容。注意：为避免上下文溢出，每次最多获取5章，需要更多章节请分多次调用。生成大纲时建议结合故事线按需读取关键章节，无需读取全部原文。",
     inputSchema: z.object({
-      chapterNumbers: z.array(z.number()).min(1).describe("章节编号数组"),
+      chapterNumbers: z.array(z.number()).min(1).max(5).describe("章节编号数组，每次最多5章"),
     }),
     execute: async ({ chapterNumbers }) => {
-      this.log("获取章节", `章节号: ${chapterNumbers.join(", ")}`);
+      // 硬限制：最多5章
+      const limited = chapterNumbers.slice(0, 5);
+      this.log("获取章节", `章节号: ${limited.join(", ")}${chapterNumbers.length > 5 ? ` (已截断，原请求${chapterNumbers.length}章)` : ""}`);
 
       const results = await Promise.all(
-        chapterNumbers.map(async (num) => {
+        limited.map(async (num) => {
           const chapter = await u
             .db("t_novel")
             .where({ projectId: this.projectId, chapterIndex: num })
@@ -640,7 +642,10 @@ ${task}
       director: directorPrompt,
     };
 
-    const context = await this.buildFullContext(task);
+    // Sub-Agents get minimal context: environment + task only (no conversation history)
+    // This avoids context overflow — sub-agents have tools to fetch data on demand
+    const envContext = await this.buildEnvironmentContext();
+    const context = `${envContext}\n\n<当前任务>\n${task}\n</当前任务>`;
 
     const { fullStream } = await u.ai.text.stream(
       {
@@ -695,7 +700,7 @@ ${task}
   private getAllTools() {
     return {
       AI1: this.createSubAgentTool("AI1", "调用故事师。负责分析小说原文并生成故事线，会自行调用 saveStoryline 保存结果。"),
-      AI2: this.createSubAgentTool("AI2", "调用大纲师。负责根据故事线生成剧集大纲，会自行调用 saveOutline 保存结果。"),
+      AI2: this.createSubAgentTool("AI2", "调用大纲师。负责根据故事线生成剧集大纲，会自行调用 saveOutline 保存结果。注意：为避免上下文溢出，每次最多生成3集大纲，如果总集数超过3集，请多次调用大纲师，每次指定不同的集数范围。大纲师应基于故事线生成，只按需读取关键章节（不要一次读全部）。"),
       director: this.createSubAgentTool("director", "调用导演。负责审核故事线和大纲，会自行调用 updateOutline 或 saveStoryline 进行修改。"),
       getChapter: this.getChapter,
       getStoryline: this.getStoryline,

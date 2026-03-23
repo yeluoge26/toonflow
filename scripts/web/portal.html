@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="./favicon.ico">
+  <title>ToonFlow - AI短剧工厂</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --primary: #6c5ce7;
+      --primary-light: #a29bfe;
+      --text: #e8e8f0;
+      --text-secondary: #8b8da3;
+      --success: #00b894;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Top Navigation Bar */
+    .top-bar {
+      height: 48px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 8px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-right: 24px;
+    }
+    .tab-group { display: flex; gap: 2px; }
+    .tab {
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: all .2s;
+      border: none;
+      background: transparent;
+      user-select: none;
+    }
+    .tab:hover { color: var(--text); background: rgba(108,92,231,.15); }
+    .tab.active { color: #fff; background: var(--primary); }
+
+    .spacer { flex: 1; }
+
+    .status-pills { display: flex; gap: 12px; align-items: center; font-size: 11px; color: var(--text-secondary); }
+    .pill { display: flex; align-items: center; gap: 4px; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .dot.green { background: var(--success); }
+    .dot.red { background: var(--danger); }
+    .dot.yellow { background: var(--warning); }
+
+    .user-info {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-left: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logout-btn {
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 11px;
+      text-decoration: none;
+      border: none;
+      background: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .logout-btn:hover { background: rgba(231,76,60,.15); }
+
+    /* Content Area */
+    .content-frame {
+      flex: 1;
+      border: none;
+      width: 100%;
+    }
+
+    /* Login Overlay */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 40px;
+      width: 380px;
+      text-align: center;
+    }
+    .login-box h2 { margin-bottom: 8px; font-size: 24px; }
+    .login-box p { color: var(--text-secondary); margin-bottom: 24px; font-size: 13px; }
+    .login-box input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    .login-box input:focus { border-color: var(--primary); }
+    .login-box button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .login-box button:hover { opacity: .9; }
+    .login-error { color: var(--danger); font-size: 12px; margin-top: 8px; min-height: 18px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Login Overlay -->
+  <div class="login-overlay" id="login-overlay">
+    <div class="login-box">
+      <h2>ToonFlow</h2>
+      <p>AI 短剧创作工厂</p>
+      <input type="text" id="login-user" placeholder="用户名" value="admin">
+      <input type="password" id="login-pass" placeholder="密码" value="admin123">
+      <button onclick="doLogin()">登 录</button>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
+
+  <!-- Top Navigation -->
+  <div class="top-bar" id="top-bar" style="display:none;">
+    <div class="logo">ToonFlow</div>
+    <div class="tab-group">
+      <button class="tab active" data-view="studio" onclick="switchView('studio')">创作工作台</button>
+      <button class="tab" data-view="admin" onclick="switchView('admin')">管理后台</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="status-pills" id="status-pills"></div>
+    <div class="user-info">
+      <span id="user-name"></span>
+      <button class="logout-btn" onclick="doLogout()">退出</button>
+    </div>
+  </div>
+
+  <!-- Content Frames -->
+  <iframe class="content-frame" id="frame-studio" style="display:none;" src="about:blank"></iframe>
+  <iframe class="content-frame" id="frame-admin" style="display:none;" src="about:blank"></iframe>
+
+<script>
+  var TOKEN = localStorage.getItem('toonflow_token');
+  var currentView = 'studio';
+  var statusTimer = null;
+
+  // ============ Auth ============
+  async function doLogin() {
+    var user = document.getElementById('login-user').value;
+    var pass = document.getElementById('login-pass').value;
+    document.getElementById('login-error').textContent = '';
+
+    try {
+      var res = await fetch('/other/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass })
+      });
+      var data = await res.json();
+      if (data.code === 200 && data.data && data.data.token) {
+        TOKEN = data.data.token;
+        localStorage.setItem('toonflow_token', TOKEN);
+        document.getElementById('user-name').textContent = data.data.name || user;
+        showApp();
+      } else {
+        document.getElementById('login-error').textContent = data.message || '登录失败';
+      }
+    } catch (e) {
+      document.getElementById('login-error').textContent = '网络错误: ' + e.message;
+    }
+  }
+
+  function doLogout() {
+    localStorage.removeItem('toonflow_token');
+    TOKEN = null;
+    clearInterval(statusTimer);
+    document.getElementById('login-overlay').classList.remove('hidden');
+    document.getElementById('top-bar').style.display = 'none';
+    document.getElementById('frame-studio').style.display = 'none';
+    document.getElementById('frame-admin').style.display = 'none';
+  }
+
+  function showApp() {
+    document.getElementById('login-overlay').classList.add('hidden');
+    document.getElementById('top-bar').style.display = 'flex';
+
+    // Load both frames with token
+    var studioFrame = document.getElementById('frame-studio');
+    var adminFrame = document.getElementById('frame-admin');
+
+    // Pass token to Vue SPA via URL and to admin via postMessage
+    studioFrame.src = '/index.html?token=' + encodeURIComponent(TOKEN);
+    adminFrame.src = '/admin.html?token=' + encodeURIComponent(TOKEN);
+
+    // Inject token into admin iframe's localStorage once loaded
+    adminFrame.onload = function() {
+      try {
+        adminFrame.contentWindow.localStorage.setItem('toonflow_token', TOKEN);
+        // Trigger re-check if admin has a checkAuth function
+        if (adminFrame.contentWindow.checkAuth) adminFrame.contentWindow.checkAuth();
+      } catch(e) {}
+    };
+
+    switchView(currentView);
+    startStatusPolling();
+  }
+
+  // ============ View Switching ============
+  function switchView(view) {
+    currentView = view;
+    document.querySelectorAll('.tab').forEach(function(t) {
+      t.classList.toggle('active', t.dataset.view === view);
+    });
+    document.getElementById('frame-studio').style.display = view === 'studio' ? 'block' : 'none';
+    document.getElementById('frame-admin').style.display = view === 'admin' ? 'block' : 'none';
+  }
+
+  // ============ Status Polling ============
+  function startStatusPolling() {
+    updateStatus();
+    statusTimer = setInterval(updateStatus, 15000);
+  }
+
+  async function updateStatus() {
+    try {
+      var res = await fetch('/system/getSystemStats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': TOKEN },
+        body: '{}'
+      });
+      var data = await res.json();
+      var s = data.data || {};
+
+      var cpuColor = (s.cpu||0) > 80 ? 'red' : (s.cpu||0) > 50 ? 'yellow' : 'green';
+      var memColor = (s.memory||0) > 80 ? 'red' : (s.memory||0) > 50 ? 'yellow' : 'green';
+      var gpuColor = (s.gpu||0) > 80 ? 'red' : (s.gpu||0) > 50 ? 'yellow' : 'green';
+      var redisColor = s.redis === 'connected' ? 'green' : 'red';
+
+      document.getElementById('status-pills').innerHTML =
+        '<div class="pill"><div class="dot ' + cpuColor + '"></div>CPU ' + (s.cpu||0) + '%</div>' +
+        '<div class="pill"><div class="dot ' + memColor + '"></div>MEM ' + (s.memory||0) + '%</div>' +
+        '<div class="pill"><div class="dot ' + gpuColor + '"></div>GPU ' + (s.gpu||0) + '%</div>' +
+        '<div class="pill"><div class="dot ' + redisColor + '"></div>Redis</div>';
+    } catch(e) {}
+  }
+
+  // ============ Auto-login ============
+  (function init() {
+    if (TOKEN) {
+      // Verify token
+      fetch('/user/getUser', { headers: { 'Authorization': TOKEN } })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.code === 200) {
+            document.getElementById('user-name').textContent = data.data?.name || 'admin';
+            showApp();
+          } else {
+            localStorage.removeItem('toonflow_token');
+            TOKEN = null;
+          }
+        })
+        .catch(function() {});
+    }
+
+    // Enter key on password
+    document.getElementById('login-pass').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doLogin();
+    });
+  })();
+</script>
+</body>
+</html>

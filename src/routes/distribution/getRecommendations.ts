@@ -25,11 +25,8 @@ export default router.post(
 
       const recommendations = await recommendContent(topics, ips);
 
-      res.status(200).send(success({
-        trending: topics,
-        recommendations,
-        platform: req.body.platform,
-      }));
+      // Return array directly for admin.html compatibility
+      res.status(200).send(success(recommendations));
     } catch (err: any) {
       res.status(500).send(error(err.message));
     }

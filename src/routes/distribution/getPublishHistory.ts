@@ -19,9 +19,7 @@ export default router.post(
     if (req.body.platform) query = query.where("platform", req.body.platform);
 
     const history = await query.select("*");
-    res.status(200).send(success({
-      history,
-      total: history.length,
-    }));
+    // Return array directly for admin.html compatibility
+    res.status(200).send(success(history));
   }
 );
