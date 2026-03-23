@@ -1,12 +1,19 @@
-<p>
+<p align="center">
   <a href="https://github.com/HBAI-Ltd/Toonflow-app">
-    <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white" alt="GitHub" />
+    <img src="https://img.shields.io/badge/Original_Project-HBAI--Ltd/Toonflow--app-blue?style=for-the-badge&logo=github" alt="Original Project" />
   </a>
-  &nbsp;|&nbsp;
+  &nbsp;
+  <a href="https://github.com/yeluoge26/toonflow">
+    <img src="https://img.shields.io/badge/Enhanced_Edition-yeluoge26/toonflow-purple?style=for-the-badge&logo=github" alt="Enhanced Edition" />
+  </a>
+  &nbsp;
   <a href="https://gitee.com/HBAI-Ltd/Toonflow-app">
-    <img src="https://img.shields.io/badge/Gitee-C71D23?style=flat-square&logo=gitee&logoColor=white" alt="Gitee" />
+    <img src="https://img.shields.io/badge/Gitee-C71D23?style=for-the-badge&logo=gitee&logoColor=white" alt="Gitee" />
   </a>
 </p>
+
+> **Fork 自 [HBAI-Ltd/Toonflow-app](https://github.com/HBAI-Ltd/Toonflow-app)**
+> — 感谢 [HBAI-Ltd](https://github.com/HBAI-Ltd) 团队开源了如此优秀的 AI 短剧创作工具，本项目在其基础上进行了深度增强与扩展。原项目采用 AGPL-3.0 协议，本增强版遵循相同协议。
 
 <p align="center">
   <strong>中文</strong> |
@@ -29,17 +36,29 @@
     </b>
   </p>
   <p align="center">
-    <a href="https://github.com/HBAI-Ltd/Toonflow-app/stargazers">
-      <img src="https://img.shields.io/github/stars/HBAI-Ltd/Toonflow-app?style=for-the-badge&logo=github" alt="Stars Badge" />
+    <a href="https://github.com/yeluoge26/toonflow/stargazers">
+      <img src="https://img.shields.io/github/stars/yeluoge26/toonflow?style=for-the-badge&logo=github" alt="Stars Badge" />
     </a>
     <a href="https://www.gnu.org/licenses/agpl-3.0" target="_blank">
       <img src="https://img.shields.io/badge/License-AGPL-blue.svg?style=for-the-badge" alt="AGPL License Badge" />
     </a>
-    <a href="https://github.com/HBAI-Ltd/Toonflow-app/releases">
-      <img alt="release" src="https://img.shields.io/github/v/release/HBAI-Ltd/Toonflow-app?style=for-the-badge" />
+    <a href="https://github.com/HBAI-Ltd/Toonflow-app">
+      <img src="https://img.shields.io/badge/Upstream-HBAI--Ltd-green?style=for-the-badge&logo=git" alt="Upstream" />
     </a>
   </p>
 </div>
+
+---
+
+## 致谢
+
+本项目基于 **[HBAI-Ltd/Toonflow-app](https://github.com/HBAI-Ltd/Toonflow-app)** 开源项目深度增强。特别感谢：
+
+- **[HBAI-Ltd](https://github.com/HBAI-Ltd)** — 原始项目作者团队，构建了完整的 AI 短剧创作框架
+- **原项目贡献者** — 为 Toonflow 的核心功能（小说解析、剧本生成、分镜制作、视频合成）奠定了坚实基础
+- **开源社区** — AI SDK、BullMQ、Prisma 等优秀开源项目
+
+> 如果你喜欢这个项目，请也给原项目 [HBAI-Ltd/Toonflow-app](https://github.com/HBAI-Ltd/Toonflow-app) 一个 Star！
 
 ---
 
