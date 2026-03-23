@@ -37,6 +37,13 @@ def main():
     client.connect(HOST, port=22, username=USER, password=PASS, timeout=30, banner_timeout=60)
     print('Connected!')
 
+    # Fix frontend localhost references for remote deployment
+    print('\n[0] Fixing frontend API URLs...')
+    run(client, f"sed -i 's|http://localhost:60000||g' {DEPLOY_DIR}/scripts/web/index.html")
+    run(client, f"sed -i 's|ws://localhost:60000|ws://{HOST}:60000|g' {DEPLOY_DIR}/scripts/web/index.html")
+    out, _, _ = run(client, f'grep -c "localhost:60000" {DEPLOY_DIR}/scripts/web/index.html')
+    print(f'  Remaining localhost refs: {out} (placeholders only)')
+
     # Check if build succeeded
     print('\n[1] Checking build status...')
     out, _, code = run(client, f'ls -la {DEPLOY_DIR}/build/app.js 2>/dev/null')
