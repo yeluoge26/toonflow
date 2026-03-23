@@ -31,6 +31,10 @@ import route27 from "./routes/character/getGlobalCharacters";
 import route28 from "./routes/character/importFromAssets";
 import route29 from "./routes/character/updateCharacter";
 import route30 from "./routes/character/updateCharacterState";
+import route155 from "./routes/character/saveIdentity";
+import route156 from "./routes/character/getIdentities";
+import route157 from "./routes/character/generateReference";
+import route158 from "./routes/character/extractIdentity";
 import route31 from "./routes/cost/estimateCost";
 import route32 from "./routes/cost/getDailySummary";
 import route33 from "./routes/cost/setBudget";
@@ -155,6 +159,15 @@ import route151 from "./routes/video/getVideoStoryboards";
 import route152 from "./routes/video/reviseVideoStoryboards";
 import route153 from "./routes/video/saveVideo";
 import route154 from "./routes/video/upDateVideoConfig";
+import route159 from "./routes/storyboard/parseDSL";
+import route160 from "./routes/video/getVideoConstraints";
+import route161 from "./routes/video/saveVideoConstraints";
+import route162 from "./routes/batch/createTemplate";
+import route163 from "./routes/batch/createJob";
+import route164 from "./routes/batch/getProgress";
+import route165 from "./routes/batch/getTemplates";
+import route166 from "./routes/audio/generateEmotionVoice";
+import route167 from "./routes/audio/batchDialogue";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -187,6 +200,10 @@ export default async (app: Express) => {
   app.use("/character/importFromAssets", route28);
   app.use("/character/updateCharacter", route29);
   app.use("/character/updateCharacterState", route30);
+  app.use("/character/saveIdentity", route155);
+  app.use("/character/getIdentities", route156);
+  app.use("/character/generateReference", route157);
+  app.use("/character/extractIdentity", route158);
   app.use("/cost/estimateCost", route31);
   app.use("/cost/getDailySummary", route32);
   app.use("/cost/setBudget", route33);
@@ -311,4 +328,13 @@ export default async (app: Express) => {
   app.use("/video/reviseVideoStoryboards", route152);
   app.use("/video/saveVideo", route153);
   app.use("/video/upDateVideoConfig", route154);
+  app.use("/storyboard/parseDSL", route159);
+  app.use("/video/getVideoConstraints", route160);
+  app.use("/video/saveVideoConstraints", route161);
+  app.use("/batch/createTemplate", route162);
+  app.use("/batch/createJob", route163);
+  app.use("/batch/getProgress", route164);
+  app.use("/batch/getTemplates", route165);
+  app.use("/audio/generateEmotionVoice", route166);
+  app.use("/audio/batchDialogue", route167);
 }

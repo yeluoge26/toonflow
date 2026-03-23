@@ -683,6 +683,35 @@ export default async (knex: Knex): Promise<void> => {
     }
   }
 
+  // ==================== t_character_identity (角色一致性系统) ====================
+  if (!(await knex.schema.hasTable("t_character_identity"))) {
+    await knex.schema.createTable("t_character_identity", (table) => {
+      table.increments("id").primary();
+      table.integer("projectId");
+      table.integer("assetsId");           // link to t_assets character
+      table.text("name");
+      // Visual identity
+      table.text("faceDescription");       // detailed face features for consistency
+      table.text("bodyType");              // body proportions
+      table.text("hairStyle");
+      table.text("clothingDefault");       // default outfit
+      table.text("colorPalette");          // dominant colors JSON
+      // Generation control
+      table.integer("consistencySeed");    // fixed seed for reproducibility
+      table.text("referenceImagePath");    // reference image for IP-Adapter
+      table.text("loraModel");             // custom LoRA if available
+      table.float("ipAdapterWeight").defaultTo(0.7);
+      // Voice identity
+      table.text("voiceType");             // male_low, female_high, etc
+      table.text("voiceEmotion").defaultTo("neutral");
+      table.float("voiceSpeed").defaultTo(1.0);
+      // Metadata
+      table.text("appearances");           // JSON: episode appearances
+      table.integer("createdAt");
+      table.integer("updatedAt");
+    });
+  }
+
   const checkSd2VideoModel = await knex("t_videoModel").where("manufacturer", "volcengine").where("model", "doubao-seedance-2-0-260128").first();
   if (!checkSd2VideoModel) {
     await knex("t_videoModel").insert([
@@ -695,5 +724,65 @@ export default async (knex: Knex): Promise<void> => {
         type: JSON.stringify(["endFrameOptional", "multiImage"]),
       },
     ]);
+  }
+
+  // Video Constraints table for visual consistency
+  if (!(await knex.schema.hasTable("t_video_constraints"))) {
+    await knex.schema.createTable("t_video_constraints", (table) => {
+      table.increments("id").primary();
+      table.integer("projectId");
+      table.text("constraintType");    // "global" | "scene" | "character"
+      table.text("constraintKey");     // field name or scene/character id
+      table.text("constraintValue");   // JSON value
+      table.integer("createdAt");
+    });
+  }
+
+  // t_production_template
+  if (!(await knex.schema.hasTable("t_production_template"))) {
+    await knex.schema.createTable("t_production_template", (table) => {
+      table.increments("id").primary();
+      table.text("name");
+      table.text("genre");
+      table.text("artStyle");
+      table.text("storyStructure"); // JSON
+      table.text("characterSlots"); // JSON
+      table.text("sceneSlots"); // JSON
+      table.text("variationAxes"); // JSON
+      table.integer("createdAt");
+    });
+  }
+
+  // t_batch_job
+  if (!(await knex.schema.hasTable("t_batch_job"))) {
+    await knex.schema.createTable("t_batch_job", (table) => {
+      table.increments("id").primary();
+      table.integer("templateId");
+      table.integer("projectId");
+      table.text("status").defaultTo("pending");
+      table.integer("totalEpisodes").defaultTo(0);
+      table.integer("completedEpisodes").defaultTo(0);
+      table.text("variations"); // JSON
+      table.text("stages"); // JSON
+      table.integer("createdAt");
+      table.integer("updatedAt");
+    });
+  }
+
+  // t_voice_profile
+  if (!(await knex.schema.hasTable("t_voice_profile"))) {
+    await knex.schema.createTable("t_voice_profile", (table) => {
+      table.increments("id").primary();
+      table.integer("characterId");
+      table.integer("projectId");
+      table.text("gender");
+      table.text("ageRange");
+      table.text("pitch");
+      table.text("quality");
+      table.text("provider");
+      table.text("voiceId");
+      table.text("apiKey");
+      table.integer("createdAt");
+    });
   }
 };

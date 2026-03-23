@@ -68,6 +68,27 @@ export interface t_character {
   'updatedAt'?: number | null;
   'voiceId'?: string | null;
 }
+export interface t_character_identity {
+  'id'?: number;
+  'projectId'?: number | null;
+  'assetsId'?: number | null;
+  'name'?: string | null;
+  'faceDescription'?: string | null;
+  'bodyType'?: string | null;
+  'hairStyle'?: string | null;
+  'clothingDefault'?: string | null;
+  'colorPalette'?: string | null;
+  'consistencySeed'?: number | null;
+  'referenceImagePath'?: string | null;
+  'loraModel'?: string | null;
+  'ipAdapterWeight'?: number | null;
+  'voiceType'?: string | null;
+  'voiceEmotion'?: string | null;
+  'voiceSpeed'?: number | null;
+  'appearances'?: string | null;
+  'createdAt'?: number | null;
+  'updatedAt'?: number | null;
+}
 export interface t_chatHistory {
   'data'?: string | null;
   'id'?: number;
@@ -372,6 +393,14 @@ export interface t_videoConfig {
   'startFrame'?: string | null;
   'updateTime'?: number | null;
 }
+export interface t_video_constraints {
+  'id'?: number;
+  'projectId'?: number | null;
+  'constraintType'?: string | null;
+  'constraintKey'?: string | null;
+  'constraintValue'?: string | null;
+  'createdAt'?: number | null;
+}
 export interface t_videoModel {
   'aspectRatio'?: string | null;
   'audio'?: number | null;
@@ -388,6 +417,7 @@ export interface DB {
   "t_assets": t_assets;
   "t_batch": t_batch;
   "t_character": t_character;
+  "t_character_identity": t_character_identity;
   "t_chatHistory": t_chatHistory;
   "t_config": t_config;
   "t_image": t_image;
@@ -415,6 +445,7 @@ export interface DB {
   "t_variablePool": t_variablePool;
   "t_video": t_video;
   "t_video_gen": t_video_gen;
+  "t_video_constraints": t_video_constraints;
   "t_videoConfig": t_videoConfig;
   "t_videoModel": t_videoModel;
 }

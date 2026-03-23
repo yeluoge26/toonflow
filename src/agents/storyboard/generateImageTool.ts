@@ -3,6 +3,7 @@ import u from "@/utils";
 import sharp from "sharp";
 import { z } from "zod";
 import { CharacterRef, matchCharactersInPrompt } from "@/utils/characterReference";
+import { buildConsistencyInjection } from "@/lib/characterConsistency";
 
 /**
  * 加载一致性收敛提示词（角色/背景/风格）
@@ -361,14 +362,39 @@ export default async (cells: { prompt: string }[], scriptId: number, projectId: 
     }
   }
 
+  // === Character Consistency System: inject CHARACTER LOCK prompts ===
+  const { consistencyPrompt: charLockPrompt, matchedIdentities } = await buildConsistencyInjection(
+    projectId,
+    cellPrompts,
+  );
+
+  // Load reference images from matched character identities
+  if (matchedIdentities.length > 0) {
+    for (const identity of matchedIdentities) {
+      if (identity.referenceImagePath) {
+        try {
+          const buf = await u.oss.getFile(identity.referenceImagePath);
+          const compressed = await compressImage(buf);
+          charRefBuffers.push(compressed);
+        } catch {
+          // Skip if reference image not found
+        }
+      }
+    }
+  }
+
   const allImageBuffers = [...processedImages, ...charRefBuffers];
   const apiConfig = await u.getPromptAi("storyboardImage");
 
   // 加载一致性收敛提示词并注入到系统提示中
   const consistencyPrompts = await loadConsistencyPrompts();
-  const fullSystemPrompt = consistencyPrompts
-    ? `${consistencyPrompts}\n\n${resourcesMapPrompts}`
-    : resourcesMapPrompts;
+
+  // Combine: generic consistency prompts + character lock prompts + resource map
+  const systemParts: string[] = [];
+  if (consistencyPrompts) systemParts.push(consistencyPrompts);
+  if (charLockPrompt) systemParts.push(charLockPrompt);
+  if (resourcesMapPrompts) systemParts.push(resourcesMapPrompts);
+  const fullSystemPrompt = systemParts.join("\n\n");
 
   const contentStr = await u.ai.image(
     {

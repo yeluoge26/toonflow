@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6ImFkbWluIiwiaWF0IjoxNzczODkzNjk0LCJleHAiOjE3ODk0NDU2OTR9.RCW3ZsV66fwS28OxSrylcB0gVJukf0sK7t75b83CEQs\")",
+      "Bash(__NEW_LINE_25c2be9258c19798__ curl -s -X POST http://localhost:60000/other/testAI -H \"Content-Type: application/json\" -H \"Authorization: Bearer $TOKEN\" -d '{:*)",
+      "Bash(netstat -ano)",
+      "Bash(node -e \":*)",
+      "Bash(__NEW_LINE_d093d14e08e00882__ cd:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6ImFkbWluIiwiaWF0IjoxNzczODkzNjk0LCJleHAiOjE3ODk0NDU2OTR9.RCW3ZsV66fwS28OxSrylcB0gVJukf0sK7t75b83CEQs\" __NEW_LINE_31de4a981ed20ce3__ echo \"=== getSingleProject ===\" curl -s -X POST http://localhost:60000/project/getSingleProject -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d '{\"\"\"\"id\"\"\"\":1}')",
+      "Bash(node -e \"const d=[];process.stdin.on\\(''''data'''',c=>d.push\\(c\\)\\);process.stdin.on\\(''''end'''',\\(\\)=>{const r=JSON.parse\\(d.join\\(''''''''\\)\\);const p=r.data[0];console.log\\(''''name:'''',p.name,''''type:'''',p.type,''''artStyle:'''',p.artStyle,''''ratio:'''',p.videoRatio\\)}\\)\" __NEW_LINE_31de4a981ed20ce3__ echo \"=== geScriptApi ===\" curl -s -X POST http://localhost:60000/script/geScriptApi -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d '{\"\"\"\"projectId\"\"\"\":1}')",
+      "Bash(node -e \"const d=[];process.stdin.on\\(''''data'''',c=>d.push\\(c\\)\\);process.stdin.on\\(''''end'''',\\(\\)=>{const r=JSON.parse\\(d.join\\(''''''''\\)\\);\\(r.data||[]\\).forEach\\(s=>console.log\\(s.name,'''':'''',\\(s.content||''''''''\\).length,''''chars''''\\)\\)}\\)\" __NEW_LINE_31de4a981ed20ce3__ echo \"=== getAssets\\(角色\\) ===\" curl -s -X POST http://localhost:60000/assets/getAssets -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d '{\"\"\"\"projectId\"\"\"\":1,\"\"\"\"type\"\"\"\":\"\"\"\"角色\"\"\"\"}')",
+      "Bash(node -e \"const d=[];process.stdin.on\\(''''data'''',c=>d.push\\(c\\)\\);process.stdin.on\\(''''end'''',\\(\\)=>{const r=JSON.parse\\(d.join\\(''''''''\\)\\);console.log\\(r.data?.length,''''roles''''\\)}\\)\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6ImFkbWluIiwiaWF0IjoxNzczODkzNjk0LCJleHAiOjE3ODk0NDU2OTR9.RCW3ZsV66fwS28OxSrylcB0gVJukf0sK7t75b83CEQs\" curl -s -X POST http://localhost:60000/assets/getAssets -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d '{\"\"\"\"projectId\"\"\"\":1,\"\"\"\"type\"\"\"\":\"\"\"\"角色\"\"\"\"}')",
+      "Bash(node scripts/gen-kling-sample.js)",
+      "Bash(node scripts/gen-gemini-samples.js)",
+      "Bash(ls -lhS e:/code3/toonflow/uploads/1/sample/gemini_*.png)",
+      "Bash(node scripts/gen-kling-ep1.js)"
+    ]
+  }
+}

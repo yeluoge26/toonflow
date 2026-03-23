@@ -263,8 +263,14 @@
     <div class="nav-item" data-module="cost" onclick="showModule('cost')">
       <span class="nav-icon">&#9830;</span><span class="nav-label">成本控制</span>
     </div>
+    <div class="nav-item" data-module="charIdentity" onclick="showModule('charIdentity')">
+      <span class="nav-icon">&#128373;</span> 角色一致性
+    </div>
     <div class="nav-item" data-module="character" onclick="showModule('character')">
       <span class="nav-icon">&#9786;</span><span class="nav-label">角色IP</span>
+    </div>
+    <div class="nav-item" data-module="videoConstraints" onclick="showModule('videoConstraints')">
+      <span class="nav-icon">&#9881;</span><span class="nav-label">视频约束</span>
     </div>
     <div class="sidebar-footer">
       <span id="user-display"></span>
@@ -770,6 +776,78 @@
       </div>
 
       <!-- ==================== Characters ==================== -->
+      <!-- Character Identity / Consistency Module -->
+      <div class="module" id="module-charIdentity">
+        <div class="section">
+          <div class="section-title">
+            角色一致性身份管理
+            <div>
+              <button class="btn btn-sm btn-outline" onclick="loadCharIdentities()">刷新</button>
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:16px;">
+            <div class="form-group">
+              <label>项目ID</label>
+              <input type="number" id="ci-projectId" placeholder="输入项目ID" value="1">
+            </div>
+            <div class="form-group" style="align-self:flex-end;">
+              <button class="btn btn-primary" onclick="loadCharIdentities()">加载</button>
+            </div>
+          </div>
+          <div id="ci-list"><div class="empty-state"><div class="empty-state-text">请输入项目ID并点击加载</div></div></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">从资产提取身份</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>资产ID (角色类型)</label>
+              <input type="number" id="ci-extract-assetsId" placeholder="资产ID">
+            </div>
+            <div class="form-group">
+              <label>项目ID</label>
+              <input type="number" id="ci-extract-projectId" placeholder="项目ID" value="1">
+            </div>
+            <div class="form-group" style="align-self:flex-end;">
+              <button class="btn btn-primary" onclick="extractCharIdentity()">AI提取</button>
+            </div>
+          </div>
+          <div id="ci-extract-result"></div>
+        </div>
+
+        <!-- Edit Identity Modal -->
+        <div class="modal-overlay" id="ci-edit-modal">
+          <div class="modal" style="max-width:640px;">
+            <button class="modal-close" onclick="closeModal('ci-edit-modal')">&times;</button>
+            <div class="modal-title">编辑角色身份</div>
+            <input type="hidden" id="ci-edit-id">
+            <input type="hidden" id="ci-edit-projectId">
+            <div class="form-row">
+              <div class="form-group"><label>角色名称</label><input type="text" id="ci-edit-name"></div>
+              <div class="form-group"><label>一致性种子</label><input type="number" id="ci-edit-seed"></div>
+            </div>
+            <div class="form-group"><label>面部特征</label><textarea id="ci-edit-face" rows="2"></textarea></div>
+            <div class="form-group"><label>发型</label><textarea id="ci-edit-hair" rows="2"></textarea></div>
+            <div class="form-group"><label>体型</label><input type="text" id="ci-edit-body"></div>
+            <div class="form-group"><label>默认服装</label><textarea id="ci-edit-clothing" rows="2"></textarea></div>
+            <div class="form-group"><label>色彩调色板 (JSON)</label><textarea id="ci-edit-palette" rows="2"></textarea></div>
+            <div class="form-row">
+              <div class="form-group"><label>IP-Adapter权重</label><input type="number" step="0.1" id="ci-edit-ipWeight" value="0.7"></div>
+              <div class="form-group"><label>LoRA模型</label><input type="text" id="ci-edit-lora"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>语音类型</label><input type="text" id="ci-edit-voiceType" placeholder="male_low, female_high..."></div>
+              <div class="form-group"><label>语音情绪</label><input type="text" id="ci-edit-voiceEmotion" value="neutral"></div>
+              <div class="form-group"><label>语速</label><input type="number" step="0.1" id="ci-edit-voiceSpeed" value="1.0"></div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" onclick="saveCharIdentity()">保存</button>
+              <button class="btn btn-outline" onclick="closeModal('ci-edit-modal')">取消</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="module" id="module-character">
         <div class="section">
           <div class="section-title">
@@ -833,6 +911,110 @@
               <button class="btn btn-outline" onclick="closeModal('char-edit-modal')">取消</button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- ==================== Video Constraints ==================== -->
+      <div class="module" id="module-videoConstraints">
+        <div class="section">
+          <div class="section-title">
+            全局风格锁定
+            <div>
+              <button class="btn btn-sm btn-outline" onclick="loaders.videoConstraints()">刷新</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>项目ID</label>
+            <input type="number" id="vc-projectId" placeholder="输入项目ID" value="1">
+            <button class="btn btn-sm btn-primary" style="margin-top:8px;" onclick="loadVideoConstraints()">加载约束</button>
+          </div>
+          <div class="detail-panel" style="margin-top:16px;">
+            <div class="form-row">
+              <div class="form-group">
+                <label>画风 (Art Style)</label>
+                <input type="text" id="vc-artStyle" placeholder="例: 龙族传说, Chinese fantasy epic">
+              </div>
+              <div class="form-group">
+                <label>色彩调性 (Color Grading)</label>
+                <select id="vc-colorGrading">
+                  <option value="">-- 选择 --</option>
+                  <option value="warm amber">暖琥珀 (warm amber)</option>
+                  <option value="cold blue">冷蓝 (cold blue)</option>
+                  <option value="neutral">中性 (neutral)</option>
+                  <option value="warm amber with cold blue highlights">暖琥珀+冷蓝高光</option>
+                  <option value="golden hour">黄金时段</option>
+                  <option value="desaturated">低饱和度</option>
+                  <option value="high contrast">高对比度</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>镜头 (Camera Lens)</label>
+                <select id="vc-cameraLens">
+                  <option value="">-- 选择 --</option>
+                  <option value="50mm cinematic lens">50mm 电影镜头</option>
+                  <option value="35mm wide lens">35mm 广角镜头</option>
+                  <option value="85mm portrait lens">85mm 人像镜头</option>
+                  <option value="24mm ultra wide lens">24mm 超广角</option>
+                  <option value="100mm macro lens">100mm 微距</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>画面比例 (Aspect Ratio)</label>
+                <select id="vc-aspectRatio">
+                  <option value="16:9">16:9 横屏</option>
+                  <option value="9:16">9:16 竖屏</option>
+                  <option value="1:1">1:1 方形</option>
+                  <option value="4:3">4:3</option>
+                  <option value="21:9">21:9 超宽</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label style="display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" id="vc-noSubtitle" checked style="width:auto;">
+                  禁止字幕/文字叠加
+                </label>
+              </div>
+              <div class="form-group">
+                <label style="display:flex;align-items:center;gap:8px;">
+                  <input type="checkbox" id="vc-noRandomCharacters" checked style="width:auto;">
+                  禁止随机/多余角色
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">
+            场景锁定 (Scene Locks)
+            <button class="btn btn-sm btn-outline" onclick="addSceneLockRow()">+ 添加场景</button>
+          </div>
+          <div id="vc-sceneLocks">
+            <div class="empty-state"><div class="empty-state-text">暂无场景锁定配置</div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">
+            角色锁定 (Character Locks)
+            <button class="btn btn-sm btn-outline" onclick="addCharLockRow()">+ 添加角色</button>
+          </div>
+          <div id="vc-charLocks">
+            <div class="empty-state"><div class="empty-state-text">暂无角色锁定配置</div></div>
+          </div>
+        </div>
+
+        <div class="section" style="text-align:right;">
+          <button class="btn btn-primary" onclick="saveVideoConstraintsUI()">保存所有约束</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">约束预览</div>
+          <pre id="vc-preview" style="background:var(--bg-primary);padding:16px;border-radius:8px;border:1px solid var(--border);white-space:pre-wrap;font-size:13px;color:var(--text-secondary);max-height:300px;overflow-y:auto;">点击"加载约束"查看已保存的约束预览</pre>
         </div>
       </div>
 
@@ -948,6 +1130,7 @@
       distribution: '分发系统',
       cost: '成本控制',
       character: '角色IP',
+      videoConstraints: '视频约束',
     };
 
     function showModule(name) {
@@ -2360,6 +2543,136 @@
       }
     }
 
+    // -------------------- Character Identity (Consistency) --------------------
+    async function loadCharIdentities() {
+      const projectId = parseInt(document.getElementById('ci-projectId').value);
+      if (!projectId) { toast('请输入项目ID', 'error'); return; }
+      const container = document.getElementById('ci-list');
+      container.innerHTML = '<div class="loading"><span class="spinner"></span>加载中...</div>';
+      try {
+        const r = await api('/character/getIdentities', { projectId });
+        const identities = r.data || [];
+        if (identities.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-state-text">该项目暂无角色身份数据。可从"资产提取"创建。</div></div>';
+          return;
+        }
+        let html = '<div class="table-wrap"><table><thead><tr><th>名称</th><th>面部</th><th>发型</th><th>服装</th><th>种子</th><th>参考图</th><th>操作</th></tr></thead><tbody>';
+        identities.forEach(ci => {
+          const face = (ci.faceDescription || '').substring(0, 40) + ((ci.faceDescription || '').length > 40 ? '...' : '');
+          const hair = (ci.hairStyle || '').substring(0, 30) + ((ci.hairStyle || '').length > 30 ? '...' : '');
+          const cloth = (ci.clothingDefault || '').substring(0, 30) + ((ci.clothingDefault || '').length > 30 ? '...' : '');
+          const refImg = ci.referenceImagePath ? '<span class="badge badge-success">有</span>' : '<span class="badge badge-warning">无</span>';
+          html += '<tr>' +
+            '<td><strong>' + escapeHtml(ci.name || '--') + '</strong></td>' +
+            '<td style="max-width:200px;font-size:12px;">' + escapeHtml(face) + '</td>' +
+            '<td style="max-width:150px;font-size:12px;">' + escapeHtml(hair) + '</td>' +
+            '<td style="max-width:150px;font-size:12px;">' + escapeHtml(cloth) + '</td>' +
+            '<td>' + (ci.consistencySeed || '--') + '</td>' +
+            '<td>' + refImg + '</td>' +
+            '<td>' +
+              '<button class="btn btn-sm btn-outline" onclick=\'editCharIdentity(' + JSON.stringify(ci).replace(/'/g, "\\'") + ')\'>编辑</button> ' +
+              '<button class="btn btn-sm btn-outline" onclick="genCharRef(' + ci.id + ',' + projectId + ')">生成参考图</button>' +
+            '</td>' +
+          '</tr>';
+        });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-text">加载失败: ' + e.message + '</div></div>';
+      }
+    }
+
+    function editCharIdentity(ci) {
+      document.getElementById('ci-edit-id').value = ci.id || '';
+      document.getElementById('ci-edit-projectId').value = ci.projectId || '';
+      document.getElementById('ci-edit-name').value = ci.name || '';
+      document.getElementById('ci-edit-seed').value = ci.consistencySeed || '';
+      document.getElementById('ci-edit-face').value = ci.faceDescription || '';
+      document.getElementById('ci-edit-hair').value = ci.hairStyle || '';
+      document.getElementById('ci-edit-body').value = ci.bodyType || '';
+      document.getElementById('ci-edit-clothing').value = ci.clothingDefault || '';
+      document.getElementById('ci-edit-palette').value = ci.colorPalette || '';
+      document.getElementById('ci-edit-ipWeight').value = ci.ipAdapterWeight || 0.7;
+      document.getElementById('ci-edit-lora').value = ci.loraModel || '';
+      document.getElementById('ci-edit-voiceType').value = ci.voiceType || '';
+      document.getElementById('ci-edit-voiceEmotion').value = ci.voiceEmotion || 'neutral';
+      document.getElementById('ci-edit-voiceSpeed').value = ci.voiceSpeed || 1.0;
+      openModal('ci-edit-modal');
+    }
+
+    async function saveCharIdentity() {
+      const data = {
+        id: parseInt(document.getElementById('ci-edit-id').value) || undefined,
+        projectId: parseInt(document.getElementById('ci-edit-projectId').value),
+        name: document.getElementById('ci-edit-name').value.trim(),
+        consistencySeed: parseInt(document.getElementById('ci-edit-seed').value) || null,
+        faceDescription: document.getElementById('ci-edit-face').value.trim(),
+        hairStyle: document.getElementById('ci-edit-hair').value.trim(),
+        bodyType: document.getElementById('ci-edit-body').value.trim(),
+        clothingDefault: document.getElementById('ci-edit-clothing').value.trim(),
+        colorPalette: document.getElementById('ci-edit-palette').value.trim(),
+        ipAdapterWeight: parseFloat(document.getElementById('ci-edit-ipWeight').value) || 0.7,
+        loraModel: document.getElementById('ci-edit-lora').value.trim(),
+        voiceType: document.getElementById('ci-edit-voiceType').value.trim(),
+        voiceEmotion: document.getElementById('ci-edit-voiceEmotion').value.trim(),
+        voiceSpeed: parseFloat(document.getElementById('ci-edit-voiceSpeed').value) || 1.0,
+      };
+      if (!data.name) { toast('请填写角色名称', 'error'); return; }
+      const r = await api('/character/saveIdentity', data);
+      if (r.data !== undefined) {
+        toast('角色身份保存成功');
+        closeModal('ci-edit-modal');
+        loadCharIdentities();
+      } else {
+        toast(r.message || '保存失败', 'error');
+      }
+    }
+
+    async function extractCharIdentity() {
+      const assetsId = parseInt(document.getElementById('ci-extract-assetsId').value);
+      const projectId = parseInt(document.getElementById('ci-extract-projectId').value);
+      if (!assetsId || !projectId) { toast('请填写资产ID和项目ID', 'error'); return; }
+      const container = document.getElementById('ci-extract-result');
+      container.innerHTML = '<div class="loading"><span class="spinner"></span>AI正在分析角色图片...</div>';
+      try {
+        const r = await api('/character/extractIdentity', { assetsId, projectId });
+        if (r.data && r.data.identity) {
+          const ci = r.data.identity;
+          container.innerHTML = '<div class="detail-panel"><h4>提取成功: ' + escapeHtml(ci.name || '') + '</h4>' +
+            '<p><strong>面部:</strong> ' + escapeHtml(ci.faceDescription || '') + '</p>' +
+            '<p><strong>发型:</strong> ' + escapeHtml(ci.hairStyle || '') + '</p>' +
+            '<p><strong>体型:</strong> ' + escapeHtml(ci.bodyType || '') + '</p>' +
+            '<p><strong>服装:</strong> ' + escapeHtml(ci.clothingDefault || '') + '</p>' +
+            '<p><strong>色板:</strong> ' + escapeHtml(ci.colorPalette || '') + '</p>' +
+            '<p><strong>种子:</strong> ' + (ci.consistencySeed || '--') + '</p></div>';
+          // Refresh the identity list
+          document.getElementById('ci-projectId').value = projectId;
+          loadCharIdentities();
+        } else {
+          container.innerHTML = '<div class="empty-state"><div class="empty-state-text">' + (r.message || '提取失败') + '</div></div>';
+        }
+      } catch (e) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-text">提取失败: ' + e.message + '</div></div>';
+      }
+    }
+
+    async function genCharRef(identityId, projectId) {
+      toast('正在生成角色参考图...');
+      try {
+        const r = await api('/character/generateReference', { identityId, projectId });
+        if (r.data && r.data.filePath) {
+          toast('参考图生成成功');
+          loadCharIdentities();
+        } else {
+          toast(r.message || '生成失败', 'error');
+        }
+      } catch (e) {
+        toast('生成失败: ' + e.message, 'error');
+      }
+    }
+
+    loaders.charIdentity = loadCharIdentities;
+
     // -------------------- Characters --------------------
     loaders.character = async () => {
       try {
@@ -2461,6 +2774,151 @@
         loaders.character();
       } else {
         toast(r.message || '更新失败', 'error');
+      }
+    }
+
+    // -------------------- Video Constraints --------------------
+    let vcSceneLocks = [];
+    let vcCharLocks = [];
+
+    loaders.videoConstraints = loadVideoConstraints;
+
+    async function loadVideoConstraints() {
+      const projectId = parseInt(document.getElementById('vc-projectId').value) || 1;
+      try {
+        const r = await api('/video/getVideoConstraints', { projectId });
+        const data = r.data || {};
+        const gl = data.globalLock || {};
+
+        document.getElementById('vc-artStyle').value = gl.artStyle || '';
+        document.getElementById('vc-colorGrading').value = gl.colorGrading || '';
+        document.getElementById('vc-cameraLens').value = gl.cameraLens || '';
+        document.getElementById('vc-aspectRatio').value = gl.aspectRatio || '16:9';
+        document.getElementById('vc-noSubtitle').checked = gl.noSubtitle !== false;
+        document.getElementById('vc-noRandomCharacters').checked = gl.noRandomCharacters !== false;
+
+        // Scene locks
+        vcSceneLocks = [];
+        const sl = data.sceneLocks || {};
+        Object.entries(sl).forEach(([k, v]) => {
+          vcSceneLocks.push({ id: k, ...v });
+        });
+        renderSceneLocks();
+
+        // Character locks
+        vcCharLocks = [];
+        const cl = data.characterLocks || {};
+        Object.entries(cl).forEach(([k, v]) => {
+          vcCharLocks.push({ id: k, ...v });
+        });
+        renderCharLocks();
+
+        // Build preview
+        updateVCPreview(data);
+
+        toast('约束已加载');
+      } catch (e) {
+        toast('加载失败: ' + e.message, 'error');
+      }
+    }
+
+    function updateVCPreview(data) {
+      const gl = data.globalLock || {};
+      let preview = '[GLOBAL STYLE LOCK]\n';
+      if (gl.artStyle) preview += '- Art style: ' + gl.artStyle + '\n';
+      if (gl.colorGrading) preview += '- Color grading: ' + gl.colorGrading + '\n';
+      if (gl.cameraLens) preview += '- Camera: ' + gl.cameraLens + ', shallow depth of field\n';
+      if (gl.noSubtitle) preview += '- NO subtitles, NO text overlays\n';
+      if (gl.noRandomCharacters) preview += '- NO random/extra characters not specified\n';
+      if (gl.aspectRatio) preview += '- Aspect ratio: ' + gl.aspectRatio + '\n';
+      preview += '[/GLOBAL STYLE LOCK]';
+      document.getElementById('vc-preview').textContent = preview;
+    }
+
+    function renderSceneLocks() {
+      const container = document.getElementById('vc-sceneLocks');
+      if (vcSceneLocks.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-text">暂无场景锁定配置</div></div>';
+        return;
+      }
+      let html = '';
+      vcSceneLocks.forEach((s, i) => {
+        html += '<div class="detail-panel" style="margin-bottom:12px;">' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>场景ID</label><input type="text" value="' + escapeHtml(s.id || '') + '" onchange="vcSceneLocks[' + i + '].id=this.value"></div>' +
+          '<div class="form-group"><label>光照</label><input type="text" value="' + escapeHtml(s.lighting || '') + '" onchange="vcSceneLocks[' + i + '].lighting=this.value"></div>' +
+          '</div>' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>建筑/环境</label><input type="text" value="' + escapeHtml(s.architecture || '') + '" onchange="vcSceneLocks[' + i + '].architecture=this.value"></div>' +
+          '<div class="form-group"><label>背景种子</label><input type="number" value="' + (s.backgroundSeed || 0) + '" onchange="vcSceneLocks[' + i + '].backgroundSeed=parseInt(this.value)||0"></div>' +
+          '</div>' +
+          '<button class="btn btn-sm btn-danger" onclick="vcSceneLocks.splice(' + i + ',1);renderSceneLocks();">删除</button>' +
+          '</div>';
+      });
+      container.innerHTML = html;
+    }
+
+    function addSceneLockRow() {
+      vcSceneLocks.push({ id: 'L' + (vcSceneLocks.length + 1), lighting: '', architecture: '', backgroundSeed: 0 });
+      renderSceneLocks();
+    }
+
+    function renderCharLocks() {
+      const container = document.getElementById('vc-charLocks');
+      if (vcCharLocks.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-text">暂无角色锁定配置</div></div>';
+        return;
+      }
+      let html = '';
+      vcCharLocks.forEach((c, i) => {
+        html += '<div class="detail-panel" style="margin-bottom:12px;">' +
+          '<div class="form-row">' +
+          '<div class="form-group"><label>角色ID/名称</label><input type="text" value="' + escapeHtml(c.id || '') + '" onchange="vcCharLocks[' + i + '].id=this.value"></div>' +
+          '<div class="form-group"><label>种子 (Seed)</label><input type="number" value="' + (c.seed || 0) + '" onchange="vcCharLocks[' + i + '].seed=parseInt(this.value)||0"></div>' +
+          '</div>' +
+          '<div class="form-group"><label>参考图路径</label><input type="text" value="' + escapeHtml(c.referenceImage || '') + '" onchange="vcCharLocks[' + i + '].referenceImage=this.value"></div>' +
+          '<button class="btn btn-sm btn-danger" onclick="vcCharLocks.splice(' + i + ',1);renderCharLocks();">删除</button>' +
+          '</div>';
+      });
+      container.innerHTML = html;
+    }
+
+    function addCharLockRow() {
+      vcCharLocks.push({ id: 'R' + (vcCharLocks.length + 1), seed: 0, referenceImage: '' });
+      renderCharLocks();
+    }
+
+    async function saveVideoConstraintsUI() {
+      const projectId = parseInt(document.getElementById('vc-projectId').value) || 1;
+      const globalLock = {
+        artStyle: document.getElementById('vc-artStyle').value.trim(),
+        colorGrading: document.getElementById('vc-colorGrading').value,
+        cameraLens: document.getElementById('vc-cameraLens').value,
+        noSubtitle: document.getElementById('vc-noSubtitle').checked,
+        noRandomCharacters: document.getElementById('vc-noRandomCharacters').checked,
+        aspectRatio: document.getElementById('vc-aspectRatio').value,
+      };
+
+      const sceneLocks = {};
+      vcSceneLocks.forEach(s => {
+        if (s.id) sceneLocks[s.id] = { lighting: s.lighting || '', architecture: s.architecture || '', backgroundSeed: s.backgroundSeed || 0 };
+      });
+
+      const characterLocks = {};
+      vcCharLocks.forEach(c => {
+        if (c.id) characterLocks[c.id] = { seed: c.seed || 0, referenceImage: c.referenceImage || '' };
+      });
+
+      try {
+        const r = await api('/video/saveVideoConstraints', { projectId, globalLock, sceneLocks, characterLocks });
+        if (r.code === 200) {
+          toast('视频约束保存成功');
+          updateVCPreview({ globalLock });
+        } else {
+          toast(r.message || '保存失败', 'error');
+        }
+      } catch (e) {
+        toast('保存失败: ' + e.message, 'error');
       }
     }
 
