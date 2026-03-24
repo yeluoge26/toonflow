@@ -28,6 +28,10 @@ export default async (knex: Knex): Promise<void> => {
   await addColumn("t_video", "time", "integer");
   await addColumn("t_video", "aiConfigId", "integer");
   await addColumn("t_config", "modelType", "text");
+
+  // Fallback model support: add configId2/configId3 to t_aiModelMap
+  await addColumn("t_aiModelMap", "configId2", "integer");
+  await addColumn("t_aiModelMap", "configId3", "integer");
   await addColumn("t_videoConfig", "audioEnabled", "integer");
   await addColumn("t_video", "errorReason", "text");
 

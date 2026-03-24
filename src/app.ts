@@ -48,7 +48,16 @@ export default async function startServe(randomPort: Boolean = false) {
   app.use("/favicon.ico", express.static(path.join(webDir, "favicon.ico")));
   app.use("/admin.html", express.static(path.join(webDir, "admin.html")));
   app.use("/timeline.html", express.static(path.join(webDir, "timeline.html")));
-  app.use("/index.html", express.static(path.join(webDir, "index.html")));
+  // Serve index.html with dynamic URL replacement (fix localhost for remote deploy)
+  app.get("/index.html", (req, res) => {
+    const indexPath = path.join(webDir, "index.html");
+    if (!fs.existsSync(indexPath)) return res.status(404).send("Not Found");
+    let html = fs.readFileSync(indexPath, "utf-8");
+    const host = req.headers.host || "localhost:60000";
+    html = html.replace(/http:\/\/localhost:60000/g, `http://${host}`);
+    html = html.replace(/ws:\/\/localhost:60000/g, `ws://${host}`);
+    res.type("html").send(html);
+  });
   // Unified portal as root entry
   app.get("/", (req, res) => {
     res.sendFile(path.join(webDir, "portal.html"));

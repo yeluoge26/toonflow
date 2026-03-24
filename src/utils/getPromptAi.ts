@@ -22,10 +22,20 @@ async function getConfigById(configId: number): Promise<AiConfig | null> {
 }
 
 export default async function getPromptAi(key: string): Promise<AiConfigWithFallback | {}> {
-  const mapRow = await db("t_aiModelMap")
-    .where("key", key)
-    .select("configId", "configId2", "configId3")
-    .first();
+  // Try with fallback columns first, fall back to basic query if columns don't exist
+  let mapRow: any;
+  try {
+    mapRow = await db("t_aiModelMap")
+      .where("key", key)
+      .select("configId", "configId2", "configId3")
+      .first();
+  } catch {
+    // configId2/configId3 columns may not exist yet
+    mapRow = await db("t_aiModelMap")
+      .where("key", key)
+      .select("configId")
+      .first();
+  }
 
   if (!mapRow || !mapRow.configId) return {};
 
@@ -34,7 +44,7 @@ export default async function getPromptAi(key: string): Promise<AiConfigWithFall
 
   const result: AiConfigWithFallback = { ...primary, moduleKey: key, fallbacks: [] };
 
-  // Load fallback configs
+  // Load fallback configs (if columns exist)
   if (mapRow.configId2) {
     const fb2 = await getConfigById(mapRow.configId2);
     if (fb2) result.fallbacks!.push(fb2);

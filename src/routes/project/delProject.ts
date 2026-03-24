@@ -14,49 +14,46 @@ export default router.post(
   async (req, res) => {
     const { id } = req.body;
 
-    const scriptData = await u.db("t_script").where("projectId", id).select("id");
-    const scriptIds = scriptData.map((item: any) => item.id);
-
-    const assetsData = await u.db("t_assets").where("projectId", id).select("id");
-    const assetsIds = assetsData.map((item: any) => item.id);
-
-    const videoData = await u.db("t_video").whereIn("scriptId", scriptIds).select("id");
-    const videoIds = videoData.map((item: any) => item.id);
-
-    await u.db.transaction(async (trx) => {
-      await trx("t_project").where("id", id).delete();
-      await trx("t_novel").where("projectId", id).delete();
-      await trx("t_storyline").where("projectId", id).delete();
-      await trx("t_outline").where("projectId", id).delete();
-      // await trx("t_myTasks").where("projectId", id).delete();
-
-      await trx("t_script").where("projectId", id).delete();
-      await trx("t_assets").where("projectId", id).delete();
-
-      const tempAssetsQuery = trx("t_image").where("projectId", id);
-      if (assetsIds.length > 0) {
-        tempAssetsQuery.orWhereIn("assetsId", assetsIds);
-      }
-      if (scriptIds.length > 0) {
-        tempAssetsQuery.orWhereIn("scriptId", scriptIds);
-      }
-      if (videoIds.length > 0) {
-        tempAssetsQuery.orWhereIn("videoId", videoIds);
-      }
-      await tempAssetsQuery.delete();
-
-      await trx("t_video").whereIn("scriptId", scriptIds).delete();
-
-      await trx("t_chatHistory").where("projectId", id).delete();
-    });
-
     try {
-      await u.oss.deleteDirectory(`${id}/`);
-      console.log(`项目 ${id} 的OSS文件夹删除成功`);
-    } catch (error: any) {
-      console.log(`项目 ${id} 没有对应的OSS文件夹，跳过删除`);
-    }
+      const safeDelete = async (trx: any, table: string, where: Record<string, any>) => {
+        try { await trx(table).where(where).delete(); } catch {}
+      };
+      const safeDeleteIn = async (trx: any, table: string, col: string, ids: number[]) => {
+        try { if (ids.length > 0) await trx(table).whereIn(col, ids).delete(); } catch {}
+      };
 
-    res.status(200).send(success({ message: "删除项目成功" }));
+      const scriptData = await u.db("t_script").where("projectId", id).select("id").catch(() => []);
+      const scriptIds = scriptData.map((item: any) => item.id);
+
+      const assetsData = await u.db("t_assets").where("projectId", id).select("id").catch(() => []);
+      const assetsIds = assetsData.map((item: any) => item.id);
+
+      await u.db.transaction(async (trx) => {
+        await safeDelete(trx, "t_project", { id });
+        await safeDelete(trx, "t_novel", { projectId: id });
+        await safeDelete(trx, "t_storyline", { projectId: id });
+        await safeDelete(trx, "t_outline", { projectId: id });
+        await safeDelete(trx, "t_script", { projectId: id });
+        await safeDelete(trx, "t_assets", { projectId: id });
+        await safeDelete(trx, "t_chatHistory", { projectId: id });
+
+        try {
+          const q = trx("t_image").where("projectId", id);
+          if (assetsIds.length > 0) q.orWhereIn("assetsId", assetsIds);
+          if (scriptIds.length > 0) q.orWhereIn("scriptId", scriptIds);
+          await q.delete();
+        } catch {}
+
+        await safeDeleteIn(trx, "t_video", "scriptId", scriptIds);
+      });
+
+      try {
+        await u.oss.deleteDirectory(`${id}/`);
+      } catch {}
+
+      res.status(200).send(success({ message: "删除项目成功" }));
+    } catch (err: any) {
+      res.status(500).send({ message: err.message || "删除失败" });
+    }
   },
 );
