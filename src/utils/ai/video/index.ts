@@ -13,6 +13,7 @@ import apimart from "./owned/apimart";
 import other from "./owned/other";
 import grsai from "./owned/grsai";
 import formal from "./owned/formal";
+import sora from "./owned/sora";
 
 const modelInstance = {
   volcengine: volcengine,
@@ -25,6 +26,7 @@ const modelInstance = {
   other: other,
   grsai: grsai,
   formal: formal,
+  sora: sora,
 } as const;
 
 export default async (input: VideoConfig, config?: AIConfig) => {
