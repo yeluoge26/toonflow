@@ -58,6 +58,8 @@ export default async function startServe(randomPort: Boolean = false) {
   app.use("/favicon.ico", express.static(path.join(webDir, "favicon.ico")));
   app.use("/admin.html", express.static(path.join(webDir, "admin.html")));
   app.use("/timeline.html", express.static(path.join(webDir, "timeline.html")));
+  // Mobile web app
+  app.use("/m", express.static(path.join(webDir, "mobile")));
   // Serve index.html with dynamic URL replacement (fix localhost for remote deploy)
   app.get("/index.html", (req, res) => {
     const indexPath = path.join(webDir, "index.html");
