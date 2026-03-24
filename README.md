@@ -90,8 +90,11 @@
 | **移动端** | 无 | React Native PWA (`/m/`) 手机创作+导出 |
 | **内容审核** | 无 | fail-close 模式 + 关键词屏蔽 |
 | **测试** | 无 | vitest + 53 测试用例 |
+| **AI 导演系统** | 无 | 节奏分析 + 情绪曲线 + 爆款评分 + 5条导演规则 |
+| **Prompt 优化** | 手写 prompt | AI 自动优化（简单描述→电影级 prompt） |
+| **模型路由** | 手动选择 | 15模型智能选择 + 健康监控 + 4维评分 |
 | **Sora 接入** | 无 | Sora 网页反代 Provider，兼容多种反代协议 |
-| **API 数量** | 82 | 182+ |
+| **API 数量** | 82 | 187+ |
 
 ## 新增功能详细列表
 
@@ -278,14 +281,72 @@ idea → storyline → outline → script → assets → storyboard
 - 内容审核 fail-close 模式（生产环境默认）
 - 用户列表接口不返回密码字段
 
-### 17. 成本控制台账
+### 17. AI 导演系统（V2 核心）
+
+从"生成工具"升级为"AI 导演系统"——不只是生成，而是**控制**内容质量和留存率。
+
+#### AI 导演 Agent (`/director/analyzeScript` + `/director/generatePlan`)
+
+```
+输入: 剧本文本
+  ↓ analyzeScript
+节奏曲线(0-100) + 情绪节拍 + 高潮点 + 切镜建议
+  ↓ generatePlan
+完整镜头计划: 景别/运镜/镜头(24-135mm)/景深/构图/过渡/prompt
+  ↓ applyRhythmRules
+5条专业导演规则自动校正
+  ↓ scoreViralPotential
+爆款潜力评分(0-100): hook强度 + 节奏多样性 + 情绪峰值 + 结尾记忆度
+```
+
+**5 条导演规则（自动强制执行）：**
+1. **前 3 秒必须 Hook** — 动态镜头 + 高强度情绪 + 特写
+2. **高潮前加速** — 缩短镜头时长，增加切镜频率
+3. **情感戏减速** — 延长镜头 + 浅景深 + 特写
+4. **每 3-5 秒视觉变化** — 防止观众流失
+5. **结尾记忆点** — 慢镜头 + 淡出 + 音乐渐强
+
+**4 种类型预设：** 韩剧 / 港风 / 仙侠 / 赛博朋克
+
+#### Prompt 优化器 (`/director/optimizePrompt`)
+
+```
+输入: "女生回头"
+输出: "beautiful young woman turning her head, cinematic close-up,
+       50mm lens, shallow depth of field f/1.8, warm amber side lighting,
+       korean drama aesthetic, emotional expression with glistening eyes,
+       soft background bokeh, professional color grading, masterpiece"
+```
+
+- 40+ 中英文视觉词典自动映射
+- 批量优化保持风格一致
+- 支持 CHARACTER LOCK 注入
+
+#### 智能模型路由器 (`/system/modelHealth`)
+
+- 15 个模型注册（Gemini/SD/ModelScope/Kling/Wan/Sora/OpenAI/DeepSeek...）
+- 质量/速度/成本/专项 4 维评分
+- 实时健康监控（延迟/错误率/状态）
+- 自动选择最优模型
+
+### 18. Sora 网页反代接入
+
+支持通过反向代理接入 OpenAI Sora 网页版：
+
+```
+配置: manufacturer=sora, baseUrl=提交URL|查询URL
+兼容: OpenAI 兼容格式 / 原生 Sora Web API
+自动: 下载视频到本地持久化
+```
+
+### 19. 成本控制台账
 
 - 按项目/批次/模型/步骤持久化到数据库
 - 支持预算拦截（超支自动阻断）
 - 计费标准可编辑（文本=百万token / 图片=张 / 视频=秒）
 - 进程重启不丢数据
 
-### 18. 批量生产引擎 + AI 配音
+### 20. 批量生产引擎 + AI 配音
 
 - 模板驱动批量生成（50集/批次）
 - 变体系统（同模板不同剧情/情绪）

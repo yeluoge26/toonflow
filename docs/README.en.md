@@ -1,12 +1,15 @@
-<p>
+<p align="center">
   <a href="https://github.com/HBAI-Ltd/Toonflow-app">
-    <img src="https://img.shields.io/badge/GitHub-181717?style=flat-square&logo=github&logoColor=white" alt="GitHub" />
+    <img src="https://img.shields.io/badge/Original_Project-HBAI--Ltd/Toonflow--app-blue?style=for-the-badge&logo=github" alt="Original Project" />
   </a>
-  &nbsp;|&nbsp;
-  <a href="https://gitee.com/HBAI-Ltd/Toonflow-app">
-    <img src="https://img.shields.io/badge/Gitee-C71D23?style=flat-square&logo=gitee&logoColor=white" alt="Gitee" />
+  &nbsp;
+  <a href="https://github.com/yeluoge26/toonflow">
+    <img src="https://img.shields.io/badge/Enhanced_Edition-yeluoge26/toonflow-purple?style=for-the-badge&logo=github" alt="Enhanced Edition" />
   </a>
 </p>
+
+> **Forked from [HBAI-Ltd/Toonflow-app](https://github.com/HBAI-Ltd/Toonflow-app)**
+> — Thanks to the [HBAI-Ltd](https://github.com/HBAI-Ltd) team for open-sourcing such an excellent AI short drama creation tool. This project is a deep enhancement built upon it. Licensed under AGPL-3.0, same as the original.
 
 <p align="center">
   <a href="../README.md">中文</a> |
@@ -17,72 +20,140 @@
 
 <img src="./logo.png" alt="Toonflow Logo" height="120"/>
 
-# Toonflow
+# Toonflow (Enhanced Edition)
 
   <p align="center">
     <b>
-      AI Short Drama Factory
+      AI Short Drama Factory — Enhanced
       <br />
-      Turn novels into episodes with a tap!
+      Novel to Series in One Click, Fully AI-Automated
       <br />
-      AI Script × AI Imagery × Lightning-fast Generation 🔥
+      Multi-Model Fallback × AI Director × Gemini/Kling/Wan2.5/Sora × Admin Console
     </b>
   </p>
-  <p align="center">
-    <a href="https://github.com/HBAI-Ltd/Toonflow-app/stargazers">
-      <img src="https://img.shields.io/github/stars/HBAI-Ltd/Toonflow-app?style=for-the-badge&logo=github" alt="Stars Badge" />
-    </a>
-    <a href="https://www.gnu.org/licenses/agpl-3.0" target="_blank">
-      <img src="https://img.shields.io/badge/License-AGPL-blue.svg?style=for-the-badge" alt="AGPL License Badge" />
-    </a>
-    <a href="https://github.com/HBAI-Ltd/Toonflow-app/releases">
-      <img alt="release" src="https://img.shields.io/github/v/release/HBAI-Ltd/Toonflow-app?style=for-the-badge" />
-    </a>
-  </p>
-  
-  > 🚀 **One-stop Short Drama Workflow**: From text to character, storyboard to video, a full AI-powered process with zero threshold, boosting creative efficiency by 10x+!
 </div>
 
 ---
 
-# 🌟 Main Features
+## Acknowledgments
 
-Toonflow is an AI tool that leverages AI technology to automatically turn novels into scripts, then uses AI to generate images and videos for efficient short drama production. With Toonflow, you can easily accomplish the entire workflow from text to visuals, making short drama creation more intelligent and convenient.
+This project is deeply enhanced from **[HBAI-Ltd/Toonflow-app](https://github.com/HBAI-Ltd/Toonflow-app)**. Special thanks to:
 
-- ✅ **Character Generation**  
-   Automatically analyzes the original novel text, intelligently recognizes and generates character profiles, including appearance, personality, identity, etc., providing a reliable foundation for subsequent script and image creation.
-- ✅ **Script Generation**  
-   Based on selected events and chapters, the system automatically generates structured scripts, covering dialogue, scene descriptions, and plot direction, enabling an efficient transition from literary text to screenplay.
-- ✅ **Storyboard Creation**  
-   According to the script content, it intelligently generates storyboard prompts and visual designs, detailing foreground, middle ground, background, character movements, props, and scene layouts. Automatically produces storyboards from the script, providing a comprehensive blueprint for video production.
-- ✅ **Video Synthesis**  
-   Integrates AI image and video techniques, supporting generation of video clips via AI. With built-in online editing, supports personalized adjustments and outputs, making filmmaking highly collaborative and efficient.
+- **[HBAI-Ltd](https://github.com/HBAI-Ltd)** — Original project authors who built the complete AI short drama framework
+- **Original contributors** — For the core features: novel parsing, script generation, storyboard creation, video synthesis
+
+> If you like this project, please also star the original [HBAI-Ltd/Toonflow-app](https://github.com/HBAI-Ltd/Toonflow-app)!
 
 ---
 
-# 📦 Application Scenarios
+# 🆕 Enhanced Features (vs Original)
 
-- Short video content production
-- Novel-to-film experiments
-- AI Literary Adaptation Tools
-- Script development and rapid prototyping
-- Video material generation
+| Module | Original | Enhanced Edition |
+|--------|----------|-----------------|
+| **Image Generation** | Single online model | Gemini / SD Local / ModelScope Z-Image multi-engine |
+| **Video Generation** | Basic integration | Kling / Wan2.5 / Volcengine multi-model, image-to-video |
+| **Storyboard Format** | Simple prompts | Professional DSL (duration/role/location/dialogue/SFX/transition) |
+| **Model Management** | Single config | Fallback mechanism (primary/secondary/tertiary), auto-switch on failure |
+| **Consistency Control** | None | Character/Background/Style 3D convergence prompts |
+| **Cost Control** | Budget cap only | Per-model billing (token/image/second), usage tracking, editable pricing |
+| **Admin Console** | None | 12-module visual dashboard (projects/queue/models/cost/GPU...) |
+| **Frontend Integration** | Separate frontend | Portal + Admin unified, no extra frontend deployment needed |
+| **Queue System** | None | BullMQ + Redis distributed task queue |
+| **Video Composition** | None | ffmpeg auto-merge complete episodes |
+| **Style System** | 6 basic styles | 20+ AI animation style presets |
+| **One-Sentence Generate** | None | Input idea → complete project auto-generated |
+| **Director Editor** | None | Timeline visual editor (CapCut-like) |
+| **Anti-Drift Rules** | None | 6D lock (lighting/characters/camera/convergence/prefix/settings) |
+| **Character Consistency** | None | Seed lock + LoRA + Character Lock injection |
+| **State Machine** | None | 12-stage pipeline + resume from failure |
+| **AI Director System** | None | Rhythm analysis + emotion curve + viral scoring + 5 director rules |
+| **Prompt Optimization** | Manual prompts | AI auto-optimize (simple description → cinematic prompt) |
+| **Model Router** | Manual selection | 15 models smart selection + health monitoring + 4D scoring |
+| **Security** | Hardcoded password | bcrypt hash + helmet + rate limiting + JWT 256bit + CORS |
+| **Mobile** | None | React Native PWA (`/m/`) mobile creation + export |
+| **Sora Integration** | None | Sora web reverse proxy provider |
+| **API Count** | 82 | 187+ |
 
 ---
 
-# 🔰 User Guide
+# 🎬 AI Director System (V2 Core)
 
-## 📺 Video Tutorial
+The core differentiator — from "generation tool" to "AI director system" that **controls** content quality and retention.
 
-https://www.bilibili.com/video/BV1na6wB6Ea2
-[![Toonflow 8-minute Quick Start AI Video](./videoCover.png)](https://www.bilibili.com/video/BV1na6wB6Ea2)
+### AI Director Agent
 
-**Toonflow 8-Minute Quick Start AI Video**
-👉 [Click to watch](https://www.bilibili.com/video/BV1na6wB6Ea2/?share_source=copy_web&vd_source=5b718c25439a901a34c7bc0c1d35b38e)
+```
+Input: Script text
+  ↓ analyzeScript
+Rhythm curve (0-100) + Emotion beats + Climax points + Cut suggestions
+  ↓ generateShotPlan
+Complete shot plan: camera/movement/lens(24-135mm)/DOF/composition/transition/prompt
+  ↓ applyRhythmRules
+5 professional director rules auto-correction
+  ↓ scoreViralPotential
+Viral potential score (0-100): hook + pacing + emotion peaks + ending
+```
 
-📱 Watch via WeChat QR scan
+**5 Director Rules (auto-enforced):**
+1. **First 3s Must Hook** — Dynamic camera + high intensity + close-up
+2. **Pre-Climax Acceleration** — Shorter shots, faster cuts
+3. **Emotion Scene Deceleration** — Longer shots + shallow DOF + close-ups
+4. **Visual Change Every 3-5s** — Prevent viewer drop-off
+5. **Memorable Ending** — Slow motion + fade out + music crescendo
 
-<img src="./videoQR.png" alt="Watch on WeChat" width="150"/>
+**4 Genre Presets:** Korean Drama / Hong Kong Style / Xianxia / Cyberpunk
+
+### Prompt Optimizer
+
+```
+Input:  "girl turns head"
+Output: "beautiful young woman turning her head, cinematic close-up,
+         50mm lens, shallow depth of field f/1.8, warm amber side lighting,
+         korean drama aesthetic, emotional expression, masterpiece"
+```
+
+### Intelligent Model Router
+
+- 15 models registered (Gemini/SD/ModelScope/Kling/Wan/Sora/OpenAI/DeepSeek...)
+- Quality/Speed/Cost/Specialty 4D scoring
+- Real-time health monitoring (latency/error rate/status)
+
+---
+
+# 🌟 Core Features
+
+- ✅ **Character Generation** — Auto-analyze novel text, extract character profiles
+- ✅ **Script Generation** — Structured screenplay from selected chapters
+- ✅ **Storyboard Creation** — Shot-by-shot breakdown with cinematic prompts
+- ✅ **Video Synthesis** — AI image + video generation with multi-model support
+- ✅ **One-Sentence Creation** — Input an idea, get a complete project
+- ✅ **Mobile App** — React Native PWA at `/m/`
+
+---
+
+# 📱 Mobile Version
+
+Access via phone browser: `http://your-server:60000/m/`
+
+- One-sentence creation → browse scripts → export convergence prompts
+- Dark theme, touch-optimized
+- Login / Project list / Script viewer / Asset browser
+- Export complete prompts with CHARACTER LOCK + anti-drift rules
+
+---
+
+# 🔒 Security (Industrial-Grade)
+
+- **bcrypt password hashing** — All passwords bcrypt-stored, legacy plaintext auto-migrated
+- **helmet.js security headers** — XSS/Clickjacking/MIME sniffing protection
+- Random initial password, force-change on first login
+- Login rate limiting (5 attempts / 15 min / IP)
+- JWT 256-bit key + 7-day expiry (optional 30-day remember me)
+- CORS configurable via `CORS_ORIGINS` env var (production: real blocking)
+- Sensitive operations (clear database) admin-only
+- Token only via Header, no URL query parameter (prevents leakage)
+- Content review fail-close mode (production default)
+- User API never returns password fields
 
 ---
 
@@ -90,354 +161,91 @@ https://www.bilibili.com/video/BV1na6wB6Ea2
 
 ## Prerequisites
 
-Before installing and using this software, please prepare the following:
+- Node.js 22+
+- Redis (for BullMQ queue)
+- LLM API Key (Qwen / DeepSeek / Gemini — any one)
+- Image model (Gemini / SD Local / ModelScope — any one)
+- Video model (Kling / Wan2.5 — optional)
+- ffmpeg (video composition — optional)
 
-- ✅ Large Language Model AI service endpoint.
-- ✅ Sora or Doubao video service endpoint
-- ✅ Nano Banana Pro image generation model service endpoint
-
-## Local Installation
-
-### 1. Download & Install
-
-| Operating System | GitHub Download                                              | 123YunPan Download                                         | Description                                                 |
-| :--------------: | :---------------------------------------------------------- | :-------------------------------------------------------- | :---------------------------------------------------------- |
-| Windows          | [Release](https://github.com/HBAI-Ltd/Toonflow-app/releases) | [123YunPan](https://www.123865.com/s/bkn5Vv-E67cv)        | Official release installation package                       |
-|  Linux           | ⚙️ Coming soon                                              | ⚙️ Coming soon                                            | To be released soon                                         |
-|  macOS           | ⚙️ Coming soon                                              | ⚙️ Coming soon                                            | To be released soon                                         |
-
-> ⚠️ If 123YunPan prompts for payment, it is only due to bandwidth limitations. This software is completely open-source and free.
-
-> Currently, only the Windows version is supported. Other systems will be released gradually.
-
-> Due to Gitee OS environment and file size restrictions for Release uploads, Gitee Release download links are not provided for now.
-
-### 2. Launch the Service
-
-After installation, start the program to use the service.
-
-> ⚠️ **First login**  
-> Account: `admin`  
-> Password: `admin123`
-
-## Cloud Deployment
-
-### I. Server Requirements
-
-- **OS**: Ubuntu 20.04+ / CentOS 7+
-- **Node.js**: 23.11.1+
-- **RAM**: 1GB+
-
-### II. Server Deployment
-
-#### 1. Install the Environment
+## Quick Start
 
 ```bash
-# Install Node.js
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-source ~/.bashrc
-nvm install 24
-# Install Yarn & PM2
-npm install -g yarn pm2
-```
-
-#### 2. Deploy the Project
-
-**Clone from GitHub:**
-
-```bash
-cd /opt
-git clone https://github.com/HBAI-Ltd/Toonflow-app.git
-cd Toonflow-app
+git clone https://github.com/yeluoge26/toonflow.git
+cd toonflow
 yarn install
+
+# Start Redis (Docker)
+docker run -d --name redis -p 6379:6379 redis:7-alpine
+
+# Development
+yarn dev
+
+# Production build + start
 yarn build
+NODE_ENV=prod node build/app.js
 ```
 
-**Clone from Gitee (recommended in China):**
+## Access Points
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost:60000/` | Portal entry page |
+| `http://localhost:60000/index.html` | Vue SPA creator workspace |
+| `http://localhost:60000/admin.html` | Admin console (12 modules) |
+| `http://localhost:60000/timeline.html` | Timeline director editor |
+| `http://localhost:60000/m/` | Mobile PWA |
+
+## Remote Deployment
 
 ```bash
-cd /opt
-git clone https://gitee.com/HBAI-Ltd/Toonflow-app.git
-cd Toonflow-app
-yarn install
-yarn build
+# Via deploy script (requires paramiko)
+pip install paramiko
+python scripts/deploy-remote.py
 ```
 
-#### 3. Configure PM2
-
-Create a `pm2.json` file:
-
-```json
-{
-  "name": "toonflow-app",
-  "script": "build/app.js",
-  "instances": "max",
-  "exec_mode": "cluster",
-  "env": {
-    "NODE_ENV": "prod",
-    "PORT": 60000,
-    "OSSURL": "http://127.0.0.1:60000/"
-  }
-}
-```
-
-**Environment Variable Description:**
-
-| Variable     | Description                                 |
-| ------------ | ------------------------------------------- |
-| `NODE_ENV`   | Runtime environment, `prod` means production|
-| `PORT`       | Service listening port                      |
-| `OSSURL`     | File storage access address for static files|
-
----
-
-#### 4. Start the Service
+## Docker
 
 ```bash
-pm2 start pm2.json
-pm2 startup
-pm2 save
-```
-
-#### 5. Common Commands
-
-```bash
-pm2 list              # List processes
-pm2 logs toonflow-app # View logs
-pm2 restart all       # Restart all services
-pm2 monit             # Monitoring panel
-```
-
-#### 6. Deploy the Frontend Website
-
-To deploy or customize the frontend separately, refer to the frontend repo:
-
-- **GitHub**: [Toonflow-web](https://github.com/HBAI-Ltd/Toonflow-web)
-- **Gitee**: [Toonflow-web](https://gitee.com/HBAI-Ltd/Toonflow-web)
-
-> 💡 **Note**: This repo includes pre-compiled frontend assets; regular users don’t need to deploy frontend separately. The frontend repo is for developers needing secondary development.
-
----
-
-# 🔧 Development Workflow Guide
-
-## Development Environment Preparation
-
-- **Node.js**: Version 23.11.1+
-- **Yarn**: Recommended package manager
-
-## Quick Project Startup
-
-1. **Clone the project**
-
-   **From GitHub:**
-
-   ```bash
-   git clone https://github.com/HBAI-Ltd/Toonflow-app.git
-   cd Toonflow-app
-   ```
-
-   **From Gitee (china):**
-
-   ```bash
-   git clone https://gitee.com/HBAI-Ltd/Toonflow-app.git
-   cd Toonflow-app
-   ```
-
-2. **Install Dependencies**
-
-   Run the following in the root directory:
-
-   ```bash
-   yarn install
-   ```
-
-3. **Start Development Server**
-
-   - Launch dev server with Node.js:
-
-     ```bash
-     yarn dev #port 60000
-     ```
-
-   - Use Bun to quickly start dev server:
-
-     ```bash
-     yarn bun:dev #port 60000
-     ```
-
-4. **Build the Project**
-
-   - Compile and generate TypeScript files:
-
-     ```bash
-     yarn build
-     ```
-
-   - Package as a Windows executable:
-
-     ```bash
-     yarn dist:win
-     ```
-
-5. **Code Quality Check**
-
-   - Lint globally for syntax and style:
-
-     ```bash
-     yarn lint
-     ```
-
-## Frontend Development
-
-To modify the frontend, go to the frontend repo:
-
-- **GitHub**: [Toonflow-web](https://github.com/HBAI-Ltd/Toonflow-web)
-- **Gitee**: [Toonflow-web](https://gitee.com/HBAI-Ltd/Toonflow-web)
-
-After building the frontend, copy the contents of the `dist` folder into this project’s `scripts/web` directory for integration.
-
-## Project Structure
-
-```
-📂 docs/                    # Documentation
-📂 scripts/                 # Build scripts and static resources
-│  └─ 📂 web/              # Embedded frontend build output
-📂 src/
-├─ 📂 agents/              # AI Agent modules
-├─ 📂 lib/                 # Shared libs (DB init, response format)
-├─ 📂 middleware/          # Middleware
-├─ 📂 routes/              # Routing modules
-│  ├─ 📂 assets/           # Asset management
-│  ├─ 📂 index/            # Home page
-│  ├─ 📂 novel/            # Novel management
-│  ├─ 📂 other/            # Other features
-│  ├─ 📂 outline/          # Outline management
-│  ├─ 📂 project/          # Project management
-│  ├─ 📂 prompt/           # Prompt management
-│  ├─ 📂 script/           # Script generation
-│  ├─ 📂 setting/          # System settings
-│  ├─ 📂 storyboard/       # Storyboard management
-│  ├─ 📂 task/             # Task management
-│  ├─ 📂 user/             # User management
-│  └─ 📂 video/            # Video generation
-├─ 📂 types/               # TypeScript type declarations
-├─ 📂 utils/               # Utility functions
-├─ 📄 app.ts               # App entry point
-├─ 📄 core.ts              # Routing core
-├─ 📄 env.ts               # Env variable handling
-├─ 📄 err.ts               # Error handling
-├─ 📄 router.ts            # Route registration
-└─ 📄 utils.ts             # Common tools
-📂 uploads/                 # Uploads
-📄 LICENSE                  # License
-📄 NOTICES.txt              # 3rd-party notices
-📄 package.json             # Project config
-📄 README.md                # Project description
-📄 tsconfig.json            # TypeScript config
+docker-compose -f docker/docker-compose.yml up -d --build
 ```
 
 ---
 
-# 🔗 Related Repos
+# 📊 API Overview (187+ endpoints)
 
-| Repository        | Description                           | GitHub                                             | Gitee                                            |
-| ----------------- | ------------------------------------- | -------------------------------------------------- | ------------------------------------------------ |
-| **Toonflow-app**  | Full client (this repo, for users)    | [GitHub](https://github.com/HBAI-Ltd/Toonflow-app) | [Gitee](https://gitee.com/HBAI-Ltd/Toonflow-app) |
-| **Toonflow-web**  | Frontend source (for devs)            | [GitHub](https://github.com/HBAI-Ltd/Toonflow-web) | [Gitee](https://gitee.com/HBAI-Ltd/Toonflow-web) |
-
-> 💡 **Tip**: If you just want to use Toonflow, download the client from this repo. The web repo is only for frontend customization/development.
-
----
-
-# 📝 Development Roadmap
-
-We continue to optimize the product. Key focuses for the near future:
-
-1. Core Function Upgrades
-
-- `🧩 Prompt Refinement Agent` AI-enhanced prompt generation for videos, auto-parsing storyboards, intelligent multi-shot fusion and smooth transitions
-- `📄 Multi-format Text Support` Extending to scripts, manga scripts, game dialogue text, and more formats beyond novels
-
-2. Production Flow Optimization
-
-- `👗 Character Costume & Props Management` Improved consistency for costumes, makeup, props across long content, support for multi-episode memory and auto costume generation
-- `📦 Batch Processing/Task Queues` Process multiple chapters at once, backend task management, real-time monitoring and resume-on-interrupt
-
-3. Visual Generation Enhancement
-
-- `🎭 Multi-style Template Library` Bundled visual style packs, one-click style swap, user-defined style saving
-- `⏱️ Intelligent Rhythm Analysis/Optimization` Analyze plot emotional arcs, auto-suggest climaxes and pace changes, optimized storyboard workflow
+| Group | Endpoints | Description |
+|-------|-----------|-------------|
+| Project | 12 | CRUD, clone, auto-save, pipeline state, anti-drift |
+| Novel | 4 | Upload, edit, delete chapters |
+| Outline | 11 | AI agent storyline/outline generation (WebSocket) |
+| Script | 7 | Generation, versioning, rewrite |
+| Storyboard | 14 | DSL parsing, shot generation, review, batch |
+| Assets | 10 | Character/scene/prop management + AI generation |
+| Video | 17 | Multi-model generation, config, timeline |
+| Audio | 7 | TTS, emotion voice, batch dialogue |
+| Director | 4 | Script analysis, shot plan, viral scoring, prompt optimize |
+| Setting | 10 | Model config, AI model mapping |
+| Batch | 8 | Template-driven batch production |
+| Cost | 4 | Usage tracking, budget, project cost |
+| Character | 9 | Identity, consistency, voice binding, reference sheets |
+| System | 4 | Stats, cache, model health |
+| Other | 60+ | Queue, factory, evolution, template, distribution, etc. |
 
 ---
 
-# 👨‍👩‍👧‍👦 WeChat Discussion Groups
+# 📄 License
 
-~~Group 1~~
-
-~~Group 2~~
-
-~~Group 3~~
-
-~~Group 4~~
-
-~~Group 5~~
-
-Group 6:
-
-<img src="./chat6QR.jpg" alt="Toonflow Logo" height="400"/>
-<p>Scan with WeChat to join. If the QR expires, open an issue to request an update.</p>
+[AGPL-3.0](../LICENSE) — Same as the original project.
 
 ---
 
-# 💌 Contact Us
+# 🙏 Credits
 
-📧 Email: [ltlctools@outlook.com](mailto:ltlctools@outlook.com?subject=Toonflow%20Inquiry)
-
----
-
-# 📜 License
-
-Toonflow is open source under the AGPL-3.0 license. Details: https://www.gnu.org/licenses/agpl-3.0.html
-
-You may use Toonflow for any purpose, including commercial, as long as you adhere to the AGPL-3.0 terms and conditions.
-
-For proprietary/commercial licensing exempt from AGPL-3.0, please contact us by email.
-
----
-
-# ⭐️ Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=HBAI-Ltd/Toonflow-app&type=date&legend=top-left)](https://www.star-history.com/#HBAI-Ltd/Toonflow-app&type=date&legend=top-left)
-
----
-
-# 🙏 Special Thanks
-
-Thanks to the following open-source projects for empowering Toonflow:
-
-- [Express](https://expressjs.com/) – Fast, open, minimal Node.js web framework
-- [LangChain](https://js.langchain.com/) – Framework for building LLM apps
-- [Better-SQLite3](https://github.com/WiseLibs/better-sqlite3) – High-performance SQLite3 bindings
-- [Sharp](https://sharp.pixelplumbing.com/) – High-performance Node.js image processing
-- [Axios](https://axios-http.com/) – Promise-based HTTP client
-- [Zod](https://zod.dev/) – TypeScript-first schema validation
-- [Aigne](https://github.com/aigne-com/aigne) – Unified LLM API middleware
-- [Electron](https://www.electronjs.org/) – Cross-platform desktop app framework
-
-Thanks to the following organizations/individuals for supporting Toonflow:
-
-<table>
-  <tr>
-    <td>
-      <img src="./sponsored/sophnet.png" alt="Sophnet Cloud Logo" width="48">
-    </td>
-    <td>
-      <b>Sophnet Cloud</b> provided compute sponsorship
-      <a href="https://www.sophnet.com/">[Official Site]</a>
-    </td>
-  </tr>
-</table>
-
-For the full list of third-party dependencies, see `NOTICES.txt`
-
+- **[HBAI-Ltd/Toonflow-app](https://github.com/HBAI-Ltd/Toonflow-app)** — Original project
+- **Vercel AI SDK** — Multi-model AI integration
+- **BullMQ** — Distributed task queue
+- **Express.js** — Web framework
+- **Knex.js** — SQL query builder
+- **sharp** — Image processing
+- **ffmpeg** — Video composition
