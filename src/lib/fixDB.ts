@@ -837,9 +837,96 @@ export default async (knex: Knex): Promise<void> => {
   await addColumn("t_setting", "contentReviewMode", "text");
   await addColumn("t_setting", "contentBlocklist", "text");
 
+  // t_modelUsage
+  if (!(await knex.schema.hasTable("t_modelUsage"))) {
+    await knex.schema.createTable("t_modelUsage", (table) => {
+      table.increments("id").primary();
+      table.integer("configId").defaultTo(0);
+      table.text("manufacturer");
+      table.text("model");
+      table.text("moduleKey");
+      table.integer("inputTokens").defaultTo(0);
+      table.integer("outputTokens").defaultTo(0);
+      table.integer("duration").defaultTo(0);
+      table.real("cost").defaultTo(0);
+      table.text("status");
+      table.text("errorMsg");
+      table.integer("createdAt");
+      table.integer("projectId").defaultTo(0);
+      table.text("batchId");
+    });
+  }
+
   // Cost tracking: add projectId and batchId to t_modelUsage for cost attribution
   await addColumn("t_modelUsage", "projectId", "integer");
   await addColumn("t_modelUsage", "batchId", "text");
+
+  // t_modelPricing
+  if (!(await knex.schema.hasTable("t_modelPricing"))) {
+    await knex.schema.createTable("t_modelPricing", (table) => {
+      table.increments("id").primary();
+      table.text("manufacturer");
+      table.text("model");
+      table.text("type");
+      table.real("inputPrice").defaultTo(0);
+      table.real("outputPrice").defaultTo(0);
+      table.text("unit");
+      table.text("currency").defaultTo("CNY");
+      table.integer("updatedAt");
+    });
+  }
+
+  // t_myTasks
+  if (!(await knex.schema.hasTable("t_myTasks"))) {
+    await knex.schema.createTable("t_myTasks", (table) => {
+      table.increments("id").primary();
+      table.integer("projectId");
+      table.text("type");
+      table.text("status").defaultTo("pending");
+      table.text("data");
+      table.text("result");
+      table.integer("createdAt");
+    });
+  }
+
+  // t_taskList
+  if (!(await knex.schema.hasTable("t_taskList"))) {
+    await knex.schema.createTable("t_taskList", (table) => {
+      table.increments("id").primary();
+      table.integer("projectId");
+      table.text("name");
+      table.text("type");
+      table.text("status").defaultTo("pending");
+      table.text("data");
+      table.text("result");
+      table.text("errorMsg");
+      table.integer("createdAt");
+      table.integer("updatedAt");
+    });
+  }
+
+  // t_tempAssets
+  if (!(await knex.schema.hasTable("t_tempAssets"))) {
+    await knex.schema.createTable("t_tempAssets", (table) => {
+      table.increments("id").primary();
+      table.integer("projectId");
+      table.integer("scriptId");
+      table.integer("assetsId");
+      table.integer("videoId");
+      table.text("name");
+      table.text("type");
+      table.text("filePath");
+      table.text("prompt");
+      table.text("videoPrompt");
+      table.integer("segmentId");
+      table.integer("shotIndex");
+      table.text("state");
+      table.integer("createdAt");
+    });
+  }
+
+  // Add role column to t_user
+  await addColumn("t_user", "role", "text");
 
   // t_series (系列生产)
   if (!(await knex.schema.hasTable("t_series"))) {

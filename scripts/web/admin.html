@@ -281,6 +281,9 @@
     <div class="nav-item" data-module="seriesManager" onclick="showModule('seriesManager')">
       <span class="nav-icon">&#127916;</span><span class="nav-label">系列管理</span>
     </div>
+    <div class="nav-item" onclick="window.open('timeline.html','_blank')">
+      <span class="nav-icon">&#9202;</span><span class="nav-label">Timeline编辑器</span>
+    </div>
     <div class="sidebar-footer">
       <span id="user-display"></span>
       <br>
@@ -592,12 +595,20 @@
               </div>
             </div>
             <div class="form-group">
-              <label>描述</label>
-              <textarea id="tpl-description" placeholder="模板描述"></textarea>
+              <label>钩子 (Hook)</label>
+              <textarea id="tpl-hook" placeholder="开头钩子"></textarea>
             </div>
             <div class="form-group">
-              <label>模板内容 (JSON)</label>
-              <textarea id="tpl-content" placeholder='{"structure": [...], "hooks": [...]}' style="min-height:120px;font-family:monospace;"></textarea>
+              <label>冲突 (Conflict)</label>
+              <textarea id="tpl-conflict" placeholder="核心冲突"></textarea>
+            </div>
+            <div class="form-group">
+              <label>反转 (Twist)</label>
+              <textarea id="tpl-twist" placeholder="剧情反转"></textarea>
+            </div>
+            <div class="form-group">
+              <label>结局 (Ending)</label>
+              <textarea id="tpl-ending" placeholder="结局"></textarea>
             </div>
             <button class="btn btn-primary" onclick="addTemplate()">添加模板</button>
           </div>
@@ -1752,7 +1763,7 @@
       try {
         var response = await fetch('/project/oneClickGenerate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('tf-token') || '') },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('toonflow_token') || '') },
           body: JSON.stringify(params),
         });
 
@@ -2112,7 +2123,7 @@
     };
 
     async function toggleQueue(queueName, pause) {
-      const r = await api('/queue/pauseQueue', { queue: queueName, pause: pause, action: pause ? 'pause' : 'resume' });
+      const r = await api('/queue/pauseQueue', { step: queueName, action: pause ? 'pause' : 'resume' });
       toast(pause ? '队列已暂停' : '队列已恢复');
       loaders.queue();
     }
@@ -2350,16 +2361,13 @@
     async function addTemplate() {
       const name = document.getElementById('tpl-name').value.trim();
       const category = document.getElementById('tpl-category').value.trim();
-      const description = document.getElementById('tpl-description').value.trim();
-      const contentStr = document.getElementById('tpl-content').value.trim();
+      const hook = document.getElementById('tpl-hook').value.trim();
+      const conflict = document.getElementById('tpl-conflict').value.trim();
+      const twist = document.getElementById('tpl-twist').value.trim();
+      const ending = document.getElementById('tpl-ending').value.trim();
       if (!name) { toast('请填写模板名称', 'error'); return; }
 
-      let content = contentStr;
-      if (contentStr) {
-        try { content = JSON.parse(contentStr); } catch { /* keep as string */ }
-      }
-
-      const r = await api('/template/addTemplate', { name, category, description, content });
+      const r = await api('/template/addTemplate', { name, category, hook, conflict, twist, ending });
       if (r.data !== undefined) {
         toast('模板添加成功');
         document.getElementById('tpl-add-form').style.display = 'none';

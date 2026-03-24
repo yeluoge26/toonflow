@@ -11,7 +11,7 @@ export default router.post(
   validateFields({
     id: z.number(),
     customValue: z.string(),
-    code: z.string(),
+    code: z.string().optional(),
   }),
   async (req, res) => {
     const { id, customValue, code } = req.body;

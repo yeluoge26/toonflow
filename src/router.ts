@@ -182,6 +182,7 @@ import route178 from "./routes/series/materialize";
 import route179 from "./routes/project/oneClickGenerate";
 import route180 from "./routes/project/quickGenerate";
 import route181 from "./routes/cost/getProjectCost";
+import route182 from "./routes/user/changePassword";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -365,4 +366,5 @@ export default async (app: Express) => {
   app.use("/series/materialize", route178);
   app.use("/project/oneClickGenerate", route179);
   app.use("/project/quickGenerate", route180);
+  app.use("/user/changePassword", route182);
 }
