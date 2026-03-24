@@ -1,6 +1,7 @@
 import express from "express";
 import u from "@/utils";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import { success, error } from "@/lib/responseFormat";
 import { validateFields } from "@/middleware/middleware";
 import { z } from "zod";
@@ -42,7 +43,14 @@ export default router.post(
       return res.status(400).send(error("用户名或密码错误"));
     }
 
-    if (data!.password == password && data!.name == username) {
+    // bcrypt 密码比较（兼容旧明文密码：首次匹配后自动升级为哈希）
+    const isMatch = bcrypt.compareSync(password, data!.password) || data!.password === password;
+    if (isMatch && data!.name == username) {
+      // 如果是明文密码匹配，自动升级为 bcrypt 哈希
+      if (!data!.password.startsWith("$2")) {
+        const hashed = bcrypt.hashSync(password, 10);
+        await u.db("t_user").where("id", data!.id).update({ password: hashed });
+      }
       // Clear rate limit on success
       loginAttempts.delete(ip);
 

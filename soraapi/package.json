@@ -1,0 +1,22 @@
+{
+  "name": "sora-proxy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "export-cookies": "node export-cookies.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "http-proxy-middleware": "^3.0.5",
+    "p-queue": "^9.1.0",
+    "playwright": "^1.58.2",
+    "uuid": "^13.0.0"
+  },
+  "type": "commonjs"
+}

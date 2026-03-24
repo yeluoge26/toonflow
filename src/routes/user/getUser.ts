@@ -7,7 +7,7 @@ const router = express.Router();
 
 // 获取用户
 export default router.get("/", async (req, res) => {
-  const data = await u.db("t_user").select("*").first();
+  const data = await u.db("t_user").select("id", "name").first();
 
   res.status(200).send(success(data));
 });

@@ -146,7 +146,7 @@ export default async (knex: Knex, forceInit: boolean = false): Promise<void> => 
         await knex("t_setting").insert({
           id: 1,
           userId: 1,
-          tokenKey: uuid().slice(0, 8),
+          tokenKey: crypto.randomBytes(32).toString("hex"),
           imageModel: "{}",
           languageModel: "{}",
           projectId: null,

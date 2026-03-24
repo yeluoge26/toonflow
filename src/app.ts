@@ -5,6 +5,7 @@ import express, { Request, Response, NextFunction } from "express";
 import expressWs from "express-ws";
 import logger from "morgan";
 import cors from "cors";
+import helmet from "helmet";
 import buildRoute from "@/core";
 import fs from "fs";
 import path from "path";
@@ -12,6 +13,7 @@ import u from "@/utils";
 import jwt from "jsonwebtoken";
 
 const app = express();
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 let server: ReturnType<typeof app.listen> | null = null;
 
 export default async function startServe(randomPort: Boolean = false) {
@@ -79,11 +81,11 @@ export default async function startServe(randomPort: Boolean = false) {
     const setting = await u.db("t_setting").where("id", 1).select("tokenKey").first();
     if (!setting) return res.status(500).send({ message: "服务器未配置，请联系管理员" });
     const { tokenKey } = setting;
-    // 从 header 或 query 参数获取 token
-    const rawToken = req.headers.authorization || (req.query.token as string) || "";
+    // 仅从 header 获取 token（不从 URL query 获取，防止泄露到日志/Referer）
+    const rawToken = req.headers.authorization || "";
     const token = rawToken.replace("Bearer ", "");
     // 白名单路径
-    if (req.path === "/other/login") return next();
+    if (req.path === "/other/login" || req.path === "/user/changePassword") return next();
 
     if (!token) return res.status(401).send({ message: "未提供token" });
     try {
