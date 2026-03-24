@@ -81,6 +81,15 @@
 | **队列系统** | 无 | BullMQ + Redis 分布式任务队列 |
 | **视频拼接** | 无 | ffmpeg 自动合成完整剧集 |
 | **风格系统** | 6 种基础风格 | 20+ 种 AI 动画风格预设（龙族传说/吉卜力/赛博朋克...） |
+| **一句话生成** | 无 | 输入灵感 → 完整项目一键生成 |
+| **导演编辑器** | 无 | Timeline 可视化编辑器（类剪映） |
+| **防跑偏规则** | 无 | 6 维锁定（灯光/人物/镜头/收敛/前缀/设定） |
+| **角色一致性** | 无 | seed 固化 + LoRA + Character Lock |
+| **状态机** | 无 | 12 阶段流水线 + 断点续跑 |
+| **安全加固** | 硬编码密码 | 随机密码 + 限流 + token 过期 + CORS |
+| **内容审核** | 无 | fail-close 模式 + 关键词屏蔽 |
+| **测试** | 无 | vitest + 53 测试用例 |
+| **API 数量** | 82 | 180+ |
 
 ## 新增功能详细列表
 
@@ -178,8 +187,91 @@
 
 - `/` — Portal 统一入口页
 - `/admin.html` — 管理控制台
+- `/timeline.html` — Timeline 导演编辑器
 - Vue SPA 创作工作台内置
 - 无需单独部署前端项目
+
+### 11. 一句话生成剧本
+
+```
+输入: "一个调酒师和失恋女孩在酒吧相遇的故事"
+  ↓ AI 自动完成以下全部步骤
+✅ 创建项目 → ✅ 故事线 → ✅ 5集大纲 → ✅ 5集剧本 → ✅ 角色/场景/道具提取
+  ↓
+输出: 完整项目，可直接进入分镜和图片生成
+```
+
+- SSE 实时进度推送
+- 可配置集数（3/5/8/10）、风格、类型
+- 支持管理后台和 Portal 两个入口
+
+### 12. Timeline 导演模式编辑器
+
+类剪映/CapCut 的可视化导演工作台（`/timeline.html`）：
+
+- **Timeline 轨道** — 水平滚动，拖拽排序，拖拽边缘调整时长
+- **镜头属性面板** — 景别/运镜/情绪/过渡/时长/对白/音效
+- **角色/场景面板** — 左侧拖拽角色进镜头
+- **10+ 镜头模板** — 情绪特写/全景建立/推镜/对话/沉默/转场等
+- **导出** — Storyboard DSL JSON
+
+### 13. 工业级防跑偏引擎
+
+6 大锁定规则（`/project/saveAntiDrift`）：
+
+| 规则 | 作用 |
+|------|------|
+| **灯光锁死** | 全局光照/色温/阴影方向固定，跨镜头不变 |
+| **人物进入规则** | 限制每镜头最大角色数，禁止随机路人 |
+| **镜头限制** | 允许的景别/运镜白名单，禁止急速运动 |
+| **核心收敛词** | 每条 Prompt 强制附加的质量/一致性关键词 |
+| **统一前缀** | 图片/视频 Prompt 统一前缀注入 |
+| **人物设定锁** | 每角色固定服装/发型/配饰/seed |
+
+### 14. 角色一致性系统
+
+- Character Identity 数据库（面部/体型/发型/服装/色板/seed）
+- AI 自动提取角色特征（从已有图片分析）
+- 参考图生成（正面/侧面/背面三视图）
+- LoRA / IP-Adapter 权重配置
+- 自动注入 `[CHARACTER LOCK]` 到每张分镜图生成
+
+### 15. 统一任务状态机
+
+12 阶段流水线，支持断点续跑：
+
+```
+idea → storyline → outline → script → assets → storyboard
+  → image → video → audio → compose → review → publish
+```
+
+- 每阶段独立状态：pending / running / success / failed / cancelled / skipped
+- 幂等性：已完成阶段自动跳过
+- 失败恢复：最多 5 次重试，支持手动重置
+- API: `getPipelineState` / `retryStage` / `skipStage` / `resetStage`
+
+### 16. 工业级安全加固
+
+- 随机初始密码，首次登录强制修改
+- 登录限流（5次/15分钟/IP）
+- JWT 7 天过期（可选 30 天记住我）
+- CORS 可通过环境变量收紧
+- 内容审核 fail-close 模式（生产环境默认）
+
+### 17. 成本控制台账
+
+- 按项目/批次/模型/步骤持久化到数据库
+- 支持预算拦截（超支自动阻断）
+- 计费标准可编辑（文本=百万token / 图片=张 / 视频=秒）
+- 进程重启不丢数据
+
+### 18. 批量生产引擎 + AI 配音
+
+- 模板驱动批量生成（50集/批次）
+- 变体系统（同模板不同剧情/情绪）
+- 情绪感知 TTS（自动检测哭泣/愤怒/低语等情绪）
+- CosyVoice / FishSpeech 双引擎
+- 角色独立音色绑定
 
 ---
 
@@ -223,8 +315,8 @@ Toonflow 是一款 AI 工具，能够利用 AI 技术将小说自动转化为剧
 
 ```bash
 # 克隆项目
-git clone https://github.com/HBAI-Ltd/Toonflow-app.git
-cd Toonflow-app
+git clone https://github.com/yeluoge26/toonflow.git
+cd toonflow
 
 # 安装依赖
 yarn install
@@ -238,7 +330,7 @@ yarn dev
 
 访问 `http://localhost:60000` 即可使用。
 
-> ⚠️ **首次登录** — 账号：`admin` / 密码：`admin123`
+> ⚠️ **首次登录** — 账号：`admin`，密码为系统自动生成的随机密码，请查看首次启动时的控制台输出获取。登录后系统会提示强制修改密码。
 
 ## Docker 部署
 
@@ -261,8 +353,8 @@ npm install -g yarn pm2
 
 # 部署
 cd /opt
-git clone https://github.com/HBAI-Ltd/Toonflow-app.git
-cd Toonflow-app
+git clone https://github.com/yeluoge26/toonflow.git
+cd toonflow
 yarn install && yarn build
 
 # 启动
