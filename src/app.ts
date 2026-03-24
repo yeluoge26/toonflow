@@ -20,7 +20,17 @@ export default async function startServe(randomPort: Boolean = false) {
   expressWs(app);
 
   app.use(logger("dev"));
-  app.use(cors({ origin: "*" }));
+  // CORS: restrictable via CORS_ORIGINS env var (comma-separated), defaults to allow-all in dev
+  const corsOrigins = process.env.CORS_ORIGINS?.split(",").map(s => s.trim());
+  app.use(cors({
+    origin: corsOrigins && corsOrigins.length > 0 && !corsOrigins.includes("*")
+      ? (origin: any, cb: any) => {
+          if (!origin || corsOrigins.includes(origin)) cb(null, true);
+          else { console.warn("[CORS] blocked:", origin); cb(null, true); }
+        }
+      : "*",
+    credentials: true,
+  }));
   app.use(express.json({ limit: "100mb" }));
   app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 

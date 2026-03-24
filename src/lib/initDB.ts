@@ -1,5 +1,6 @@
 import { Knex } from "knex";
 import { v4 as uuid } from "uuid";
+import crypto from "crypto";
 import { artStyle } from "./artStyle";
 interface TableSchema {
   name: string;
@@ -15,11 +16,18 @@ export default async (knex: Knex, forceInit: boolean = false): Promise<void> => 
         table.integer("id").notNullable();
         table.text("name");
         table.text("password");
+        table.integer("forcePasswordChange").defaultTo(1);
         table.primary(["id"]);
         table.unique(["id"]);
       },
       initData: async (knex) => {
-        await knex("t_user").insert([{ id: 1, name: "admin", password: "admin123" }]);
+        const initPassword = crypto.randomBytes(8).toString("hex");
+        await knex("t_user").insert([{ id: 1, name: "admin", password: initPassword, forcePasswordChange: 1 }]);
+        console.log(`\n${"=".repeat(50)}`);
+        console.log(`[初始化] 管理员账号: admin`);
+        console.log(`[初始化] 初始密码: ${initPassword}`);
+        console.log(`[初始化] ⚠️  请立即登录后修改密码！`);
+        console.log(`${"=".repeat(50)}\n`);
       },
     },
     {

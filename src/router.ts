@@ -181,6 +181,7 @@ import route177 from "./routes/series/generatePlan";
 import route178 from "./routes/series/materialize";
 import route179 from "./routes/project/oneClickGenerate";
 import route180 from "./routes/project/quickGenerate";
+import route181 from "./routes/cost/getProjectCost";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -220,6 +221,7 @@ export default async (app: Express) => {
   app.use("/cost/estimateCost", route31);
   app.use("/cost/getDailySummary", route32);
   app.use("/cost/setBudget", route33);
+  app.use("/cost/getProjectCost", route181);
   app.use("/dashboard/getProductionStats", route34);
   app.use("/distribution/autoGenerate", route35);
   app.use("/distribution/getPublishHistory", route36);

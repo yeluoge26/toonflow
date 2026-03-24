@@ -1,3 +1,16 @@
+// ============================================================
+// DEPRECATED: This Prisma schema is for REFERENCE ONLY.
+// It is NOT the source of truth for the database schema.
+//
+// The actual data layer uses Knex with t_* tables, defined in:
+//   - src/lib/initDB.ts  (table creation)
+//   - src/lib/fixDB.ts   (schema migrations)
+//   - src/types/database.d.ts (TypeScript type definitions)
+//
+// Do NOT use PrismaClient for new features.
+// See docs/DATA_LAYER.md for the full data layer strategy.
+// ============================================================
+
 generator client {
   provider = "prisma-client-js"
 }

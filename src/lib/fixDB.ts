@@ -32,6 +32,22 @@ export default async (knex: Knex): Promise<void> => {
   // Fallback model support: add configId2/configId3 to t_aiModelMap
   await addColumn("t_aiModelMap", "configId2", "integer");
   await addColumn("t_aiModelMap", "configId3", "integer");
+
+  // Security: forcePasswordChange for existing users
+  await addColumn("t_user", "forcePasswordChange", "integer");
+
+  // Pipeline state machine
+  if (!(await knex.schema.hasTable("t_pipeline_state"))) {
+    await knex.schema.createTable("t_pipeline_state", (table) => {
+      table.increments("id").primary();
+      table.integer("projectId").unique();
+      table.text("currentStage");
+      table.text("stageData");
+      table.integer("createdAt");
+      table.integer("updatedAt");
+    });
+  }
+
   await addColumn("t_videoConfig", "audioEnabled", "integer");
   await addColumn("t_video", "errorReason", "text");
 
@@ -815,6 +831,15 @@ export default async (knex: Knex): Promise<void> => {
       table.integer("updatedAt");
     });
   }
+
+  // Content review settings columns
+  await addColumn("t_setting", "contentReviewEnabled", "integer");
+  await addColumn("t_setting", "contentReviewMode", "text");
+  await addColumn("t_setting", "contentBlocklist", "text");
+
+  // Cost tracking: add projectId and batchId to t_modelUsage for cost attribution
+  await addColumn("t_modelUsage", "projectId", "integer");
+  await addColumn("t_modelUsage", "batchId", "text");
 
   // t_series (系列生产)
   if (!(await knex.schema.hasTable("t_series"))) {

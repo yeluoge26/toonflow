@@ -27,7 +27,8 @@
     "dist:win": "yarn build && electron-builder --win",
     "dist:mac": "yarn build && electron-builder --mac",
     "dist:linux": "yarn build && electron-builder --linux",
-    "test": "cross-env NODE_ENV=prod node build/app.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "docker:build": "docker-compose -f docker/docker-compose.yml up -d --build",
     "docker:local": "docker-compose -f docker/docker-compose.local.yml up -d --build",
     "start:workers": "bash scripts/start-workers.sh",
@@ -96,6 +97,7 @@
     "license-checker": "^25.0.1",
     "nodemon": "^3.1.11",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.1"
   }
 }

@@ -6,7 +6,7 @@ import costTracker from "@/lib/costControl";
 const router = express.Router();
 
 export default router.post("/", async (req, res) => {
-  const runtime = costTracker.getTodaySummary();
+  const runtime = await costTracker.getTodaySummaryFromDB();
 
   // Get model usage stats from DB
   const today = new Date();
