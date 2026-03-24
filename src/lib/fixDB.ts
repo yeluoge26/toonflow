@@ -980,6 +980,30 @@ export default async (knex: Knex): Promise<void> => {
     });
   }
 
+  // t_agent_runs
+  if (!(await knex.schema.hasTable("t_agent_runs"))) {
+    await knex.schema.createTable("t_agent_runs", (table) => {
+      table.increments("id").primary();
+      table.text("agentName");
+      table.text("input");   // JSON
+      table.text("output");  // JSON
+      table.text("status");
+      table.real("duration");
+      table.integer("createdAt");
+    });
+  }
+
+  // t_agent_feedback
+  if (!(await knex.schema.hasTable("t_agent_feedback"))) {
+    await knex.schema.createTable("t_agent_feedback", (table) => {
+      table.increments("id").primary();
+      table.integer("runId");
+      table.real("score");
+      table.text("feedback");
+      table.integer("createdAt");
+    });
+  }
+
   // ==================== 数据库索引 ====================
 
   const indexes = [

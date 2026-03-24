@@ -188,6 +188,8 @@ import route184 from "./routes/director/generatePlan";
 import route185 from "./routes/director/scorePlan";
 import route186 from "./routes/director/optimizePrompt";
 import route187 from "./routes/system/modelHealth";
+import route188 from "./routes/director/orchestrate";
+import route189 from "./routes/director/agentHistory";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -377,4 +379,6 @@ export default async (app: Express) => {
   app.use("/director/scorePlan", route185);
   app.use("/director/optimizePrompt", route186);
   app.use("/system/modelHealth", route187);
+  app.use("/director/orchestrate", route188);
+  app.use("/director/agentHistory", route189);
 }

@@ -281,6 +281,9 @@
     <div class="nav-item" data-module="seriesManager" onclick="showModule('seriesManager')">
       <span class="nav-icon">&#127916;</span><span class="nav-label">系列管理</span>
     </div>
+    <div class="nav-item" data-module="agentMonitor" onclick="showModule('agentMonitor')">
+      <span class="nav-icon">&#129302;</span><span class="nav-label">Agent 监控</span>
+    </div>
     <div class="nav-item" onclick="window.open('timeline.html','_blank')">
       <span class="nav-icon">&#9202;</span><span class="nav-label">Timeline编辑器</span>
     </div>
@@ -1381,6 +1384,21 @@
         </div>
       </div>
 
+      <!-- ==================== Agent监控 ==================== -->
+      <div class="module" id="module-agentMonitor">
+        <div class="section">
+          <div class="section-title">
+            Agent监控
+            <button class="btn btn-sm btn-outline" onclick="loaders.agentMonitor()">刷新</button>
+          </div>
+          <div class="cards" id="agent-stats"></div>
+        </div>
+        <div class="section">
+          <div class="section-title">最近Agent运行记录</div>
+          <div id="agent-history-table"></div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 
@@ -1494,6 +1512,7 @@
       cost: '成本控制',
       character: '角色IP',
       videoConstraints: '视频约束',
+      agentMonitor: 'Agent监控',
     };
 
     function showModule(name) {
@@ -3840,6 +3859,73 @@
         toast('创建项目失败: ' + e.message, 'error');
       }
     }
+
+    // ============================================================
+    // Agent Monitor
+    // ============================================================
+    loaders.agentMonitor = async () => {
+      try {
+        const r = await api('/director/agentHistory', { limit: 200 });
+        const runs = r.data || [];
+
+        // Stats
+        const totalRuns = runs.length;
+        const successRuns = runs.filter(r => r.status === 'success').length;
+        const successRate = totalRuns > 0 ? ((successRuns / totalRuns) * 100).toFixed(1) : '0';
+        const avgDuration = totalRuns > 0 ? (runs.reduce((s, r) => s + (r.duration || 0), 0) / totalRuns).toFixed(0) : '0';
+
+        // Agent name distribution
+        const agentCounts = {};
+        runs.forEach(r => { agentCounts[r.agentName] = (agentCounts[r.agentName] || 0) + 1; });
+
+        document.getElementById('agent-stats').innerHTML =
+          '<div class="card"><div class="card-title">总运行次数</div><div class="card-value">' + totalRuns + '</div></div>' +
+          '<div class="card"><div class="card-title">成功率</div><div class="card-value" style="color:var(--success);">' + successRate + '%</div></div>' +
+          '<div class="card"><div class="card-title">平均耗时</div><div class="card-value">' + avgDuration + ' ms</div></div>' +
+          '<div class="card"><div class="card-title">Agent类型数</div><div class="card-value">' + Object.keys(agentCounts).length + '</div></div>';
+
+        // Table
+        const recent = runs.slice(0, 50);
+        if (recent.length === 0) {
+          document.getElementById('agent-history-table').innerHTML = '<p style="color:var(--text-secondary);">暂无Agent运行记录</p>';
+          return;
+        }
+
+        let html = '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+          '<thead><tr style="border-bottom:1px solid var(--border);">' +
+          '<th style="text-align:left;padding:8px;">ID</th>' +
+          '<th style="text-align:left;padding:8px;">Agent</th>' +
+          '<th style="text-align:left;padding:8px;">状态</th>' +
+          '<th style="text-align:right;padding:8px;">耗时(ms)</th>' +
+          '<th style="text-align:left;padding:8px;">输出摘要</th>' +
+          '<th style="text-align:left;padding:8px;">时间</th>' +
+          '</tr></thead><tbody>';
+
+        recent.forEach(run => {
+          const statusColor = run.status === 'success' ? 'var(--success)' : 'var(--error)';
+          let outputSummary = '--';
+          try {
+            const out = JSON.parse(run.output || '{}');
+            outputSummary = Object.entries(out).slice(0, 3).map(([k, v]) => k + ':' + v).join(', ');
+            if (outputSummary.length > 80) outputSummary = outputSummary.substring(0, 77) + '...';
+          } catch {}
+          const time = run.createdAt ? new Date(run.createdAt).toLocaleString() : '--';
+          html += '<tr style="border-bottom:1px solid var(--border);">' +
+            '<td style="padding:8px;">' + run.id + '</td>' +
+            '<td style="padding:8px;font-weight:600;">' + (run.agentName || '--') + '</td>' +
+            '<td style="padding:8px;"><span style="color:' + statusColor + ';">' + (run.status || '--') + '</span></td>' +
+            '<td style="padding:8px;text-align:right;">' + (run.duration || 0) + '</td>' +
+            '<td style="padding:8px;color:var(--text-secondary);font-size:12px;">' + outputSummary + '</td>' +
+            '<td style="padding:8px;color:var(--text-secondary);font-size:12px;">' + time + '</td>' +
+          '</tr>';
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('agent-history-table').innerHTML = html;
+      } catch (e) {
+        document.getElementById('agent-stats').innerHTML = '<p style="color:var(--error);">加载失败: ' + e.message + '</p>';
+      }
+    };
 
     // ============================================================
     // Init
