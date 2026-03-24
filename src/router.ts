@@ -183,6 +183,11 @@ import route179 from "./routes/project/oneClickGenerate";
 import route180 from "./routes/project/quickGenerate";
 import route181 from "./routes/cost/getProjectCost";
 import route182 from "./routes/user/changePassword";
+import route183 from "./routes/director/analyzeScript";
+import route184 from "./routes/director/generatePlan";
+import route185 from "./routes/director/scorePlan";
+import route186 from "./routes/director/optimizePrompt";
+import route187 from "./routes/system/modelHealth";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -367,4 +372,9 @@ export default async (app: Express) => {
   app.use("/project/oneClickGenerate", route179);
   app.use("/project/quickGenerate", route180);
   app.use("/user/changePassword", route182);
+  app.use("/director/analyzeScript", route183);
+  app.use("/director/generatePlan", route184);
+  app.use("/director/scorePlan", route185);
+  app.use("/director/optimizePrompt", route186);
+  app.use("/system/modelHealth", route187);
 }
