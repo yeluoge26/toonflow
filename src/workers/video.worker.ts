@@ -45,7 +45,7 @@ const worker = new Worker(
           state: 1,
           time: shotData.duration || 5,
           createdAt: Date.now(),
-        } as any).catch(() => {});
+        } as any).catch((err: any) => { console.error("[background]", err.message); });
 
         generated++;
         await job.updateProgress(10 + Math.round((i / images.length) * 80));

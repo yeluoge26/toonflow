@@ -48,7 +48,7 @@ const worker = new Worker(
     // Save storyboard
     const storyboardData = JSON.stringify(shots.map((s, i) => ({ index: i, title: `镜头${i + 1}`, description: s.description, duration: s.duration })));
 
-    await u.db("t_chatHistory").where({ projectId, type: "storyboard" }).delete().catch(() => {});
+    await u.db("t_chatHistory").where({ projectId, type: "storyboard" }).delete().catch((err: any) => { console.error("[background]", err.message); });
     await u.db("t_chatHistory").insert({ projectId, type: "storyboard", data: storyboardData, createdAt: Date.now() } as any);
 
     await job.updateProgress(80);

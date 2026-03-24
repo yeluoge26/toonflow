@@ -944,4 +944,62 @@ export default async (knex: Knex): Promise<void> => {
       table.integer("createdAt");
     });
   }
+
+  // ==================== 缺失表补建 ====================
+
+  if (!(await knex.schema.hasTable("t_modelUsage"))) {
+    await knex.schema.createTable("t_modelUsage", (table) => {
+      table.increments("id").primary();
+      table.integer("configId");
+      table.text("manufacturer");
+      table.text("model");
+      table.text("moduleKey");
+      table.integer("inputTokens").defaultTo(0);
+      table.integer("outputTokens").defaultTo(0);
+      table.integer("duration").defaultTo(0);
+      table.real("cost").defaultTo(0);
+      table.text("status");
+      table.text("errorMsg");
+      table.integer("createdAt");
+      table.integer("projectId");
+      table.text("batchId");
+    });
+  }
+
+  if (!(await knex.schema.hasTable("t_modelPricing"))) {
+    await knex.schema.createTable("t_modelPricing", (table) => {
+      table.increments("id").primary();
+      table.text("manufacturer");
+      table.text("model");
+      table.text("type").defaultTo("text");
+      table.real("inputPrice").defaultTo(0);
+      table.real("outputPrice").defaultTo(0);
+      table.text("unit").defaultTo("per_1m_tokens");
+      table.text("currency").defaultTo("CNY");
+      table.integer("updatedAt");
+    });
+  }
+
+  // ==================== 数据库索引 ====================
+
+  const indexes = [
+    { table: "t_assets", column: "projectId" },
+    { table: "t_script", column: "projectId" },
+    { table: "t_outline", column: "projectId" },
+    { table: "t_novel", column: "projectId" },
+    { table: "t_image", column: "projectId" },
+    { table: "t_image", column: "assetsId" },
+    { table: "t_chatHistory", column: "projectId" },
+    { table: "t_modelUsage", column: "createdAt" },
+  ];
+
+  for (const idx of indexes) {
+    try {
+      if (await knex.schema.hasTable(idx.table)) {
+        await knex.schema.alterTable(idx.table, (table) => {
+          table.index([idx.column], `idx_${idx.table}_${idx.column}`);
+        });
+      }
+    } catch {} // Index may already exist
+  }
 };

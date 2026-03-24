@@ -41,7 +41,7 @@ const worker = new Worker(
           filePath: imageUrl,
           shotIndex: i,
           createdAt: Date.now(),
-        } as any).catch(() => {});
+        } as any).catch((err: any) => { console.error("[background]", err.message); });
 
         generated++;
         await job.updateProgress(10 + Math.round((i / shots.length) * 80));

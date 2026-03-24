@@ -137,7 +137,7 @@ class ProductionScheduler {
               status: "active",
               usageCount: 0,
               createdAt: Date.now(),
-            }).catch(() => {});
+            }).catch((err: any) => { console.error("[background]", err.message); });
           }
           evolved = true;
         }

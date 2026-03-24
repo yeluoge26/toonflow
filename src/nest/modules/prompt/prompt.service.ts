@@ -54,7 +54,7 @@ export class PromptService {
         status: "active",
         usageCount: 0,
         createdAt: Date.now(),
-      }).catch(() => {});
+      }).catch((err: any) => { console.error("[background]", err.message); });
     }
 
     return { count: nextGen.length, avgGeneration: Math.round(nextGen.reduce((s: number, g: any) => s + g.generation, 0) / nextGen.length * 10) / 10 };

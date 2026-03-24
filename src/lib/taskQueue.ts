@@ -120,7 +120,7 @@ class TaskQueue {
     });
 
     // Execute with retry logic
-    this.executeTask(task, handler, controller).catch(() => {});
+    this.executeTask(task, handler, controller).catch((err: any) => { console.error("[background]", err.message); });
   }
 
   private async executeTask(

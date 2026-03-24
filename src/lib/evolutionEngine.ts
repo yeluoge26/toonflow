@@ -94,7 +94,7 @@ class EvolutionEngine {
         status: "active",
         usageCount: 0,
         createdAt: Date.now(),
-      }).catch(() => {}); // Ignore if exists
+      }).catch((err: any) => { console.error("[background]", err.message); }); // Ignore if exists
     }
 
     return population;
