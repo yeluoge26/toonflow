@@ -26,7 +26,7 @@ export default async function startServe(randomPort: Boolean = false) {
     origin: corsOrigins && corsOrigins.length > 0 && !corsOrigins.includes("*")
       ? (origin: any, cb: any) => {
           if (!origin || corsOrigins.includes(origin)) cb(null, true);
-          else { console.warn("[CORS] blocked:", origin); cb(null, true); }
+          else { console.warn("[CORS] blocked:", origin); cb(new Error("CORS blocked: " + origin)); }
         }
       : "*",
     credentials: true,
@@ -92,6 +92,15 @@ export default async function startServe(randomPort: Boolean = false) {
       return res.status(401).send({ message: "无效的token" });
     }
   });
+
+  // Content review middleware — applied to generation endpoints
+  const { reviewMiddleware } = await import("@/middleware/contentReview");
+  app.use([
+    "/project/oneClickGenerate", "/project/quickGenerate",
+    "/script/generateScriptApi", "/storyboard/chatStoryboard",
+    "/outline/agentsOutline", "/assets/generateAssets",
+    "/video/generateVideo", "/video/generatePrompt",
+  ], reviewMiddleware(["prompt", "content", "text", "idea"]));
 
   // Register task handlers (audio TTS, etc.)
   const { registerTaskHandlers } = await import("@/lib/taskHandlers");

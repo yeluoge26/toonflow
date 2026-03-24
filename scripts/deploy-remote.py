@@ -120,7 +120,7 @@ def main():
     print(f'Deployment complete!')
     print(f'Access: http://{HOST}:60000')
     print(f'Admin:  http://{HOST}:60000/admin.html')
-    print(f'Login:  admin / admin123')
+    print(f'Login:  admin / (see PM2 logs for initial password: pm2 logs toonflow)')
     print(f'{"="*50}')
 
     client.close()
