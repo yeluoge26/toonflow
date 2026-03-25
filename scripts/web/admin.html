@@ -295,6 +295,16 @@
       <div class="nav-group-title" onclick="toggleGroup(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> 运维</div>
       <div class="nav-group-items">
         <div class="nav-item" data-module="cost" onclick="showModule('cost')"><span class="nav-label">成本控制</span><span class="nav-desc">模型用量、计费标准、每日预算</span></div>
+        <div class="nav-item" data-module="dataFeedback" onclick="showModule('dataFeedback')"><span class="nav-label">数据反馈</span><span class="nav-desc">播放数据分析、爆款规律、AI自进化</span></div>
+      </div>
+    </div>
+
+    <!-- 商业系统 -->
+    <div class="nav-group">
+      <div class="nav-group-title" onclick="toggleGroup(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> 商业系统</div>
+      <div class="nav-group-items">
+        <div class="nav-item" data-module="marketplace" onclick="showModule('marketplace')"><span class="nav-label">模板市场</span><span class="nav-desc">模板浏览、购买、发布、爆款排行</span></div>
+        <div class="nav-item" data-module="billing" onclick="showModule('billing')"><span class="nav-label">SaaS计费</span><span class="nav-desc">套餐管理、配额监控、收益统计</span></div>
       </div>
     </div>
 
@@ -793,8 +803,93 @@
 
       <!-- ==================== Distribution ==================== -->
       <div class="module" id="module-distribution">
+        <!-- Account Management -->
         <div class="section">
-          <div class="section-title">发布视频</div>
+          <div class="section-title">
+            账号管理
+            <button class="btn btn-sm btn-outline" onclick="loadDistAccounts()">刷新</button>
+          </div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group">
+                <label>平台</label>
+                <select id="dist-acc-platform">
+                  <option value="douyin">抖音</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="bilibili">B站</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="instagram">Instagram</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="dist-acc-username" placeholder="账号用户名">
+              </div>
+              <div class="form-group">
+                <label>代理IP</label>
+                <input type="text" id="dist-acc-proxy" placeholder="可选，如 1.2.3.4:8080">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Access Token</label>
+                <input type="text" id="dist-acc-token" placeholder="可选，平台API Token">
+              </div>
+              <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-primary" onclick="addDistAccount()">添加账号</button>
+              </div>
+            </div>
+          </div>
+          <div id="dist-accounts"><div class="loading"><span class="spinner"></span>加载中...</div></div>
+        </div>
+
+        <!-- Publish Task Creation -->
+        <div class="section">
+          <div class="section-title">创建发布任务</div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group">
+                <label>视频ID</label>
+                <input type="number" id="dist-task-videoId" placeholder="视频ID">
+              </div>
+              <div class="form-group">
+                <label>项目ID</label>
+                <input type="number" id="dist-task-projectId" placeholder="项目ID">
+              </div>
+              <div class="form-group">
+                <label>平台</label>
+                <select id="dist-task-platform">
+                  <option value="douyin">抖音</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="bilibili">B站</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="instagram">Instagram</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:2;">
+                <label>标题 <button class="btn btn-sm btn-outline" onclick="aiGenerateTitles()" style="margin-left:8px;">AI生成标题</button></label>
+                <input type="text" id="dist-task-title" placeholder="视频标题（可AI生成）">
+              </div>
+            </div>
+            <div id="dist-ai-titles" style="margin-bottom:12px;"></div>
+            <div class="form-group">
+              <label>描述</label>
+              <input type="text" id="dist-task-desc" placeholder="视频描述（可选）">
+            </div>
+            <div class="form-group">
+              <label>剧本摘要（用于AI生成标题）</label>
+              <textarea id="dist-task-summary" rows="3" placeholder="粘贴剧本内容摘要，AI将据此生成爆款标题"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="createDistTask()">创建发布任务</button>
+          </div>
+        </div>
+
+        <!-- Legacy Publish -->
+        <div class="section">
+          <div class="section-title">快速发布（旧版）</div>
           <div class="detail-panel">
             <div class="form-group">
               <label>视频路径</label>
@@ -811,6 +906,40 @@
             <button class="btn btn-primary" onclick="publishVideo()">发布</button>
           </div>
         </div>
+
+        <!-- Task History -->
+        <div class="section">
+          <div class="section-title">
+            发布任务历史
+            <button class="btn btn-sm btn-outline" onclick="loadDistTaskHistory()">刷新</button>
+          </div>
+          <div class="form-row" style="margin-bottom:12px;">
+            <div class="form-group">
+              <select id="dist-history-platform" onchange="loadDistTaskHistory()" style="padding:6px 10px;">
+                <option value="">全部平台</option>
+                <option value="douyin">抖音</option>
+                <option value="tiktok">TikTok</option>
+                <option value="bilibili">B站</option>
+                <option value="youtube">YouTube</option>
+                <option value="instagram">Instagram</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <select id="dist-history-status" onchange="loadDistTaskHistory()" style="padding:6px 10px;">
+                <option value="">全部状态</option>
+                <option value="pending">等待中</option>
+                <option value="scheduled">已计划</option>
+                <option value="publishing">发布中</option>
+                <option value="success">成功</option>
+                <option value="failed">失败</option>
+                <option value="retry">重试中</option>
+              </select>
+            </div>
+          </div>
+          <div id="dist-task-history"><div class="loading"><span class="spinner"></span>加载中...</div></div>
+        </div>
+
+        <!-- Trending & Recommendations -->
         <div class="section">
           <div class="section-title">热门话题</div>
           <div id="dist-trending"><div class="loading"><span class="spinner"></span>加载中...</div></div>
@@ -819,12 +948,44 @@
           <div class="section-title">内容推荐</div>
           <div id="dist-recommendations"><div class="loading"><span class="spinner"></span>加载中...</div></div>
         </div>
+
+        <!-- Legacy History -->
         <div class="section">
           <div class="section-title">
-            发布历史
+            发布历史（旧版）
             <button class="btn btn-sm btn-outline" onclick="loadPublishHistory()">刷新</button>
           </div>
           <div id="dist-history"><div class="loading"><span class="spinner"></span>加载中...</div></div>
+        </div>
+
+        <!-- Strategy Settings -->
+        <div class="section">
+          <div class="section-title">分发策略设置</div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group">
+                <label>每日最大发布数/账号</label>
+                <input type="number" id="dist-strategy-maxPosts" value="3" min="1" max="20">
+              </div>
+              <div class="form-group">
+                <label>发布间隔（分钟）</label>
+                <input type="number" id="dist-strategy-interval" value="120" min="10">
+              </div>
+              <div class="form-group">
+                <label>失败冷却（分钟）</label>
+                <input type="number" id="dist-strategy-cooldown" value="30" min="5">
+              </div>
+              <div class="form-group">
+                <label>最大重试次数</label>
+                <input type="number" id="dist-strategy-retryMax" value="3" min="0" max="10">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>最佳发布时段（逗号分隔，如 12:00, 18:00, 22:00）</label>
+              <input type="text" id="dist-strategy-timeSlots" value="12:00, 18:00, 22:00">
+            </div>
+            <div style="color:var(--text-secondary);font-size:13px;margin-top:8px;">策略设置目前保存在前端本地，重启后恢复默认值。</div>
+          </div>
         </div>
       </div>
 
@@ -1418,6 +1579,203 @@
         </div>
       </div>
 
+      <!-- Data Feedback Loop -->
+      <div class="module" id="module-dataFeedback">
+        <div class="section">
+          <div class="section-title">
+            数据反馈闭环
+            <button class="btn btn-sm btn-outline" onclick="loaders.dataFeedback()">刷新</button>
+          </div>
+          <div class="cards" id="feedback-stats"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">录入视频数据</div>
+          <div class="form-row">
+            <div class="form-group"><label>视频ID</label><input type="number" id="fb-videoId" placeholder="视频ID"></div>
+            <div class="form-group"><label>平台</label>
+              <select id="fb-platform"><option value="douyin">抖音</option><option value="tiktok">TikTok</option><option value="bilibili">B站</option><option value="youtube">YouTube</option><option value="kuaishou">快手</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>播放量</label><input type="number" id="fb-views" placeholder="0"></div>
+            <div class="form-group"><label>点赞</label><input type="number" id="fb-likes" placeholder="0"></div>
+            <div class="form-group"><label>评论</label><input type="number" id="fb-comments" placeholder="0"></div>
+            <div class="form-group"><label>分享</label><input type="number" id="fb-shares" placeholder="0"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>完播率 (0-1)</label><input type="number" id="fb-completion" step="0.01" min="0" max="1" placeholder="0.65"></div>
+            <div class="form-group"><label>平均观看时长(秒)</label><input type="number" id="fb-watchTime" placeholder="15"></div>
+          </div>
+          <button class="btn btn-primary" onclick="submitFeedbackMetrics()">提交数据</button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">查询视频/项目分析</div>
+          <div class="form-row">
+            <div class="form-group"><label>视频ID</label><input type="number" id="fb-query-videoId" placeholder="按视频查询"></div>
+            <div class="form-group"><label>项目ID</label><input type="number" id="fb-query-projectId" placeholder="按项目查询"></div>
+            <div class="form-group" style="display:flex;align-items:flex-end;"><button class="btn btn-outline" onclick="queryVideoAnalytics()">查询</button></div>
+          </div>
+          <div id="feedback-query-result"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">AI爆款规律分析</div>
+          <div class="form-row">
+            <div class="form-group"><label>项目ID</label><input type="number" id="fb-pattern-projectId" placeholder="项目ID"></div>
+            <div class="form-group" style="display:flex;align-items:flex-end;gap:8px;">
+              <button class="btn btn-primary" onclick="analyzePatterns()">分析规律</button>
+              <button class="btn btn-outline" onclick="evolveDirector()">AI自进化</button>
+            </div>
+          </div>
+          <div id="feedback-patterns-result"></div>
+        </div>
+      </div>
+
+      <!-- 模板市场 -->
+      <div class="module" id="module-marketplace">
+        <div class="section">
+          <div class="section-title">
+            模板市场
+            <div style="display:flex;gap:8px;">
+              <select id="mp-category" onchange="loaders.marketplace()" style="width:auto;">
+                <option value="">全部分类</option>
+                <option value="romance">爱情</option>
+                <option value="suspense">悬疑</option>
+                <option value="comedy">喜剧</option>
+                <option value="horror">恐怖</option>
+                <option value="fantasy">奇幻</option>
+              </select>
+              <select id="mp-sort" onchange="loaders.marketplace()" style="width:auto;">
+                <option value="popular">最受欢迎</option>
+                <option value="viral">爆款指数</option>
+                <option value="newest">最新发布</option>
+                <option value="price">按价格</option>
+              </select>
+              <button class="btn btn-sm btn-outline" onclick="loaders.marketplace()">刷新</button>
+            </div>
+          </div>
+          <div class="cards" id="mp-stats"></div>
+        </div>
+        <div class="section">
+          <div class="section-title">模板列表</div>
+          <div id="mp-template-list"><div class="loading"><span class="spinner"></span>加载中...</div></div>
+        </div>
+        <div class="section">
+          <div class="section-title">发布新模板</div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group"><label>模板名称</label><input type="text" id="mp-pub-name" placeholder="输入模板名称"></div>
+              <div class="form-group"><label>分类</label>
+                <select id="mp-pub-category">
+                  <option value="romance">爱情</option><option value="suspense">悬疑</option>
+                  <option value="comedy">喜剧</option><option value="horror">恐怖</option><option value="fantasy">奇幻</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>价格 (0=免费)</label><input type="number" id="mp-pub-price" value="0" min="0"></div>
+              <div class="form-group"><label>作者ID</label><input type="number" id="mp-pub-author" value="1"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:1;"><label>描述</label><textarea id="mp-pub-desc" rows="2" placeholder="模板描述"></textarea></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="flex:1;"><label>模板配置 (JSON)</label><textarea id="mp-pub-data" rows="3" placeholder='{"scenes":[],"style":"anime"}'>{}</textarea></div>
+            </div>
+            <button class="btn btn-primary" onclick="publishMarketTemplate()">发布到市场</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SaaS计费 -->
+      <div class="module" id="module-billing">
+        <div class="section">
+          <div class="section-title">
+            SaaS计费概览
+            <button class="btn btn-sm btn-outline" onclick="loaders.billing()">刷新</button>
+          </div>
+          <div class="cards" id="billing-plan-info"></div>
+        </div>
+        <div class="section">
+          <div class="section-title">套餐方案</div>
+          <div class="queue-grid" id="billing-plans">
+            <div class="queue-card">
+              <div class="queue-name">Free</div>
+              <div class="queue-stats">
+                <div class="queue-stat">价格<span>免费</span></div>
+                <div class="queue-stat">项目/月<span>3</span></div>
+                <div class="queue-stat">图片生成<span>50</span></div>
+                <div class="queue-stat">视频生成<span>10</span></div>
+              </div>
+            </div>
+            <div class="queue-card" style="border-color:var(--accent);">
+              <div class="queue-name" style="color:var(--accent);">Pro</div>
+              <div class="queue-stats">
+                <div class="queue-stat">价格<span>$29/月</span></div>
+                <div class="queue-stat">项目/月<span>20</span></div>
+                <div class="queue-stat">图片生成<span>500</span></div>
+                <div class="queue-stat">视频生成<span>100</span></div>
+              </div>
+            </div>
+            <div class="queue-card" style="border-color:var(--warning);">
+              <div class="queue-name" style="color:var(--warning);">Studio</div>
+              <div class="queue-stats">
+                <div class="queue-stat">价格<span>$199/月</span></div>
+                <div class="queue-stat">项目/月<span>无限</span></div>
+                <div class="queue-stat">图片生成<span>无限</span></div>
+                <div class="queue-stat">视频生成<span>无限</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">配额检查</div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group"><label>用户ID</label><input type="number" id="bill-check-uid" value="1"></div>
+              <div class="form-group"><label>操作类型</label>
+                <select id="bill-check-action">
+                  <option value="projectsPerMonth">项目创建</option>
+                  <option value="imageGenerations">图片生成</option>
+                  <option value="videoGenerations">视频生成</option>
+                  <option value="publishPerDay">每日发布</option>
+                </select>
+              </div>
+              <div class="form-group" style="display:flex;align-items:flex-end;">
+                <button class="btn btn-primary" onclick="checkUserQuota()">检查配额</button>
+              </div>
+            </div>
+            <div id="billing-quota-result"></div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">收益统计</div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group"><label>用户ID</label><input type="number" id="bill-rev-uid" value="1"></div>
+              <div class="form-group" style="display:flex;align-items:flex-end;">
+                <button class="btn btn-primary" onclick="loadRevenue()">查询收益</button>
+              </div>
+            </div>
+            <div id="billing-revenue-result"></div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">项目ROI分析</div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group"><label>项目ID</label><input type="number" id="bill-roi-pid" value="1"></div>
+              <div class="form-group" style="display:flex;align-items:flex-end;">
+                <button class="btn btn-primary" onclick="loadROI()">计算ROI</button>
+              </div>
+            </div>
+            <div id="billing-roi-result"></div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 
@@ -1532,6 +1890,9 @@
       character: '角色IP',
       videoConstraints: '视频约束',
       agentMonitor: 'Agent监控',
+      dataFeedback: '数据反馈',
+      marketplace: '模板市场',
+      billing: 'SaaS计费',
     };
 
     function toggleGroup(el) {
@@ -2763,6 +3124,10 @@
     }
 
     // -------------------- Distribution --------------------
+    const platformNames = { douyin: '抖音', tiktok: 'TikTok', bilibili: 'B站', youtube: 'YouTube', instagram: 'Instagram' };
+    const statusNames = { pending: '等待中', scheduled: '已计划', publishing: '发布中', success: '成功', failed: '失败', retry: '重试中' };
+    const statusBadges = { pending: 'badge-warning', scheduled: 'badge-info', publishing: 'badge-warning', success: 'badge-success', failed: 'badge-danger', retry: 'badge-warning' };
+
     loaders.distribution = async () => {
       try {
         const [trendRes, recRes] = await Promise.all([
@@ -2806,13 +3171,155 @@
           recContainer.innerHTML = '<div class="empty-state"><div class="empty-state-text">暂无推荐</div></div>';
         }
 
-        // Load history
+        // Load accounts and task history
+        loadDistAccounts();
+        loadDistTaskHistory();
+
+        // Load legacy history
         loadPublishHistory();
       } catch (e) {
         console.error('Distribution load error:', e);
       }
     };
 
+    // --- Account Management ---
+    async function loadDistAccounts() {
+      try {
+        const r = await api('/distribution/listAccounts');
+        const accounts = r.data || [];
+        const container = document.getElementById('dist-accounts');
+
+        if (!Array.isArray(accounts) || accounts.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-state-text">暂无分发账号，请添加</div></div>';
+          return;
+        }
+
+        let html = '<div class="table-wrap"><table><thead><tr><th>平台</th><th>用户名</th><th>状态</th><th>今日发布</th><th>代理IP</th><th>最后活跃</th></tr></thead><tbody>';
+        accounts.forEach(a => {
+          const sBadge = a.status === 'active' ? 'badge-success' : a.status === 'cooldown' ? 'badge-warning' : a.status === 'banned' ? 'badge-danger' : 'badge-warning';
+          const sText = a.status === 'active' ? '活跃' : a.status === 'cooldown' ? '冷却中' : a.status === 'banned' ? '封禁' : '风险';
+          html += '<tr>' +
+            '<td>' + escapeHtml(platformNames[a.platform] || a.platform) + '</td>' +
+            '<td>' + escapeHtml(a.username) + '</td>' +
+            '<td><span class="badge ' + sBadge + '">' + sText + '</span></td>' +
+            '<td>' + (a.postsToday || 0) + '</td>' +
+            '<td>' + escapeHtml(a.proxyIp || '--') + '</td>' +
+            '<td>' + formatTime(a.lastActiveAt) + '</td>' +
+          '</tr>';
+        });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      } catch (e) {
+        document.getElementById('dist-accounts').innerHTML = '<div class="empty-state"><div class="empty-state-text">加载失败</div></div>';
+      }
+    }
+
+    async function addDistAccount() {
+      const platform = document.getElementById('dist-acc-platform').value;
+      const username = document.getElementById('dist-acc-username').value.trim();
+      if (!username) { toast('请输入用户名', 'error'); return; }
+
+      const r = await api('/distribution/addAccount', {
+        platform,
+        username,
+        proxyIp: document.getElementById('dist-acc-proxy').value.trim() || undefined,
+        accessToken: document.getElementById('dist-acc-token').value.trim() || undefined,
+      });
+      if (r.data !== undefined) {
+        toast('账号添加成功');
+        document.getElementById('dist-acc-username').value = '';
+        document.getElementById('dist-acc-proxy').value = '';
+        document.getElementById('dist-acc-token').value = '';
+        loadDistAccounts();
+      } else {
+        toast(r.message || '添加失败', 'error');
+      }
+    }
+
+    // --- Publish Task ---
+    async function createDistTask() {
+      const videoId = parseInt(document.getElementById('dist-task-videoId').value);
+      const projectId = parseInt(document.getElementById('dist-task-projectId').value);
+      const platform = document.getElementById('dist-task-platform').value;
+      const title = document.getElementById('dist-task-title').value.trim();
+      const description = document.getElementById('dist-task-desc').value.trim();
+
+      if (!videoId || !projectId) { toast('请填写视频ID和项目ID', 'error'); return; }
+
+      const r = await api('/distribution/createPublishTask', {
+        videoId, projectId, platform,
+        title: title || undefined,
+        description: description || undefined,
+      });
+      if (r.data !== undefined) {
+        toast('发布任务已创建');
+        loadDistTaskHistory();
+      } else {
+        toast(r.message || '创建失败', 'error');
+      }
+    }
+
+    async function aiGenerateTitles() {
+      const summary = document.getElementById('dist-task-summary').value.trim();
+      if (!summary) { toast('请先输入剧本摘要', 'error'); return; }
+
+      const container = document.getElementById('dist-ai-titles');
+      container.innerHTML = '<div class="loading"><span class="spinner"></span>AI生成中...</div>';
+
+      const r = await api('/distribution/generateTitles', { scriptSummary: summary, count: 5 });
+      const titles = r.data || [];
+      if (Array.isArray(titles) && titles.length > 0) {
+        let html = '<div class="genome-vars" style="gap:6px;">';
+        titles.forEach(t => {
+          html += '<span class="var-tag" style="cursor:pointer;font-size:13px;padding:6px 12px;" onclick="document.getElementById(\'dist-task-title\').value=this.textContent">' + escapeHtml(t) + '</span>';
+        });
+        html += '</div><div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">点击标题可自动填入</div>';
+        container.innerHTML = html;
+      } else {
+        container.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;">未能生成标题，请手动输入</div>';
+      }
+    }
+
+    // --- Task History ---
+    async function loadDistTaskHistory() {
+      try {
+        const platform = document.getElementById('dist-history-platform').value || undefined;
+        const status = document.getElementById('dist-history-status').value || undefined;
+        const r = await api('/distribution/getPublishStatus', { platform, status, limit: 50 });
+        const tasks = r.data || [];
+        const container = document.getElementById('dist-task-history');
+
+        if (!Array.isArray(tasks) || tasks.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="empty-state-text">暂无发布任务</div></div>';
+          return;
+        }
+
+        let html = '<div class="table-wrap"><table><thead><tr><th>ID</th><th>标题</th><th>平台</th><th>账号</th><th>状态</th><th>标签</th><th>重试</th><th>创建时间</th><th>发布时间</th><th>错误</th></tr></thead><tbody>';
+        tasks.forEach(t => {
+          const sBadge = statusBadges[t.status] || 'badge-warning';
+          const sText = statusNames[t.status] || t.status;
+          const tags = Array.isArray(t.tags) ? t.tags.slice(0, 3).join(', ') : '--';
+          html += '<tr>' +
+            '<td>' + t.id + '</td>' +
+            '<td>' + escapeHtml(t.title || '--') + '</td>' +
+            '<td>' + escapeHtml(platformNames[t.platform] || t.platform) + '</td>' +
+            '<td>' + escapeHtml(t.accountName || '--') + '</td>' +
+            '<td><span class="badge ' + sBadge + '">' + sText + '</span></td>' +
+            '<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(tags) + '</td>' +
+            '<td>' + (t.retryCount || 0) + '</td>' +
+            '<td>' + formatTime(t.createdAt) + '</td>' +
+            '<td>' + (t.publishedAt ? formatTime(t.publishedAt) : '--') + '</td>' +
+            '<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;color:var(--danger);">' + escapeHtml(t.errorMsg || '') + '</td>' +
+          '</tr>';
+        });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+      } catch (e) {
+        document.getElementById('dist-task-history').innerHTML = '<div class="empty-state"><div class="empty-state-text">加载失败</div></div>';
+      }
+    }
+
+    // --- Legacy functions ---
     async function loadPublishHistory() {
       try {
         const r = await api('/distribution/getPublishHistory');
@@ -3949,6 +4456,209 @@
         document.getElementById('agent-stats').innerHTML = '<p style="color:var(--error);">加载失败: ' + e.message + '</p>';
       }
     };
+
+    // ============================================================
+    // Data Feedback Loop
+    // ============================================================
+    loaders.dataFeedback = async () => {
+      try {
+        document.getElementById('feedback-stats').innerHTML =
+          '<div class="card"><div class="card-title">数据反馈闭环</div><div class="card-value">OK</div><div class="card-sub">录入视频数据 → AI分析规律 → 自进化导演配置</div></div>' +
+          '<div class="card"><div class="card-title">工作流</div><div class="card-value">3步</div><div class="card-sub">1.录入数据 2.分析规律 3.AI自进化</div></div>';
+      } catch (e) {
+        document.getElementById('feedback-stats').innerHTML = '<p style="color:var(--danger);">加载失败: ' + e.message + '</p>';
+      }
+    };
+
+    async function submitFeedbackMetrics() {
+      const videoId = parseInt(document.getElementById('fb-videoId').value);
+      const platform = document.getElementById('fb-platform').value;
+      const views = parseInt(document.getElementById('fb-views').value) || 0;
+      const likes = parseInt(document.getElementById('fb-likes').value) || 0;
+      const comments = parseInt(document.getElementById('fb-comments').value) || 0;
+      const shares = parseInt(document.getElementById('fb-shares').value) || 0;
+      const completionRate = parseFloat(document.getElementById('fb-completion').value) || 0;
+      const avgWatchTime = parseFloat(document.getElementById('fb-watchTime').value) || 0;
+      if (!videoId) { toast('请输入视频ID', 'error'); return; }
+      const res = await api('/analytics/recordMetrics', { videoId, platform, views, likes, comments, shares, completionRate, avgWatchTime });
+      if (res && res.code === 200) { toast('数据已录入'); } else { toast(res?.message || '录入失败', 'error'); }
+    }
+
+    async function queryVideoAnalytics() {
+      const videoId = parseInt(document.getElementById('fb-query-videoId').value) || undefined;
+      const projectId = parseInt(document.getElementById('fb-query-projectId').value) || undefined;
+      if (!videoId && !projectId) { toast('请输入视频ID或项目ID', 'error'); return; }
+      const res = await api('/analytics/getVideoAnalytics', { videoId, projectId });
+      const el = document.getElementById('feedback-query-result');
+      if (res && res.code === 200 && res.data) {
+        const d = res.data;
+        if (d.metrics) {
+          let html = '<div class="table-wrap"><table><thead><tr><th>平台</th><th>播放</th><th>点赞</th><th>完播率</th><th>观看时长</th><th>采集时间</th></tr></thead><tbody>';
+          d.metrics.forEach(m => {
+            html += '<tr><td>' + (m.platform||'--') + '</td><td>' + (m.views||0) + '</td><td>' + (m.likes||0) + '</td><td>' + ((m.completionRate*100)||0).toFixed(1) + '%</td><td>' + (m.avgWatchTime||0) + 's</td><td>' + (m.collectedAt ? new Date(m.collectedAt).toLocaleString() : '--') + '</td></tr>';
+          });
+          html += '</tbody></table></div>';
+          el.innerHTML = html;
+        } else {
+          el.innerHTML = '<div class="card"><div class="card-title">项目汇总</div><div class="card-value">' + (d.totalViews||0).toLocaleString() + ' 播放</div><div class="card-sub">视频数: ' + (d.videoCount||0) + ' | 平均完播: ' + (d.avgCompletion||0) + '%</div></div>';
+        }
+      } else {
+        el.innerHTML = '<p style="color:var(--danger);">' + (res?.message || '查询失败') + '</p>';
+      }
+    }
+
+    async function analyzePatterns() {
+      const projectId = parseInt(document.getElementById('fb-pattern-projectId').value);
+      if (!projectId) { toast('请输入项目ID', 'error'); return; }
+      const el = document.getElementById('feedback-patterns-result');
+      el.innerHTML = '<p style="color:var(--text-secondary);">分析中...</p>';
+      const res = await api('/analytics/getViralPatterns', { projectId });
+      if (res && res.code === 200 && res.data) {
+        let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
+        html += '<div class="card"><div class="card-title">发现的规律</div><ul style="margin-top:8px;padding-left:16px;color:var(--text-secondary);font-size:13px;">';
+        (res.data.patterns || []).forEach(p => { html += '<li style="margin-bottom:4px;">' + p + '</li>'; });
+        html += '</ul></div>';
+        html += '<div class="card"><div class="card-title">优化建议</div><ul style="margin-top:8px;padding-left:16px;color:var(--success);font-size:13px;">';
+        (res.data.suggestions || []).forEach(s => { html += '<li style="margin-bottom:4px;">' + s + '</li>'; });
+        html += '</ul></div></div>';
+        el.innerHTML = html;
+      } else {
+        el.innerHTML = '<p style="color:var(--danger);">' + (res?.message || '分析失败') + '</p>';
+      }
+    }
+
+    async function evolveDirector() {
+      const projectId = parseInt(document.getElementById('fb-pattern-projectId').value);
+      if (!projectId) { toast('请输入项目ID', 'error'); return; }
+      const el = document.getElementById('feedback-patterns-result');
+      el.innerHTML = '<p style="color:var(--text-secondary);">AI自进化中...</p>';
+      const res = await api('/analytics/evolveDirector', { projectId });
+      if (res && res.code === 200 && res.data) {
+        let html = '<div class="card" style="margin-bottom:16px;"><div class="card-title">AI导演自进化结果</div>';
+        html += '<div style="margin-top:12px;">';
+        if (res.data.adjustments && Object.keys(res.data.adjustments).length > 0) {
+          html += '<p style="font-size:13px;color:var(--accent);margin-bottom:8px;">配置调整:</p><ul style="padding-left:16px;font-size:13px;color:var(--text-secondary);">';
+          Object.entries(res.data.adjustments).forEach(([k, v]) => { html += '<li>' + k + ': ' + v + '</li>'; });
+          html += '</ul>';
+        } else {
+          html += '<p style="font-size:13px;color:var(--text-secondary);">当前配置已是最优，无需调整</p>';
+        }
+        html += '</div></div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
+        html += '<div class="card"><div class="card-title">分析规律</div><ul style="margin-top:8px;padding-left:16px;color:var(--text-secondary);font-size:13px;">';
+        (res.data.patterns || []).forEach(p => { html += '<li style="margin-bottom:4px;">' + p + '</li>'; });
+        html += '</ul></div>';
+        html += '<div class="card"><div class="card-title">优化建议</div><ul style="margin-top:8px;padding-left:16px;color:var(--success);font-size:13px;">';
+        (res.data.suggestions || []).forEach(s => { html += '<li style="margin-bottom:4px;">' + s + '</li>'; });
+        html += '</ul></div></div>';
+        el.innerHTML = html;
+        toast('AI自进化完成');
+      } else {
+        el.innerHTML = '<p style="color:var(--danger);">' + (res?.message || '自进化失败') + '</p>';
+      }
+    }
+
+    // ============================================================
+    // Marketplace (模板市场)
+    // ============================================================
+    loaders.marketplace = async () => {
+      try {
+        const category = document.getElementById('mp-category').value;
+        const sortBy = document.getElementById('mp-sort').value;
+        const r = await api('/marketplace/listTemplates', { category: category || undefined, sortBy, page: 1, pageSize: 50 });
+        const data = r.data || {};
+        const items = data.items || [];
+        const total = data.total || 0;
+        document.getElementById('mp-stats').innerHTML =
+          '<div class="card"><div class="card-title">模板总数</div><div class="card-value">' + total + '</div></div>' +
+          '<div class="card"><div class="card-title">免费模板</div><div class="card-value" style="color:var(--success);">' + items.filter(function(t){return t.price===0}).length + '</div></div>' +
+          '<div class="card"><div class="card-title">付费模板</div><div class="card-value" style="color:var(--warning);">' + items.filter(function(t){return t.price>0}).length + '</div></div>' +
+          '<div class="card"><div class="card-title">总使用次数</div><div class="card-value">' + items.reduce(function(s,t){return s+(t.usageCount||0)},0) + '</div></div>';
+        if (items.length === 0) { document.getElementById('mp-template-list').innerHTML = '<p style="color:var(--text-secondary);">暂无模板</p>'; return; }
+        var catMap = { romance:'爱情', suspense:'悬疑', comedy:'喜剧', horror:'恐怖', fantasy:'奇幻' };
+        var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:8px;">ID</th><th style="text-align:left;padding:8px;">名称</th><th style="text-align:left;padding:8px;">分类</th><th style="text-align:right;padding:8px;">价格</th><th style="text-align:right;padding:8px;">使用次数</th><th style="text-align:right;padding:8px;">爆款指数</th><th style="text-align:left;padding:8px;">状态</th><th style="text-align:left;padding:8px;">操作</th></tr></thead><tbody>';
+        items.forEach(function(t) {
+          html += '<tr style="border-bottom:1px solid var(--border);"><td style="padding:8px;">'+t.id+'</td><td style="padding:8px;font-weight:600;">'+(t.name||'--')+'</td><td style="padding:8px;"><span class="badge badge-info">'+(catMap[t.category]||t.category)+'</span></td><td style="padding:8px;text-align:right;">'+(t.price>0?t.price+' '+(t.currency||'CNY'):'<span style="color:var(--success);">免费</span>')+'</td><td style="padding:8px;text-align:right;">'+(t.usageCount||0)+'</td><td style="padding:8px;text-align:right;">'+(t.viralScore||0)+'</td><td style="padding:8px;"><span class="badge badge-success">'+(t.status||'--')+'</span></td><td style="padding:8px;"><button class="btn btn-sm btn-outline" onclick="useMarketTemplate('+t.id+')">使用</button></td></tr>';
+        });
+        html += '</tbody></table>';
+        document.getElementById('mp-template-list').innerHTML = html;
+      } catch (e) { document.getElementById('mp-template-list').innerHTML = '<p style="color:var(--danger);">加载失败: '+e.message+'</p>'; }
+    };
+
+    async function publishMarketTemplate() {
+      try {
+        const r = await api('/marketplace/publishMarketTemplate', { name: document.getElementById('mp-pub-name').value, category: document.getElementById('mp-pub-category').value, description: document.getElementById('mp-pub-desc').value, price: Number(document.getElementById('mp-pub-price').value)||0, authorId: Number(document.getElementById('mp-pub-author').value)||1, templateData: document.getElementById('mp-pub-data').value||'{}', status: 'published' });
+        if (r.data) { toast('模板发布成功'); loaders.marketplace(); } else toast(r.error||'发布失败','error');
+      } catch (e) { toast('发布失败: '+e.message,'error'); }
+    }
+
+    async function useMarketTemplate(templateId) {
+      try {
+        const userId = currentUser?.id || 1;
+        const r = await api('/marketplace/useTemplate', { templateId, userId });
+        if (r.data && r.data.success) { toast('模板使用成功'); loaders.marketplace(); } else toast((r.data&&r.data.error)||r.error||'使用失败','error');
+      } catch (e) { toast('使用失败: '+e.message,'error'); }
+    }
+
+    // ============================================================
+    // Billing (SaaS计费)
+    // ============================================================
+    loaders.billing = async () => {
+      try {
+        const userId = currentUser?.id || 1;
+        const r = await api('/billing/getPlan', { userId });
+        const data = r.data || {};
+        document.getElementById('billing-plan-info').innerHTML =
+          '<div class="card"><div class="card-title">当前套餐</div><div class="card-value" style="color:var(--accent);">'+(data.planName||'Free')+'</div></div>' +
+          '<div class="card"><div class="card-title">月费</div><div class="card-value">$'+(data.price||0)+'</div></div>' +
+          '<div class="card"><div class="card-title">余额(积分)</div><div class="card-value" style="color:var(--success);">'+(data.credits||0)+'</div></div>' +
+          '<div class="card"><div class="card-title">用户ID</div><div class="card-value">'+userId+'</div></div>';
+      } catch (e) { document.getElementById('billing-plan-info').innerHTML = '<p style="color:var(--danger);">加载失败: '+e.message+'</p>'; }
+    };
+
+    async function checkUserQuota() {
+      try {
+        const userId = Number(document.getElementById('bill-check-uid').value)||1;
+        const action = document.getElementById('bill-check-action').value;
+        const r = await api('/billing/checkQuota', { userId, action });
+        const data = r.data || {};
+        const actionNames = { projectsPerMonth:'项目创建', imageGenerations:'图片生成', videoGenerations:'视频生成', publishPerDay:'每日发布' };
+        const statusColor = data.allowed ? 'var(--success)' : 'var(--danger)';
+        const statusText = data.allowed ? '允许' : '已达上限';
+        document.getElementById('billing-quota-result').innerHTML =
+          '<div class="detail-row"><div class="detail-label">操作</div><div class="detail-value">'+(actionNames[action]||action)+'</div></div>' +
+          '<div class="detail-row"><div class="detail-label">状态</div><div class="detail-value" style="color:'+statusColor+';font-weight:600;">'+statusText+'</div></div>' +
+          '<div class="detail-row"><div class="detail-label">剩余额度</div><div class="detail-value">'+(data.remaining===-1?'无限':data.remaining)+'</div></div>' +
+          '<div class="detail-row"><div class="detail-label">总限额</div><div class="detail-value">'+(data.limit===-1?'无限':data.limit)+'</div></div>';
+      } catch (e) { toast('查询失败: '+e.message,'error'); }
+    }
+
+    async function loadRevenue() {
+      try {
+        const userId = Number(document.getElementById('bill-rev-uid').value)||1;
+        const r = await api('/billing/getRevenue', { userId });
+        const data = r.data || {};
+        var sourceHtml = '';
+        if (data.bySource) { var sourceNames = { template_sale:'模板销售', platform_commission:'平台佣金' }; Object.entries(data.bySource).forEach(function(e){ sourceHtml += '<div class="detail-row"><div class="detail-label">'+(sourceNames[e[0]]||e[0])+'</div><div class="detail-value">$'+e[1]+'</div></div>'; }); }
+        document.getElementById('billing-revenue-result').innerHTML =
+          '<div class="detail-row"><div class="detail-label">总收益</div><div class="detail-value" style="color:var(--success);font-weight:600;">$'+(data.totalRevenue||0)+'</div></div>' +
+          '<div class="detail-row"><div class="detail-label">本月收益</div><div class="detail-value" style="color:var(--accent);font-weight:600;">$'+(data.monthRevenue||0)+'</div></div>' + sourceHtml;
+      } catch (e) { toast('查询失败: '+e.message,'error'); }
+    }
+
+    async function loadROI() {
+      try {
+        const projectId = Number(document.getElementById('bill-roi-pid').value)||1;
+        const r = await api('/billing/getROI', { projectId });
+        const data = r.data || {};
+        const roiColor = data.roi>0 ? 'var(--success)' : data.roi<0 ? 'var(--danger)' : 'var(--text-secondary)';
+        document.getElementById('billing-roi-result').innerHTML =
+          '<div class="detail-row"><div class="detail-label">总播放量</div><div class="detail-value">'+(data.views||0).toLocaleString()+'</div></div>' +
+          '<div class="detail-row"><div class="detail-label">预估收入</div><div class="detail-value" style="color:var(--success);">$'+(data.revenue||0)+'</div></div>' +
+          '<div class="detail-row"><div class="detail-label">总成本</div><div class="detail-value" style="color:var(--danger);">$'+(data.cost||0)+'</div></div>' +
+          '<div class="detail-row"><div class="detail-label">ROI</div><div class="detail-value" style="color:'+roiColor+';font-weight:600;font-size:18px;">'+(data.roi||0)+'%</div></div>';
+      } catch (e) { toast('计算失败: '+e.message,'error'); }
+    }
 
     // ============================================================
     // Init

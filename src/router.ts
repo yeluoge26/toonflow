@@ -190,6 +190,22 @@ import route186 from "./routes/director/optimizePrompt";
 import route187 from "./routes/system/modelHealth";
 import route188 from "./routes/director/orchestrate";
 import route189 from "./routes/director/agentHistory";
+import route190 from "./routes/distribution/addAccount";
+import route191 from "./routes/distribution/listAccounts";
+import route192 from "./routes/distribution/createPublishTask";
+import route193 from "./routes/distribution/getPublishStatus";
+import route194 from "./routes/distribution/generateTitles";
+import route195 from "./routes/analytics/recordMetrics";
+import route196 from "./routes/analytics/getVideoAnalytics";
+import route197 from "./routes/analytics/getViralPatterns";
+import route198 from "./routes/analytics/evolveDirector";
+import route199 from "./routes/marketplace/listTemplates";
+import route200 from "./routes/marketplace/publishMarketTemplate";
+import route201 from "./routes/marketplace/useTemplate";
+import route202 from "./routes/billing/getPlan";
+import route203 from "./routes/billing/checkQuota";
+import route204 from "./routes/billing/getRevenue";
+import route205 from "./routes/billing/getROI";
 
 export default async (app: Express) => {
   app.use("/artStyle/getArtStyle", route1);
@@ -381,4 +397,20 @@ export default async (app: Express) => {
   app.use("/system/modelHealth", route187);
   app.use("/director/orchestrate", route188);
   app.use("/director/agentHistory", route189);
+  app.use("/distribution/addAccount", route190);
+  app.use("/distribution/listAccounts", route191);
+  app.use("/distribution/createPublishTask", route192);
+  app.use("/distribution/getPublishStatus", route193);
+  app.use("/distribution/generateTitles", route194);
+  app.use("/analytics/recordMetrics", route195);
+  app.use("/analytics/getVideoAnalytics", route196);
+  app.use("/analytics/getViralPatterns", route197);
+  app.use("/analytics/evolveDirector", route198);
+  app.use("/marketplace/listTemplates", route199);
+  app.use("/marketplace/publishMarketTemplate", route200);
+  app.use("/marketplace/useTemplate", route201);
+  app.use("/billing/getPlan", route202);
+  app.use("/billing/checkQuota", route203);
+  app.use("/billing/getRevenue", route204);
+  app.use("/billing/getROI", route205);
 }

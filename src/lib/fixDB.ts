@@ -1004,6 +1004,147 @@ export default async (knex: Knex): Promise<void> => {
     });
   }
 
+  // ==================== 分发系统 ====================
+
+  if (!(await knex.schema.hasTable("t_distribution_account"))) {
+    await knex.schema.createTable("t_distribution_account", (table) => {
+      table.increments("id").primary();
+      table.text("platform");             // tiktok | youtube | instagram | douyin | bilibili
+      table.text("username");
+      table.text("status").defaultTo("active"); // active | cooldown | banned | risk
+      table.text("proxyIp");
+      table.text("deviceFingerprint");    // JSON
+      table.text("cookies");
+      table.text("accessToken");
+      table.integer("lastActiveAt");
+      table.integer("postsToday").defaultTo(0);
+      table.integer("createdAt");
+    });
+  }
+
+  if (!(await knex.schema.hasTable("t_distribution_task"))) {
+    await knex.schema.createTable("t_distribution_task", (table) => {
+      table.increments("id").primary();
+      table.integer("videoId");
+      table.integer("projectId");
+      table.integer("accountId");
+      table.text("platform");
+      table.text("status").defaultTo("pending"); // pending | scheduled | publishing | success | failed | retry
+      table.text("title");
+      table.text("description");
+      table.text("tags");                 // JSON array
+      table.text("coverUrl");
+      table.integer("scheduledAt");
+      table.integer("publishedAt");
+      table.text("postId");              // Platform's post ID after publish
+      table.integer("retryCount").defaultTo(0);
+      table.text("errorMsg");
+      table.integer("createdAt");
+    });
+  }
+
+  // t_video_metrics - Data Feedback Loop
+  if (!(await knex.schema.hasTable("t_video_metrics"))) {
+    await knex.schema.createTable("t_video_metrics", (table) => {
+      table.increments("id").primary();
+      table.integer("videoId");
+      table.text("platform");
+      table.integer("views").defaultTo(0);
+      table.integer("likes").defaultTo(0);
+      table.integer("comments").defaultTo(0);
+      table.integer("shares").defaultTo(0);
+      table.real("completionRate").defaultTo(0);
+      table.real("avgWatchTime").defaultTo(0);
+      table.integer("collectedAt");
+    });
+  }
+
+  // t_video_features - Video feature extraction for AI analysis
+  if (!(await knex.schema.hasTable("t_video_features"))) {
+    await knex.schema.createTable("t_video_features", (table) => {
+      table.increments("id").primary();
+      table.integer("videoId").unique();
+      table.text("hookType");
+      table.real("hookStrength").defaultTo(0);
+      table.real("emotionPeakIntensity").defaultTo(0);
+      table.real("pacingScore").defaultTo(0);
+      table.real("shotDurationAvg").defaultTo(0);
+      table.integer("cameraVariety").defaultTo(0);
+      table.text("styleType");
+      table.integer("templateId");
+      table.real("totalDuration").defaultTo(0);
+    });
+  }
+
+  // ==================== Commercial System (模板市场 + SaaS计费 + 收益) ====================
+
+  // t_market_template - 模板市场
+  if (!(await knex.schema.hasTable("t_market_template"))) {
+    await knex.schema.createTable("t_market_template", (table) => {
+      table.increments("id").primary();
+      table.text("name");
+      table.text("category");           // romance | suspense | comedy | horror | fantasy
+      table.text("description");
+      table.integer("authorId");
+      table.real("viralScore").defaultTo(0);
+      table.integer("usageCount").defaultTo(0);
+      table.real("avgCompletionRate").defaultTo(0);
+      table.real("price").defaultTo(0);
+      table.text("currency").defaultTo("CNY");
+      table.text("templateData");        // JSON: full template config
+      table.text("thumbnailUrl");
+      table.text("status").defaultTo("draft"); // draft | published | archived
+      table.integer("createdAt");
+    });
+  }
+
+  // t_user_billing - SaaS计费
+  if (!(await knex.schema.hasTable("t_user_billing"))) {
+    await knex.schema.createTable("t_user_billing", (table) => {
+      table.increments("id").primary();
+      table.integer("userId");
+      table.text("plan").defaultTo("free"); // free | pro | studio
+      table.real("credits").defaultTo(0);
+      table.integer("createdAt");
+      table.integer("updatedAt");
+    });
+  }
+
+  // t_transaction - 交易记录
+  if (!(await knex.schema.hasTable("t_transaction"))) {
+    await knex.schema.createTable("t_transaction", (table) => {
+      table.increments("id").primary();
+      table.integer("userId");
+      table.text("type");                // template_purchase | plan_upgrade | credit_topup
+      table.real("amount");
+      table.integer("referenceId");
+      table.integer("createdAt");
+    });
+  }
+
+  // t_revenue - 收益记录
+  if (!(await knex.schema.hasTable("t_revenue"))) {
+    await knex.schema.createTable("t_revenue", (table) => {
+      table.increments("id").primary();
+      table.integer("userId");
+      table.text("source");             // template_sale | platform_commission
+      table.real("amount");
+      table.integer("referenceId");
+      table.integer("createdAt");
+    });
+  }
+
+  // t_usage_log - 用量记录
+  if (!(await knex.schema.hasTable("t_usage_log"))) {
+    await knex.schema.createTable("t_usage_log", (table) => {
+      table.increments("id").primary();
+      table.integer("userId");
+      table.text("action");
+      table.real("cost").defaultTo(0);
+      table.integer("createdAt");
+    });
+  }
+
   // ==================== 数据库索引 ====================
 
   const indexes = [
@@ -1015,6 +1156,21 @@ export default async (knex: Knex): Promise<void> => {
     { table: "t_image", column: "assetsId" },
     { table: "t_chatHistory", column: "projectId" },
     { table: "t_modelUsage", column: "createdAt" },
+    { table: "t_distribution_account", column: "platform" },
+    { table: "t_distribution_task", column: "projectId" },
+    { table: "t_distribution_task", column: "platform" },
+    { table: "t_distribution_task", column: "status" },
+    { table: "t_video_metrics", column: "videoId" },
+    { table: "t_video_metrics", column: "collectedAt" },
+    { table: "t_video_features", column: "videoId" },
+    { table: "t_market_template", column: "category" },
+    { table: "t_market_template", column: "authorId" },
+    { table: "t_market_template", column: "status" },
+    { table: "t_user_billing", column: "userId" },
+    { table: "t_transaction", column: "userId" },
+    { table: "t_revenue", column: "userId" },
+    { table: "t_usage_log", column: "userId" },
+    { table: "t_usage_log", column: "action" },
   ];
 
   for (const idx of indexes) {
