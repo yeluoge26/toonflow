@@ -518,6 +518,77 @@ yarn debug:ai     # AI SDK 调试面板
 
 ---
 
+# 📋 更新日志
+
+### v1.1.0 (2026-03-25) — 工业级加固 + AI 导演系统
+
+**安全加固 (P0)**
+- bcrypt 密码哈希存储，旧明文自动迁移
+- helmet.js 安全响应头 (XSS/Clickjacking/MIME防护)
+- clearDatabase/deleteAllData 仅管理员可执行
+- JWT 256-bit 密钥 (crypto.randomBytes(32))
+- getSetting 过滤 apiKey 敏感字段
+- 移除 URL 查询参数 token 支持
+- CORS 生产环境真拦截 (不再 cb(null, true))
+- getUser 不返回密码字段
+
+**统一任务状态机**
+- 12 阶段流水线: idea→storyline→outline→script→assets→storyboard→image→video→audio→compose→review→publish
+- 幂等 + 断点续跑 + 重试/跳过/重置 API
+- t_pipeline_state 持久化
+
+**成本控制增强**
+- recordCost 持久化到 t_modelUsage (非内存)
+- 按项目/批次/模型归因
+- 预算拦截 checkBudget()
+- POST /cost/getProjectCost 项目级成本
+
+**内容审核闭环**
+- 环境感知: dev=fail-open, prod=fail-close
+- 可配置关键词屏蔽列表
+- 审核中间件挂载到 8 个生成端点
+
+**AI 导演系统 (V2)**
+- Director Agent: 节奏分析 + 情绪曲线 + 爆点检测 + 镜头语言
+- Prompt 优化器: 简单描述→电影级 prompt
+- 智能模型路由: 15 模型×6 供应商自动选择
+- Orchestrator 总调度: 多 Agent 自优化循环 (score<70 自动重试)
+- Agent 运行追踪 + 反馈闭环 (t_agent_runs/t_agent_feedback)
+
+**数据库加固**
+- 缺失表补建: t_modelUsage, t_modelPricing, t_agent_runs 等
+- 10 张表高频字段索引
+- 列表接口分页 (limit/offset)
+- 静默 .catch(()=>{}) 替换为错误日志
+
+**前端优化**
+- 管理后台导航重构: 20 项→7 组二级目录 + 栏目说明
+- 全部 emoji 替换为 Lucide 风格 SVG 矢量图标
+- 移动端 Expo Web App (/m)
+
+**测试 + 文档**
+- vitest 测试框架 + 53 个测试用例
+- 数据层文档 (DATA_LAYER.md): Knex 为主, Prisma 标记弃用
+- 英文 README 完整重写
+
+### v1.0.7 (2026-03-19) — 增强版首发
+
+- 多模型图片引擎 (Gemini/SD/ModelScope)
+- 多模型视频引擎 (Kling/Wan2.5)
+- 专业分镜脚本 (DSL 标签)
+- 一致性收敛系统 (角色/背景/风格)
+- 模型 Fallback 机制
+- 管理后台 12 模块控制台
+- 一句话生成剧本
+- Timeline 导演编辑器
+- 防跑偏 6 维锁定
+- 角色一致性系统
+- 批量生产引擎
+- AI 配音情绪引擎
+- 20+ 风格预设
+
+---
+
 # 📜 许可证
 
 Toonflow 基于 AGPL-3.0 协议开源发布。详情：https://www.gnu.org/licenses/agpl-3.0.html
