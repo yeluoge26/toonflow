@@ -236,7 +236,7 @@
       <div class="sidebar-section" id="sec-characters">
         <div class="sidebar-section-header" onclick="toggleSection('sec-characters')">
           <span>Characters</span>
-          <span class="toggle-icon">&#9660;</span>
+          <span class="toggle-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
         </div>
         <div class="sidebar-section-body" id="char-list">
           <div style="color:var(--text-secondary);font-size:12px;padding:8px;">Select a project to load</div>
@@ -247,7 +247,7 @@
       <div class="sidebar-section" id="sec-scenes">
         <div class="sidebar-section-header" onclick="toggleSection('sec-scenes')">
           <span>Scenes</span>
-          <span class="toggle-icon">&#9660;</span>
+          <span class="toggle-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
         </div>
         <div class="sidebar-section-body" id="scene-list">
           <div style="color:var(--text-secondary);font-size:12px;padding:8px;">Select a project to load</div>
@@ -258,7 +258,7 @@
       <div class="sidebar-section" id="sec-templates">
         <div class="sidebar-section-header" onclick="toggleSection('sec-templates')">
           <span>Shot Templates</span>
-          <span class="toggle-icon">&#9660;</span>
+          <span class="toggle-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
         </div>
         <div class="sidebar-section-body" id="template-list"></div>
       </div>
@@ -267,7 +267,7 @@
       <div class="sidebar-section" id="sec-props">
         <div class="sidebar-section-header" onclick="toggleSection('sec-props')">
           <span>Props</span>
-          <span class="toggle-icon">&#9660;</span>
+          <span class="toggle-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
         </div>
         <div class="sidebar-section-body" id="prop-list">
           <div style="color:var(--text-secondary);font-size:12px;padding:8px;">Select a project to load</div>
@@ -291,7 +291,7 @@
         <!-- Properties Panel -->
         <div class="props-panel" id="props-panel">
           <div class="no-selection" id="no-selection">
-            <div style="font-size: 32px; margin-bottom: 12px;">&#127916;</div>
+            <div style="font-size: 32px; margin-bottom: 12px;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg></div>
             Click a shot on the timeline to edit its properties
           </div>
           <div id="props-form" style="display:none;">
@@ -401,8 +401,8 @@
       <div class="timeline-area">
         <div class="timeline-controls">
           <div class="tc-left">
-            <button class="btn btn-icon btn-sm btn-outline" id="btn-play" onclick="togglePlayback()" title="Play">&#9654;</button>
-            <button class="btn btn-icon btn-sm btn-outline" onclick="resetPlayback()" title="Reset">&#8634;</button>
+            <button class="btn btn-icon btn-sm btn-outline" id="btn-play" onclick="togglePlayback()" title="Play"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+            <button class="btn btn-icon btn-sm btn-outline" onclick="resetPlayback()" title="Reset"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
             <button class="btn btn-icon btn-sm btn-outline" onclick="zoomIn()" title="Zoom In">+</button>
             <button class="btn btn-icon btn-sm btn-outline" onclick="zoomOut()" title="Zoom Out">-</button>
           </div>
@@ -683,7 +683,7 @@
         return;
       }
       el.innerHTML = characters.map((c, i) => {
-        const thumb = c.filePath ? '<img src="' + c.filePath + '" alt="">' : '&#128100;';
+        const thumb = c.filePath ? '<img src="' + c.filePath + '" alt="">' : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
         return '<div class="res-card" draggable="true" ondragstart="dragCharStart(event,' + i + ')">' +
           '<div class="res-avatar">' + thumb + '</div>' +
           '<div class="res-info"><div class="res-name">' + esc(c.name) + '</div><div class="res-sub">' + esc(c.intro || c.remark || '') + '</div></div></div>';
@@ -697,7 +697,7 @@
         return;
       }
       el.innerHTML = scenes.map(s => {
-        const thumb = s.filePath ? '<img src="' + s.filePath + '" alt="">' : '&#127748;';
+        const thumb = s.filePath ? '<img src="' + s.filePath + '" alt="">' : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="2" y1="12" x2="22" y2="12"/></svg>';
         return '<div class="res-card">' +
           '<div class="res-avatar">' + thumb + '</div>' +
           '<div class="res-info"><div class="res-name">' + esc(s.name) + '</div><div class="res-sub">' + esc(s.intro || s.remark || '') + '</div></div></div>';
@@ -711,7 +711,7 @@
         return;
       }
       el.innerHTML = props.map(p => {
-        const thumb = p.filePath ? '<img src="' + p.filePath + '" alt="">' : '&#128295;';
+        const thumb = p.filePath ? '<img src="' + p.filePath + '" alt="">' : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
         return '<div class="res-card">' +
           '<div class="res-avatar">' + thumb + '</div>' +
           '<div class="res-info"><div class="res-name">' + esc(p.name) + '</div></div></div>';
@@ -1145,7 +1145,7 @@
     function startPlayback() {
       if (shots.length === 0) return;
       isPlaying = true;
-      document.getElementById('btn-play').innerHTML = '&#9646;&#9646;';
+      document.getElementById('btn-play').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
       if (selectedShotIndex < 0) selectedShotIndex = 0;
       playCurrentTime = 0;
 
@@ -1183,7 +1183,7 @@
     function stopPlayback() {
       isPlaying = false;
       clearInterval(playTimer);
-      document.getElementById('btn-play').innerHTML = '&#9654;';
+      document.getElementById('btn-play').innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
     }
 
     function resetPlayback() {
