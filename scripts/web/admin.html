@@ -230,6 +230,72 @@
     </div>
   </div>
 
+  <!-- Change Password Modal -->
+  <div class="modal-overlay" id="change-pwd-modal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('change-pwd-modal')">&times;</button>
+      <div class="modal-title">修改密码</div>
+      <div class="form-group">
+        <label>原密码</label>
+        <input type="password" id="chpwd-old" placeholder="输入当前密码" autocomplete="current-password">
+      </div>
+      <div class="form-group">
+        <label>新密码（至少6位）</label>
+        <input type="password" id="chpwd-new" placeholder="输入新密码" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>确认新密码</label>
+        <input type="password" id="chpwd-confirm" placeholder="再次输入新密码" autocomplete="new-password">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="doChangePassword()">保存</button>
+        <button class="btn btn-outline" onclick="closeModal('change-pwd-modal')">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model Edit Modal -->
+  <div class="modal-overlay" id="model-edit-modal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('model-edit-modal')">&times;</button>
+      <div class="modal-title">编辑模型</div>
+      <input type="hidden" id="edit-model-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>类型</label>
+          <select id="edit-model-type">
+            <option value="text">文本生成</option>
+            <option value="image">图片生成</option>
+            <option value="video">视频生成</option>
+            <option value="audio">语音合成</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>模型名称</label>
+          <input type="text" id="edit-model-name" placeholder="如: gpt-4o">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>厂商</label>
+          <input type="text" id="edit-model-manufacturer" placeholder="如: openai">
+        </div>
+        <div class="form-group">
+          <label>Base URL</label>
+          <input type="text" id="edit-model-baseurl" placeholder="https://api.openai.com/v1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>API Key</label>
+        <input type="password" id="edit-model-apikey" placeholder="留空则不修改">
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="doUpdateModel()">保存</button>
+        <button class="btn btn-outline" onclick="closeModal('model-edit-modal')">取消</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-header">
@@ -287,6 +353,7 @@
         <div class="nav-item" data-module="prompt" onclick="showModule('prompt')"><span class="nav-label">提示词管理</span><span class="nav-desc">系统Prompt编辑、一致性收敛词</span></div>
         <div class="nav-item" data-module="evolution" onclick="showModule('evolution')"><span class="nav-label">Prompt进化</span><span class="nav-desc">遗传算法优化，自动变异/交叉</span></div>
         <div class="nav-item" data-module="agentMonitor" onclick="showModule('agentMonitor')"><span class="nav-label">Agent监控</span><span class="nav-desc">AI Agent运行记录、评分、耗时</span></div>
+        <div class="nav-item" data-module="director" onclick="showModule('director')"><span class="nav-label">AI导演工作台</span><span class="nav-desc">剧本分析、分镜计划、爆款评分、Prompt优化</span></div>
       </div>
     </div>
 
@@ -319,6 +386,7 @@
     <div class="sidebar-footer">
       <span id="user-display"></span>
       <br>
+      <a href="#" onclick="showChangePasswordModal()" style="color:var(--accent);font-size:12px;text-decoration:none;margin-right:12px;">修改密码</a>
       <a href="#" onclick="doLogout()" style="color:var(--danger);font-size:12px;text-decoration:none;">退出登录</a>
     </div>
   </div>
@@ -427,6 +495,32 @@
           <div class="section-title">Token 用量（累计）</div>
           <div class="cards" id="dash-tokens"></div>
         </div>
+
+        <!-- System Logs -->
+        <div class="section">
+          <div class="section-title">
+            系统日志
+            <button class="btn btn-sm btn-outline" onclick="loadSystemLogs()">加载日志</button>
+          </div>
+          <pre id="system-log-viewer" style="background:#1a1a2e;color:#e0e0e0;padding:16px;border-radius:8px;max-height:400px;overflow-y:auto;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-all;margin:0;">点击"加载日志"查看系统日志...</pre>
+        </div>
+        <div class="section">
+          <div class="section-title">
+            模型健康状态
+            <button class="btn btn-sm btn-outline" onclick="loadModelHealth()">检测</button>
+          </div>
+          <div id="dash-model-health"><div style="color:var(--text-secondary);">点击"检测"查看模型状态</div></div>
+        </div>
+        <div class="section">
+          <div class="section-title">
+            缓存状态
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-sm btn-outline" onclick="loadCacheStats()">刷新</button>
+              <button class="btn btn-sm btn-danger" onclick="flushCache()">清空缓存</button>
+            </div>
+          </div>
+          <div class="cards" id="dash-cache-stats"></div>
+        </div>
       </div>
 
       <!-- ==================== Batch Production ==================== -->
@@ -482,6 +576,82 @@
         <div class="section" id="batch-detail-section" style="display:none;">
           <div class="section-title">批次详情</div>
           <div id="batch-detail"></div>
+        </div>
+
+        <!-- V2 Batch Template System -->
+        <div class="section">
+          <div class="section-title">
+            生产模板
+            <button class="btn btn-sm btn-outline" onclick="loadBatchTemplates()">加载模板</button>
+          </div>
+          <div id="v2-template-list"></div>
+          <div class="detail-panel" style="margin-top:12px;">
+            <div class="section-title" style="font-size:14px;">新建模板</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>模板名称</label>
+                <input type="text" id="v2tpl-name" placeholder="如: 都市短剧模板">
+              </div>
+              <div class="form-group">
+                <label>类型 (genre)</label>
+                <input type="text" id="v2tpl-genre" placeholder="如: comedy, drama">
+              </div>
+              <div class="form-group">
+                <label>美术风格 (artStyle)</label>
+                <input type="text" id="v2tpl-artStyle" placeholder="如: anime, realistic">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>幕数 (acts)</label>
+                <input type="number" id="v2tpl-acts" value="3" min="1" max="10">
+              </div>
+              <div class="form-group">
+                <label>每幕集数</label>
+                <input type="number" id="v2tpl-epsPerAct" value="4" min="1" max="50">
+              </div>
+              <div class="form-group">
+                <label>每集分钟数</label>
+                <input type="number" id="v2tpl-minsPerEp" value="3" min="1" max="60">
+              </div>
+              <div class="form-group">
+                <label>每场景镜头数</label>
+                <input type="number" id="v2tpl-shotsPerScene" value="5" min="1" max="30">
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="createBatchTemplate()">保存</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">批量任务</div>
+          <div class="detail-panel">
+            <div class="section-title" style="font-size:14px;">新建批量任务</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>选择模板</label>
+                <select id="v2job-template"><option value="">-- 请先加载模板 --</option></select>
+              </div>
+              <div class="form-group">
+                <label>项目ID</label>
+                <input type="number" id="v2job-projectId" placeholder="项目ID">
+              </div>
+              <div class="form-group">
+                <label>集数</label>
+                <input type="number" id="v2job-episodeCount" value="10" min="1">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>变体参数 (JSON)</label>
+              <textarea id="v2job-variations" rows="3" placeholder='{"artStyle":"watercolor","genre":"romance"}'></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="createBatchJob()">创建</button>
+          </div>
+          <div style="margin-top:12px;">
+            <button class="btn btn-sm btn-outline" onclick="loadBatchJobs()" style="margin-bottom:8px;">刷新任务列表</button>
+            <div id="v2-job-list"></div>
+          </div>
+          <div id="v2-job-progress" style="margin-top:12px;"></div>
         </div>
       </div>
 
@@ -958,6 +1128,58 @@
           <div id="dist-history"><div class="loading"><span class="spinner"></span>加载中...</div></div>
         </div>
 
+        <!-- Auto Generate + Publish -->
+        <div class="section">
+          <div class="section-title">自动生成+发布</div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group">
+                <label>项目ID</label>
+                <input type="number" id="dist-auto-projectId" placeholder="项目ID">
+              </div>
+              <div class="form-group">
+                <label>平台</label>
+                <select id="dist-auto-platform">
+                  <option value="douyin">抖音</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="bilibili">B站</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="instagram">Instagram</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-primary" onclick="distAutoGenerate()">自动生成并发布</button>
+              </div>
+            </div>
+            <div id="dist-auto-status" style="margin-top:8px;"></div>
+          </div>
+        </div>
+
+        <!-- Batch Publish All Platforms -->
+        <div class="section">
+          <div class="section-title">批量发布</div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group">
+                <label>项目ID</label>
+                <input type="number" id="dist-all-projectId" placeholder="项目ID">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>选择平台</label>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px;">
+                <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="dist-all-plat" value="tiktok" checked> TikTok</label>
+                <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="dist-all-plat" value="youtube" checked> YouTube</label>
+                <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="dist-all-plat" value="instagram" checked> Instagram</label>
+                <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" class="dist-all-plat" value="douyin" checked> 抖音</label>
+              </div>
+            </div>
+            <button class="btn btn-primary" onclick="distPublishAll()" style="margin-top:8px;">一键全平台发布</button>
+            <div id="dist-all-status" style="margin-top:8px;"></div>
+          </div>
+        </div>
+
         <!-- Strategy Settings -->
         <div class="section">
           <div class="section-title">分发策略设置</div>
@@ -1033,6 +1255,24 @@
             </div>
             <button class="btn btn-primary" onclick="estimateCost()">估算</button>
             <div id="cost-estimate-result" style="margin-top:12px;"></div>
+          </div>
+        </div>
+
+        <!-- Project Cost Breakdown -->
+        <div class="section">
+          <div class="section-title">项目级成本</div>
+          <div class="detail-panel">
+            <div class="form-row">
+              <div class="form-group">
+                <label>项目ID</label>
+                <input type="number" id="cost-project-id" placeholder="项目ID">
+              </div>
+              <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-primary" onclick="loadProjectCost()">查询</button>
+              </div>
+            </div>
+            <div id="project-cost-result" style="margin-top:12px;"></div>
           </div>
         </div>
       </div>
@@ -1579,6 +1819,121 @@
         </div>
       </div>
 
+      <!-- ==================== AI Director ==================== -->
+      <div class="module" id="module-director">
+        <!-- Section 1: 剧本分析 -->
+        <div class="section">
+          <div class="section-title">剧本分析</div>
+          <div class="form-group">
+            <label>剧本文本</label>
+            <textarea id="dir-script-text" style="min-height:150px;" placeholder="粘贴或输入剧本内容..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>风格类型</label>
+              <select id="dir-genre">
+                <option value="韩剧">韩剧</option>
+                <option value="港风">港风</option>
+                <option value="仙侠">仙侠</option>
+                <option value="赛博">赛博</option>
+                <option value="都市">都市</option>
+                <option value="悬疑">悬疑</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>总时长(秒)</label>
+              <input type="number" id="dir-duration" value="60" min="5" max="600">
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+              <button class="btn btn-primary" onclick="dirAnalyzeScript()">分析剧本</button>
+            </div>
+          </div>
+          <div id="dir-analysis-result"></div>
+        </div>
+
+        <!-- Section 2: 生成分镜计划 -->
+        <div class="section">
+          <div class="section-title">生成分镜计划</div>
+          <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">使用上方已分析的剧本，或直接输入新剧本后点击生成。</p>
+          <button class="btn btn-primary" onclick="dirGeneratePlan()">生成分镜</button>
+          <div id="dir-plan-result" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- Section 3: 爆款评分 -->
+        <div class="section">
+          <div class="section-title">爆款评分</div>
+          <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">基于已生成的分镜计划进行爆款潜力评分。</p>
+          <button class="btn btn-warning" onclick="dirScorePlan()">评分</button>
+          <div id="dir-score-result" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- Section 4: Prompt优化 -->
+        <div class="section">
+          <div class="section-title">Prompt优化</div>
+          <div class="form-group">
+            <label>简单描述</label>
+            <input type="text" id="dir-prompt-desc" placeholder="如: 一个女孩站在雨中回头看...">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>风格</label>
+              <select id="dir-prompt-style">
+                <option value="cinematic">电影感</option>
+                <option value="anime">动漫</option>
+                <option value="realistic">写实</option>
+                <option value="watercolor">水彩</option>
+                <option value="cyberpunk">赛博朋克</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>类型</label>
+              <select id="dir-prompt-genre">
+                <option value="韩剧">韩剧</option>
+                <option value="港风">港风</option>
+                <option value="仙侠">仙侠</option>
+                <option value="赛博">赛博</option>
+                <option value="都市">都市</option>
+                <option value="悬疑">悬疑</option>
+              </select>
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+              <button class="btn btn-primary" onclick="dirOptimizePrompt()">优化</button>
+            </div>
+          </div>
+          <div id="dir-prompt-result"></div>
+        </div>
+
+        <!-- Section 5: 一键编排 -->
+        <div class="section">
+          <div class="section-title">一键编排</div>
+          <div class="form-group">
+            <label>剧本文本</label>
+            <textarea id="dir-orch-script" style="min-height:120px;" placeholder="输入完整剧本..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>风格类型</label>
+              <select id="dir-orch-genre">
+                <option value="韩剧">韩剧</option>
+                <option value="港风">港风</option>
+                <option value="仙侠">仙侠</option>
+                <option value="赛博">赛博</option>
+                <option value="都市">都市</option>
+                <option value="悬疑">悬疑</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>美术风格</label>
+              <input type="text" id="dir-orch-style" placeholder="如: cinematic, anime...">
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+              <button class="btn btn-success" onclick="dirOrchestrate()">一键编排</button>
+            </div>
+          </div>
+          <div id="dir-orch-result" style="margin-top:16px;"></div>
+        </div>
+      </div>
+
       <!-- Data Feedback Loop -->
       <div class="module" id="module-dataFeedback">
         <div class="section">
@@ -1890,6 +2245,7 @@
       character: '角色IP',
       videoConstraints: '视频约束',
       agentMonitor: 'Agent监控',
+      director: 'AI导演工作台',
       dataFeedback: '数据反馈',
       marketplace: '模板市场',
       billing: 'SaaS计费',
@@ -2821,7 +3177,7 @@
         // Model list table (all t_config entries with ID)
         var container = document.getElementById('model-list');
         if (_allConfigs.length > 0) {
-          var listHtml = '<table class="data-table"><thead><tr><th>ID</th><th>类型</th><th>厂商</th><th>模型</th><th>创建时间</th></tr></thead><tbody>';
+          var listHtml = '<table class="data-table"><thead><tr><th>ID</th><th>类型</th><th>厂商</th><th>模型</th><th>创建时间</th><th>操作</th></tr></thead><tbody>';
           _allConfigs.forEach(function(c) {
             var t = c.createTime ? new Date(Number(c.createTime)).toLocaleString() : '-';
             listHtml += '<tr>' +
@@ -2830,6 +3186,7 @@
               '<td>' + escapeHtml(c.manufacturer||'-') + '</td>' +
               '<td>' + escapeHtml(c.model||'-') + '</td>' +
               '<td style="font-size:12px;">' + t + '</td>' +
+              '<td><button class="btn btn-sm btn-outline" onclick="showEditModel(' + c.id + ',\'' + escapeHtml(c.type||'text') + '\',\'' + escapeHtml(c.model||'') + '\',\'' + escapeHtml(c.manufacturer||'') + '\',\'' + escapeHtml(c.baseUrl||'') + '\')">编辑</button> <button class="btn btn-sm btn-danger" onclick="deleteModel(' + c.id + ')">删除</button></td>' +
             '</tr>';
           });
           listHtml += '</tbody></table>';
@@ -4660,6 +5017,370 @@
       } catch (e) { toast('计算失败: '+e.message,'error'); }
     }
 
+    // -------------------- AI Director --------------------
+    var _dirAnalysis = null;
+    var _dirPlan = null;
+
+    loaders.director = async () => {
+      // Director is interactive, no auto-load needed
+    };
+
+    async function dirAnalyzeScript() {
+      var scriptText = document.getElementById('dir-script-text').value.trim();
+      if (!scriptText) { toast('请输入剧本文本', 'error'); return; }
+      var genre = document.getElementById('dir-genre').value;
+      var duration = parseInt(document.getElementById('dir-duration').value) || 60;
+
+      document.getElementById('dir-analysis-result').innerHTML = '<div class="loading"><span class="spinner"></span>分析中...</div>';
+      try {
+        var r = await api('/director/analyzeScript', { scriptText: scriptText, genre: genre, duration: duration });
+        var data = r.data || r || {};
+        _dirAnalysis = data;
+
+        var html = '';
+        // Rhythm curve bar chart
+        if (data.rhythmCurve && data.rhythmCurve.length) {
+          html += '<div class="section-title" style="margin-top:16px;">节奏曲线</div>';
+          html += '<div class="bar-chart">';
+          var maxVal = Math.max.apply(null, data.rhythmCurve.map(function(r){ return r.intensity || r.value || 0; })) || 1;
+          data.rhythmCurve.forEach(function(item, i) {
+            var val = item.intensity || item.value || 0;
+            var w = (val / maxVal * 100).toFixed(1);
+            html += '<div class="bar-row"><div class="bar-label">' + (item.label || item.beat || ('Beat ' + (i+1))) + '</div><div class="bar-track"><div class="bar-fill" style="width:' + w + '%;background:var(--accent);">' + val + '</div></div></div>';
+          });
+          html += '</div>';
+        }
+
+        // Emotion beats
+        if (data.emotionBeats && data.emotionBeats.length) {
+          html += '<div class="section-title" style="margin-top:16px;">情感节拍</div><ul style="padding-left:20px;color:var(--text-secondary);font-size:13px;">';
+          data.emotionBeats.forEach(function(e) {
+            html += '<li style="margin-bottom:4px;"><strong>' + escapeHtml(e.time || e.timestamp || '') + '</strong> - ' + escapeHtml(e.emotion || e.type || '') + ': ' + escapeHtml(e.description || e.text || '') + '</li>';
+          });
+          html += '</ul>';
+        }
+
+        // Climax points
+        if (data.climaxPoints && data.climaxPoints.length) {
+          html += '<div class="section-title" style="margin-top:16px;">高潮点</div><div class="cards">';
+          data.climaxPoints.forEach(function(cp) {
+            html += '<div class="card"><div class="card-title">' + escapeHtml(cp.time || cp.timestamp || '') + '</div><div class="card-value" style="font-size:16px;">' + escapeHtml(cp.description || cp.type || '') + '</div></div>';
+          });
+          html += '</div>';
+        }
+
+        if (!html) html = '<pre style="background:var(--bg-primary);padding:16px;border-radius:8px;font-size:13px;white-space:pre-wrap;">' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+        document.getElementById('dir-analysis-result').innerHTML = html;
+      } catch (e) {
+        document.getElementById('dir-analysis-result').innerHTML = '<div style="color:var(--danger);">分析失败: ' + escapeHtml(e.message) + '</div>';
+      }
+    }
+
+    async function dirGeneratePlan() {
+      var scriptText = document.getElementById('dir-script-text').value.trim();
+      var genre = document.getElementById('dir-genre').value;
+      var duration = parseInt(document.getElementById('dir-duration').value) || 60;
+
+      if (!scriptText) { toast('请先输入剧本文本', 'error'); return; }
+
+      document.getElementById('dir-plan-result').innerHTML = '<div class="loading"><span class="spinner"></span>生成分镜中...</div>';
+      try {
+        var r = await api('/director/generatePlan', { scriptText: scriptText, genre: genre, duration: duration, analysis: _dirAnalysis });
+        var data = r.data || r || {};
+        _dirPlan = data;
+
+        var shots = data.shots || data.plan || data || [];
+        if (!Array.isArray(shots)) shots = shots.shots || [];
+
+        if (shots.length) {
+          var html = '<div class="table-wrap"><table><thead><tr><th>#</th><th>时长</th><th>镜头</th><th>运动</th><th>情绪</th><th>镜头感</th><th>转场</th><th>动作</th><th>Prompt</th></tr></thead><tbody>';
+          shots.forEach(function(s, i) {
+            var prompt = s.prompt || s.description || '';
+            var truncPrompt = prompt.length > 60 ? prompt.substring(0, 60) + '...' : prompt;
+            html += '<tr>' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + (s.duration || '-') + 's</td>' +
+              '<td>' + escapeHtml(s.camera || s.cameraType || '-') + '</td>' +
+              '<td>' + escapeHtml(s.movement || s.cameraMovement || '-') + '</td>' +
+              '<td>' + escapeHtml(s.emotion || '-') + '</td>' +
+              '<td>' + escapeHtml(s.lens || s.lensType || '-') + '</td>' +
+              '<td>' + escapeHtml(s.transition || '-') + '</td>' +
+              '<td>' + escapeHtml(s.action || '-') + '</td>' +
+              '<td title="' + escapeHtml(prompt) + '" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(truncPrompt) + '</td>' +
+            '</tr>';
+          });
+          html += '</tbody></table></div>';
+          document.getElementById('dir-plan-result').innerHTML = html;
+        } else {
+          document.getElementById('dir-plan-result').innerHTML = '<pre style="background:var(--bg-primary);padding:16px;border-radius:8px;font-size:13px;white-space:pre-wrap;">' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+        }
+      } catch (e) {
+        document.getElementById('dir-plan-result').innerHTML = '<div style="color:var(--danger);">生成失败: ' + escapeHtml(e.message) + '</div>';
+      }
+    }
+
+    async function dirScorePlan() {
+      if (!_dirPlan) { toast('请先生成分镜计划', 'error'); return; }
+
+      document.getElementById('dir-score-result').innerHTML = '<div class="loading"><span class="spinner"></span>评分中...</div>';
+      try {
+        var r = await api('/director/scorePlan', { plan: _dirPlan });
+        var data = r.data || r || {};
+
+        var html = '<div class="cards">';
+        var dims = [
+          { key: 'hook', label: 'Hook开头', color: 'var(--accent)' },
+          { key: 'pace', label: '节奏感', color: 'var(--warning)' },
+          { key: 'emotion', label: '情感张力', color: 'var(--danger)' },
+          { key: 'ending', label: '结尾留钩', color: 'var(--success)' }
+        ];
+        var scores = data.scores || data.dimensions || data;
+        dims.forEach(function(d) {
+          var val = scores[d.key] || scores[d.key + 'Score'] || 0;
+          html += '<div class="card"><div class="card-title">' + d.label + '</div><div class="card-value" style="color:' + d.color + ';">' + val + '<span style="font-size:14px;color:var(--text-secondary);">/100</span></div></div>';
+        });
+        html += '</div>';
+
+        var total = data.totalScore || data.total || 0;
+        html += '<div class="card" style="margin:16px 0;text-align:center;"><div class="card-title">总分</div><div class="card-value" style="font-size:36px;color:' + (total >= 80 ? 'var(--success)' : total >= 60 ? 'var(--warning)' : 'var(--danger)') + ';">' + total + '</div></div>';
+
+        // Issues
+        var issues = data.issues || [];
+        if (issues.length) {
+          html += '<div class="section-title" style="margin-top:12px;">问题</div><ul style="padding-left:20px;color:var(--danger);font-size:13px;">';
+          issues.forEach(function(iss) { html += '<li>' + escapeHtml(typeof iss === 'string' ? iss : iss.message || iss.description || JSON.stringify(iss)) + '</li>'; });
+          html += '</ul>';
+        }
+
+        // Suggestions
+        var suggestions = data.suggestions || [];
+        if (suggestions.length) {
+          html += '<div class="section-title" style="margin-top:12px;">建议</div><ul style="padding-left:20px;color:var(--success);font-size:13px;">';
+          suggestions.forEach(function(s) { html += '<li>' + escapeHtml(typeof s === 'string' ? s : s.message || s.text || JSON.stringify(s)) + '</li>'; });
+          html += '</ul>';
+        }
+
+        document.getElementById('dir-score-result').innerHTML = html;
+      } catch (e) {
+        document.getElementById('dir-score-result').innerHTML = '<div style="color:var(--danger);">评分失败: ' + escapeHtml(e.message) + '</div>';
+      }
+    }
+
+    async function dirOptimizePrompt() {
+      var desc = document.getElementById('dir-prompt-desc').value.trim();
+      if (!desc) { toast('请输入描述', 'error'); return; }
+      var style = document.getElementById('dir-prompt-style').value;
+      var genre = document.getElementById('dir-prompt-genre').value;
+
+      document.getElementById('dir-prompt-result').innerHTML = '<div class="loading"><span class="spinner"></span>优化中...</div>';
+      try {
+        var r = await api('/director/optimizePrompt', { description: desc, style: style, genre: genre });
+        var data = r.data || r || {};
+        var optimized = data.optimizedPrompt || data.prompt || data.result || (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+        document.getElementById('dir-prompt-result').innerHTML = '<div style="background:var(--bg-primary);padding:16px;border-radius:8px;font-size:13px;line-height:1.6;white-space:pre-wrap;border:1px solid var(--accent);">' + escapeHtml(optimized) + '</div>';
+      } catch (e) {
+        document.getElementById('dir-prompt-result').innerHTML = '<div style="color:var(--danger);">优化失败: ' + escapeHtml(e.message) + '</div>';
+      }
+    }
+
+    async function dirOrchestrate() {
+      var scriptText = document.getElementById('dir-orch-script').value.trim();
+      if (!scriptText) { toast('请输入剧本', 'error'); return; }
+      var genre = document.getElementById('dir-orch-genre').value;
+      var style = document.getElementById('dir-orch-style').value.trim() || 'cinematic';
+
+      document.getElementById('dir-orch-result').innerHTML = '<div class="loading"><span class="spinner"></span>一键编排中，可能需要较长时间...</div>';
+      try {
+        var r = await api('/director/orchestrate', { scriptText: scriptText, genre: genre, style: style });
+        var data = r.data || r || {};
+
+        var html = '<div class="cards">';
+        html += '<div class="card"><div class="card-title">迭代次数</div><div class="card-value">' + (data.iterations || data.iterationCount || '-') + '</div></div>';
+        html += '<div class="card"><div class="card-title">最终评分</div><div class="card-value" style="color:var(--success);">' + (data.finalScore || data.score || '-') + '</div></div>';
+        html += '</div>';
+
+        // Shots
+        var shots = data.shots || (data.plan && data.plan.shots) || [];
+        if (shots.length) {
+          html += '<div class="section-title" style="margin-top:16px;">分镜列表 (' + shots.length + ' 个镜头)</div>';
+          html += '<div class="table-wrap"><table><thead><tr><th>#</th><th>时长</th><th>镜头</th><th>运动</th><th>情绪</th><th>Prompt</th></tr></thead><tbody>';
+          shots.forEach(function(s, i) {
+            var prompt = s.prompt || s.description || '';
+            var truncPrompt = prompt.length > 80 ? prompt.substring(0, 80) + '...' : prompt;
+            html += '<tr><td>' + (i+1) + '</td><td>' + (s.duration||'-') + 's</td><td>' + escapeHtml(s.camera||'-') + '</td><td>' + escapeHtml(s.movement||'-') + '</td><td>' + escapeHtml(s.emotion||'-') + '</td><td title="' + escapeHtml(prompt) + '">' + escapeHtml(truncPrompt) + '</td></tr>';
+          });
+          html += '</tbody></table></div>';
+        }
+
+        // Optimized prompts
+        var prompts = data.optimizedPrompts || data.prompts || [];
+        if (prompts.length) {
+          html += '<div class="section-title" style="margin-top:16px;">优化后Prompt</div>';
+          prompts.forEach(function(p, i) {
+            var text = typeof p === 'string' ? p : (p.prompt || p.text || JSON.stringify(p));
+            html += '<div style="background:var(--bg-primary);padding:12px;border-radius:8px;margin-bottom:8px;font-size:12px;line-height:1.5;border-left:3px solid var(--accent);"><strong>#' + (i+1) + '</strong> ' + escapeHtml(text) + '</div>';
+          });
+        }
+
+        // Model selections
+        var models = data.modelSelections || data.models || [];
+        if (models.length) {
+          html += '<div class="section-title" style="margin-top:16px;">模型选择</div><div class="cards">';
+          models.forEach(function(m) {
+            html += '<div class="card"><div class="card-title">' + escapeHtml(m.purpose || m.task || '') + '</div><div class="card-value" style="font-size:14px;">' + escapeHtml(m.model || m.name || '') + '</div><div class="card-sub">' + escapeHtml(m.reason || '') + '</div></div>';
+          });
+          html += '</div>';
+        }
+
+        if (!shots.length && !prompts.length && !models.length) {
+          html += '<pre style="background:var(--bg-primary);padding:16px;border-radius:8px;font-size:13px;white-space:pre-wrap;">' + escapeHtml(JSON.stringify(data, null, 2)) + '</pre>';
+        }
+
+        document.getElementById('dir-orch-result').innerHTML = html;
+      } catch (e) {
+        document.getElementById('dir-orch-result').innerHTML = '<div style="color:var(--danger);">编排失败: ' + escapeHtml(e.message) + '</div>';
+      }
+    }
+
+    // -------------------- Model Edit/Delete --------------------
+    function showEditModel(id, type, model, manufacturer, baseUrl) {
+      document.getElementById('edit-model-id').value = id;
+      document.getElementById('edit-model-type').value = type;
+      document.getElementById('edit-model-name').value = model;
+      document.getElementById('edit-model-manufacturer').value = manufacturer;
+      document.getElementById('edit-model-baseurl').value = baseUrl;
+      document.getElementById('edit-model-apikey').value = '';
+      document.getElementById('edit-model-apikey').placeholder = '******（留空则不修改）';
+      document.getElementById('model-edit-modal').classList.add('show');
+    }
+
+    async function doUpdateModel() {
+      var id = parseInt(document.getElementById('edit-model-id').value);
+      var type = document.getElementById('edit-model-type').value;
+      var model = document.getElementById('edit-model-name').value.trim();
+      var manufacturer = document.getElementById('edit-model-manufacturer').value.trim();
+      var baseUrl = document.getElementById('edit-model-baseurl').value.trim();
+      var apiKey = document.getElementById('edit-model-apikey').value.trim();
+
+      if (!model) { toast('请填写模型名称', 'error'); return; }
+      if (!manufacturer) { toast('请填写厂商', 'error'); return; }
+
+      // Find existing config to get current apiKey if not changed
+      var existing = _allConfigs.find(function(c) { return c.id === id; });
+      if (!apiKey && existing) apiKey = existing.apiKey || '';
+      if (!apiKey) { toast('请填写API Key', 'error'); return; }
+
+      var r = await api('/setting/updateModel', { id: id, type: type, model: model, manufacturer: manufacturer, baseUrl: baseUrl, apiKey: apiKey, modelType: type });
+      if (r.data !== undefined || r.message === '编辑成功') {
+        toast('模型更新成功');
+        closeModal('model-edit-modal');
+        loaders.model();
+      } else {
+        toast(r.message || '更新失败', 'error');
+      }
+    }
+
+    async function deleteModel(id) {
+      if (!confirm('确定要删除此模型配置吗？删除后关联的模型映射将被清除。')) return;
+      var r = await api('/setting/delModel', { id: id });
+      if (r.data !== undefined || r.message === '删除成功') {
+        toast('模型已删除');
+        loaders.model();
+      } else {
+        toast(r.message || '删除失败', 'error');
+      }
+    }
+
+    // -------------------- Change Password --------------------
+    function showChangePasswordModal() {
+      document.getElementById('chpwd-old').value = '';
+      document.getElementById('chpwd-new').value = '';
+      document.getElementById('chpwd-confirm').value = '';
+      document.getElementById('change-pwd-modal').classList.add('show');
+    }
+
+    async function doChangePassword() {
+      var oldPwd = document.getElementById('chpwd-old').value;
+      var newPwd = document.getElementById('chpwd-new').value;
+      var confirmPwd = document.getElementById('chpwd-confirm').value;
+
+      if (!oldPwd) { toast('请输入原密码', 'error'); return; }
+      if (!newPwd || newPwd.length < 6) { toast('新密码至少6位', 'error'); return; }
+      if (newPwd !== confirmPwd) { toast('两次输入的新密码不一致', 'error'); return; }
+
+      try {
+        var r = await api('/user/changePassword', { oldPassword: oldPwd, newPassword: newPwd });
+        if (r.data || (r.message && r.message.indexOf('成功') >= 0)) {
+          toast('密码修改成功');
+          closeModal('change-pwd-modal');
+        } else {
+          toast(r.message || '修改失败', 'error');
+        }
+      } catch (e) {
+        toast('修改失败: ' + e.message, 'error');
+      }
+    }
+
+    // -------------------- Dashboard Diagnostics --------------------
+    async function loadModelHealth() {
+      document.getElementById('dash-model-health').innerHTML = '<div class="loading"><span class="spinner"></span>检测中...</div>';
+      try {
+        var r = await api('/system/modelHealth');
+        var models = r.data || r || [];
+        if (!Array.isArray(models)) models = models.models || models.results || [];
+
+        if (models.length) {
+          var html = '<div class="table-wrap"><table><thead><tr><th>厂商</th><th>模型</th><th>状态</th><th>延迟</th><th>错误率</th></tr></thead><tbody>';
+          models.forEach(function(m) {
+            var status = m.status || 'unknown';
+            var badgeClass = status === 'ok' || status === 'healthy' || status === 'online' ? 'badge-success' : status === 'slow' || status === 'degraded' ? 'badge-warning' : 'badge-danger';
+            var statusText = status === 'ok' || status === 'healthy' ? '正常' : status === 'slow' ? '较慢' : status === 'degraded' ? '降级' : status === 'offline' || status === 'error' ? '离线' : status;
+            html += '<tr>' +
+              '<td>' + escapeHtml(m.provider || m.manufacturer || '-') + '</td>' +
+              '<td>' + escapeHtml(m.model || m.name || '-') + '</td>' +
+              '<td><span class="badge ' + badgeClass + '">' + statusText + '</span></td>' +
+              '<td>' + (m.latency || m.responseTime || '-') + 'ms</td>' +
+              '<td>' + (m.errorRate != null ? (typeof m.errorRate === 'number' ? m.errorRate.toFixed(1) : m.errorRate) + '%' : '-') + '</td>' +
+            '</tr>';
+          });
+          html += '</tbody></table></div>';
+          document.getElementById('dash-model-health').innerHTML = html;
+        } else {
+          document.getElementById('dash-model-health').innerHTML = '<pre style="background:var(--bg-primary);padding:16px;border-radius:8px;font-size:13px;white-space:pre-wrap;">' + escapeHtml(JSON.stringify(r.data || r, null, 2)) + '</pre>';
+        }
+      } catch (e) {
+        document.getElementById('dash-model-health').innerHTML = '<div style="color:var(--danger);">检测失败: ' + escapeHtml(e.message) + '</div>';
+      }
+    }
+
+    async function loadCacheStats() {
+      try {
+        var r = await api('/system/getCacheStats');
+        var data = r.data || r || {};
+        var hitRate = data.hitRate != null ? (typeof data.hitRate === 'number' ? data.hitRate.toFixed(1) : data.hitRate) : '-';
+        var size = data.size || data.memoryUsage || '-';
+        var entries = data.entries || data.keys || data.count || '-';
+
+        document.getElementById('dash-cache-stats').innerHTML =
+          '<div class="card"><div class="card-title">命中率</div><div class="card-value">' + hitRate + '<span style="font-size:16px;color:var(--text-secondary);">%</span></div></div>' +
+          '<div class="card"><div class="card-title">缓存大小</div><div class="card-value" style="font-size:20px;">' + size + '</div></div>' +
+          '<div class="card"><div class="card-title">缓存条目</div><div class="card-value">' + entries + '</div></div>';
+      } catch (e) {
+        document.getElementById('dash-cache-stats').innerHTML = '<div class="card"><div class="card-title">错误</div><div class="card-value" style="font-size:14px;color:var(--danger);">' + escapeHtml(e.message) + '</div></div>';
+      }
+    }
+
+    async function flushCache() {
+      if (!confirm('确定要清空所有缓存吗？')) return;
+      try {
+        var r = await api('/system/flushCache');
+        toast('缓存已清空');
+        loadCacheStats();
+      } catch (e) {
+        toast('清空缓存失败: ' + e.message, 'error');
+      }
+    }
+
     // ============================================================
     // Init
     // ============================================================
@@ -4675,6 +5396,168 @@
         }
       });
     });
+
+    // ==================== V2 Batch Template System ====================
+    let v2Templates = [];
+
+    async function loadBatchTemplates() {
+      const r = await api('/batch/getTemplates', {});
+      const list = r.data || r.templates || [];
+      v2Templates = list;
+      const sel = document.getElementById('v2job-template');
+      sel.innerHTML = '<option value="">-- 选择模板 --</option>' + list.map(function(t, i) {
+        return '<option value="' + i + '">' + (t.name || t.id || ('模板' + i)) + '</option>';
+      }).join('');
+      if (!list.length) {
+        document.getElementById('v2-template-list').innerHTML = '<div style="color:var(--text-secondary);padding:8px;">暂无模板</div>';
+        return;
+      }
+      var html = '<table class="data-table"><thead><tr><th>名称</th><th>类型</th><th>美术风格</th><th>每幕集数</th></tr></thead><tbody>';
+      list.forEach(function(t) {
+        html += '<tr><td>' + (t.name||'-') + '</td><td>' + (t.genre||'-') + '</td><td>' + (t.artStyle||'-') + '</td><td>' + (t.episodesPerAct||t.epsPerAct||'-') + '</td></tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('v2-template-list').innerHTML = html;
+    }
+
+    async function createBatchTemplate() {
+      var payload = {
+        name: document.getElementById('v2tpl-name').value.trim(),
+        genre: document.getElementById('v2tpl-genre').value.trim(),
+        artStyle: document.getElementById('v2tpl-artStyle').value.trim(),
+        acts: Number(document.getElementById('v2tpl-acts').value) || 3,
+        episodesPerAct: Number(document.getElementById('v2tpl-epsPerAct').value) || 4,
+        minutesPerEpisode: Number(document.getElementById('v2tpl-minsPerEp').value) || 3,
+        shotsPerScene: Number(document.getElementById('v2tpl-shotsPerScene').value) || 5
+      };
+      if (!payload.name) { toast('请填写模板名称', 'error'); return; }
+      var r = await api('/batch/createTemplate', payload);
+      if (r.error) { toast('创建失败: ' + r.error, 'error'); return; }
+      toast('模板已创建');
+      loadBatchTemplates();
+    }
+
+    async function createBatchJob() {
+      var tplIdx = document.getElementById('v2job-template').value;
+      if (tplIdx === '') { toast('请选择模板', 'error'); return; }
+      var variations = {};
+      var vText = document.getElementById('v2job-variations').value.trim();
+      if (vText) { try { variations = JSON.parse(vText); } catch(e) { toast('变体JSON格式错误', 'error'); return; } }
+      var payload = {
+        templateId: v2Templates[Number(tplIdx)].id || v2Templates[Number(tplIdx)].name,
+        projectId: Number(document.getElementById('v2job-projectId').value) || undefined,
+        episodeCount: Number(document.getElementById('v2job-episodeCount').value) || 10,
+        variations: variations
+      };
+      var r = await api('/batch/createJob', payload);
+      if (r.error) { toast('创建失败: ' + r.error, 'error'); return; }
+      toast('批量任务已创建');
+      loadBatchJobs();
+    }
+
+    async function loadBatchJobs() {
+      var r = await api('/batch/getJobs', {});
+      var jobs = r.data || r.jobs || [];
+      if (!jobs.length) { document.getElementById('v2-job-list').innerHTML = '<div style="color:var(--text-secondary);padding:8px;">暂无批量任务</div>'; return; }
+      var html = '<table class="data-table"><thead><tr><th>Job ID</th><th>模板</th><th>状态</th><th>进度</th><th>创建时间</th><th>操作</th></tr></thead><tbody>';
+      jobs.forEach(function(j) {
+        var progress = (j.completed||0) + '/' + (j.total||'?');
+        html += '<tr><td>' + (j.id||j.jobId||'-') + '</td><td>' + (j.templateName||j.templateId||'-') + '</td><td><span class="badge badge-' + (j.status==='completed'?'success':j.status==='failed'?'danger':'info') + '">' + (j.status||'-') + '</span></td><td>' + progress + '</td><td>' + (j.createdAt ? new Date(j.createdAt).toLocaleString() : '-') + '</td><td><button class="btn btn-sm btn-outline" onclick="viewBatchJobProgress(\'' + (j.id||j.jobId) + '\')">查看进度</button></td></tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('v2-job-list').innerHTML = html;
+    }
+
+    async function viewBatchJobProgress(jobId) {
+      var r = await api('/batch/getProgress', { jobId: jobId });
+      var d = r.data || r;
+      var html = '<div class="detail-panel"><div class="section-title" style="font-size:14px;">任务 ' + jobId + ' 进度</div>';
+      html += '<div class="detail-row"><div class="detail-label">状态</div><div class="detail-value">' + (d.status||'-') + '</div></div>';
+      html += '<div class="detail-row"><div class="detail-label">已完成</div><div class="detail-value">' + (d.completed||0) + ' / ' + (d.total||'?') + '</div></div>';
+      if (d.errors) { html += '<div class="detail-row"><div class="detail-label">错误数</div><div class="detail-value" style="color:var(--danger);">' + d.errors + '</div></div>'; }
+      if (d.episodes && d.episodes.length) {
+        html += '<table class="data-table" style="margin-top:8px;"><thead><tr><th>集</th><th>状态</th></tr></thead><tbody>';
+        d.episodes.forEach(function(ep) { html += '<tr><td>' + (ep.episode||ep.id||'-') + '</td><td>' + (ep.status||'-') + '</td></tr>'; });
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+      document.getElementById('v2-job-progress').innerHTML = html;
+    }
+
+    // ==================== Auto Distribution ====================
+    async function distAutoGenerate() {
+      var projectId = Number(document.getElementById('dist-auto-projectId').value);
+      var platform = document.getElementById('dist-auto-platform').value;
+      if (!projectId) { toast('请填写项目ID', 'error'); return; }
+      document.getElementById('dist-auto-status').innerHTML = '<span class="spinner"></span> 正在自动生成并发布...';
+      var r = await api('/distribution/autoGenerate', { projectId: projectId, platform: platform });
+      if (r.error) {
+        document.getElementById('dist-auto-status').innerHTML = '<div style="color:var(--danger);">失败: ' + r.error + '</div>';
+        return;
+      }
+      var d = r.data || r;
+      document.getElementById('dist-auto-status').innerHTML = '<div style="color:var(--success);">完成! ' + (d.message || JSON.stringify(d)) + '</div>';
+    }
+
+    async function distPublishAll() {
+      var projectId = Number(document.getElementById('dist-all-projectId').value);
+      if (!projectId) { toast('请填写项目ID', 'error'); return; }
+      var platforms = [];
+      document.querySelectorAll('.dist-all-plat:checked').forEach(function(cb) { platforms.push(cb.value); });
+      if (!platforms.length) { toast('请至少选择一个平台', 'error'); return; }
+      document.getElementById('dist-all-status').innerHTML = '<span class="spinner"></span> 正在全平台发布...';
+      var r = await api('/distribution/publishAll', { projectId: projectId, platforms: platforms });
+      if (r.error) {
+        document.getElementById('dist-all-status').innerHTML = '<div style="color:var(--danger);">失败: ' + r.error + '</div>';
+        return;
+      }
+      var d = r.data || r;
+      var html = '<div style="color:var(--success);">发布完成!</div>';
+      if (d.results) {
+        html += '<table class="data-table" style="margin-top:8px;"><thead><tr><th>平台</th><th>状态</th></tr></thead><tbody>';
+        (Array.isArray(d.results) ? d.results : Object.entries(d.results).map(function(e){return{platform:e[0],status:e[1]};})).forEach(function(r) {
+          html += '<tr><td>' + (r.platform||'-') + '</td><td>' + (r.status||r.message||'ok') + '</td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      document.getElementById('dist-all-status').innerHTML = html;
+    }
+
+    // ==================== Project Cost ====================
+    async function loadProjectCost() {
+      var projectId = Number(document.getElementById('cost-project-id').value);
+      if (!projectId) { toast('请填写项目ID', 'error'); return; }
+      var el = document.getElementById('project-cost-result');
+      el.innerHTML = '<span class="spinner"></span> 查询中...';
+      var r = await api('/cost/getProjectCost', { projectId: projectId });
+      if (r.error) { el.innerHTML = '<div style="color:var(--danger);">查询失败: ' + r.error + '</div>'; return; }
+      var d = r.data || r;
+      var html = '<div class="detail-row"><div class="detail-label">总成本</div><div class="detail-value" style="font-weight:600;color:var(--accent);">$' + (d.totalCost||d.total||0) + '</div></div>';
+      if (d.byModel) {
+        html += '<div class="detail-row"><div class="detail-label">按模型</div><div class="detail-value"></div></div>';
+        Object.entries(d.byModel).forEach(function(e) {
+          html += '<div class="detail-row" style="padding-left:24px;"><div class="detail-label">' + e[0] + '</div><div class="detail-value">$' + e[1] + '</div></div>';
+        });
+      }
+      if (d.byDate) {
+        html += '<div class="detail-row"><div class="detail-label">按日期</div><div class="detail-value"></div></div>';
+        Object.entries(d.byDate).forEach(function(e) {
+          html += '<div class="detail-row" style="padding-left:24px;"><div class="detail-label">' + e[0] + '</div><div class="detail-value">$' + e[1] + '</div></div>';
+        });
+      }
+      el.innerHTML = html;
+    }
+
+    // ==================== System Logs ====================
+    async function loadSystemLogs() {
+      var viewer = document.getElementById('system-log-viewer');
+      viewer.textContent = '加载中...';
+      var r = await api('/setting/getLog', {});
+      var logs = r.data || r.logs || r.log || '';
+      if (Array.isArray(logs)) { logs = logs.join('\n'); }
+      viewer.textContent = logs || '(无日志)';
+      viewer.scrollTop = viewer.scrollHeight;
+    }
 
     // Keyboard shortcut: Escape to close modals
     document.addEventListener('keydown', e => {
